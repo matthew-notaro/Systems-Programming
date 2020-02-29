@@ -34,6 +34,7 @@ int isIntFile = 0;
 int main(int argc, char** argv){
     // Command Line: exec file, sorting algo (-i / -q), file name
     if(argc != 3){
+        printf("Enter correct parameters\n");
         return -1;
     }
 
@@ -44,7 +45,7 @@ int main(int argc, char** argv){
     char* file_string = readFromFile(file);
     Node* front = extractAndBuild(file_string);
 
-    int sortSuccessful = 0;
+    /*int sortSuccessful = 0;
     if(stringCmp(sortingAlgo, "-i")){
         if(isIntFile)
             sortSuccessful = insertionSort(head, intCmp);
@@ -57,12 +58,11 @@ int main(int argc, char** argv){
         else 
             sortSuccessful = quickSort(head, stringCmp);
     }
-    return sortSuccessful;
-    /* Can replace 14 previous lines with following 1 statement
-    return = (stringCmp(sortingAlgo, "-i") == 0) ? 
+    return sortSuccessful;*/
+    // Can replace 14 previous lines with following 1 statement
+    return (stringCmp(sortingAlgo, "-i") == 0) ? 
         (isIntFile ? insertionSort(head, intCmp) : insertionSort(head, stringCmp)) :
         (isIntFile ? quickSort(head, intCmp) : quickSort(head, stringCmp));
-    */
 }
 
 // Read entire file into string buffer
