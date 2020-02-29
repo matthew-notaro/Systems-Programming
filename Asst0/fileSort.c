@@ -45,6 +45,8 @@ int main(int argc, char** argv){
     char* file_string = readFromFile(file);
     Node* front = extractAndBuild(file_string);
 
+    printLL(front);
+
     /*int sortSuccessful = 0;
     if(stringCmp(sortingAlgo, "-i")){
         if(isIntFile)
@@ -52,17 +54,21 @@ int main(int argc, char** argv){
         else
             sortSuccessful = insertionSort(head, stringCmp);
     }
-    else{
+    else if(stringCmp(sortingAlgo, "-q"){
         if(isIntFile)
             sortSuccessful = quickSort(head, intCmp);
         else
             sortSuccessful = quickSort(head, stringCmp);
     }
+    else {return -1;}
     return sortSuccessful;*/
+
     // Can replace 14 previous lines with following 1 statement
     return (stringCmp(sortingAlgo, "-i") == 0) ?
         (isIntFile ? insertionSort(front, intCmp) : insertionSort(front, stringCmp)) :
-        (isIntFile ? quickSort(front, intCmp) : quickSort(front, stringCmp));
+        ((stringCmp(sortingAlgo, "-q") == 0) ?
+        (isIntFile ? quickSort(front, intCmp) : quickSort(front, stringCmp)) :
+        -1);
 }
 
 // Read entire file into string buffer
