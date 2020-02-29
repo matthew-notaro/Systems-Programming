@@ -229,7 +229,7 @@ Node* partition(Node* left, Node* right, int (*comparator)(void*, void*))
   for(i = partNode; partNode != right; partNode = partNode->next)
   {
     //If data of current Node i is less than pivot
-    if((*comparator)(i->data, pivot) < 0)
+    if(comparator(i->data, pivot) < 0)
     {
       //Swap data of partNode and current
       void* temp = i->data;
