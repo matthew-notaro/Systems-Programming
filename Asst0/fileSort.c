@@ -61,8 +61,8 @@ int main(int argc, char** argv){
     return sortSuccessful;*/
     // Can replace 14 previous lines with following 1 statement
     return (stringCmp(sortingAlgo, "-i") == 0) ?
-        (isIntFile ? insertionSort(head, intCmp) : insertionSort(head, stringCmp)) :
-        (isIntFile ? quickSort(head, intCmp) : quickSort(head, stringCmp));
+        (isIntFile ? insertionSort(front, intCmp) : insertionSort(front, stringCmp)) :
+        (isIntFile ? quickSort(front, intCmp) : quickSort(front, stringCmp));
 }
 
 // Read entire file into string buffer
@@ -110,7 +110,7 @@ Node* extractAndBuild(char* file_string)
         if(isdigit(file_string[i])){
             isIntFile = 1;
         }
-        else if(isalpha(file_string)){
+        else if(isalpha(file_string[i])){
             isIntFile = 0;
         }
     }
