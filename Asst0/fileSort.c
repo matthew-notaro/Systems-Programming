@@ -20,6 +20,9 @@ int intCmp(void*, void*);
 int insertionSort(void*, int (*comparator)(void*, void*));
 int quickSort(void*, int (*comparator)(void*, void*));
 
+int recursiveQuickSort(Node* left, Node* right, int (*comparator)(void*, void*));
+Node* partition(Node* left, Node* right, int (*comparator)(void*, void*));
+
 char* readFromFile(char* file);
 Node* extractAndBuild(char* file_string);
 Node* insert(void* num, Node* head);
@@ -175,7 +178,6 @@ int insertionSort(void* toSort, int (*comparator)(void*, void*)){
     return 0;
 }
 
-
 // Implementation of quick sort on LL
 // Returns -1 on NULL LL, 0 on success
 int quickSort(void* toSort, int (*comparator)(void*, void*)){
@@ -183,26 +185,62 @@ int quickSort(void* toSort, int (*comparator)(void*, void*)){
         return -1;
     }
     Node* front = (Node*)toSort;
-    Node* currNode;
-
-    // Iterates through for every element in LL
-    for(currNode = front; currNode != NULL; currNode = currNode->next){
-        Node* ptr = currNode;                   // Creates ptr to compare previous elements
-        void* currData = currNode->data;        // Saves currNode data so it's not lost when overwritten
-        // Compares previous values to curr, if prev>curr then shift prev value right by one and continue
-        while(ptr->prev != NULL && (*comparator)(ptr->prev->data, currData) > 0){
-            ptr->data = ptr->prev->data;
-            ptr = ptr->prev;
-        }
-        // Sets currData in appropriate order
-        ptr->data = currData;
-        printLL(front);
-    }
-
+    int result = recursiveQuickSort(front, front, comparator);
 
     return 0;
 }
 
+int recursiveQuickSort(Node* left, Node* right, int (*comparator)(void*, void*))
+{
+  //First Node is pivot and leftmost
+
+  //Pick rightmost Node
+  while (right != NULL && right->next != NULL)
+  {
+    right = right->next;
+  }
+
+  //Compare values of left and right until values cross over
+  if(right != NULL && left != NULL)
+  {
+    if(right != left && left != right->next)
+    {
+      //Partition Linked List
+      Node* part = partition(left, right, comparator);
+
+      //Call recursiveQuickSort on partitioned lists
+      recursiveQuickSort(left, part->prev, comparator);
+      recursiveQuickSort(part->next, right, comparator);
+    }
+  }
+  return 0;
+}
+
+//Partition Linked List
+Node* partition(Node* left, Node* right, int (*comparator)(void*, void*))
+{
+  //Set pivot to be data of first Node
+  void* pivot = left->data;
+  Node* partNode = left->next;
+
+  Node* i;
+
+  //Traverse list
+  for(i = partNode; partNode != right; partNode = partNode->next)
+  {
+    //If data of current Node i is less than pivot
+    if((*comparator)(i->data, pivot) < 0)
+    {
+      //Swap data of partNode and current
+      void* temp = i->data;
+      i->data = partNode->data;
+      partNode->data = temp;
+
+      partNode = i->next;
+    }
+  }
+  return partNode;
+}
 
 
 // Returns null on failed malloc, head of new LL otherwise
