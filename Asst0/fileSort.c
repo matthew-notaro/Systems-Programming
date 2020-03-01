@@ -26,7 +26,6 @@ Node* partition(Node* left, Node* right, int (*comparator)(void*, void*));
 char* readFromFile(char* file);
 Node* extractAndBuild(char* file_string);
 Node* insert(void* num, Node* head);
-void swapNodeData(Node* a, Node* b);
 
 void printLL(struct Node* head); // Useful function to print out LL
 
@@ -46,22 +45,7 @@ int main(int argc, char** argv){
 
     // Reads
     char* file_string = readFromFile(file);
-    //Node* front = extractAndBuild(file_string);
-
-    Node* front = NULL;
-    int a = 0, b = 1, c = 4,  d = 64, f = 192;
-    front = insert(&a, front);
-    front = insert(&b, front);
-    front = insert(&c, front);
-    front = insert(&d, front);
-    front = insert(&f, front);
-    // front = insert("f", front);
-    // front = insert("a", front);
-    // front = insert("d", front);
-    // front = insert("y", front);
-    // front = insert("c", front);
-    // front = insert("t", front);
-
+    Node* front = extractAndBuild(file_string);
 
     printLL(front);
 
@@ -82,16 +66,13 @@ int main(int argc, char** argv){
     return sortSuccessful;*/
 
     // Can replace 14 previous lines with following 1 statement
-    /*
+
     return (stringCmp(sortingAlgo, "-i") == 0) ?
         (isIntFile ? insertionSort(front, intCmp) : insertionSort(front, stringCmp)) :
         ((stringCmp(sortingAlgo, "-q") == 0) ?
         (isIntFile ? quickSort(front, intCmp) : quickSort(front, stringCmp)) :
         -1);
-        */
 
-        int result = quickSort(front, intCmp);
-        return 0;
 }
 
 // Read entire file into string buffer
@@ -151,7 +132,7 @@ Node* extractAndBuild(char* file_string)
             //Malloc space to hold substr from start to location of comma, +1 for '\0'
             char* substring = (char*)malloc(i-start+1);
             memset(substring, '\0', i-start+1);
-            //Loop though chars of substring, find non-white spaces
+            //Loops though chars of substring, find non-white spaces
             int substr_cnt = 0;
             for(j = start; j < i; j++){
                 if(!isspace(file_string[j])){
@@ -159,9 +140,9 @@ Node* extractAndBuild(char* file_string)
                     substr_cnt++;
                 }
             }
-            //Insert into linked list
+            //Inserts into linked list
             head = insert(substring, head);
-            //Increment starting point for next token
+            //Increments starting point for next token
             if(i+1 < len)
                 start = i+1;
 
@@ -201,46 +182,36 @@ int insertionSort(void* toSort, int (*comparator)(void*, void*)){
 // Implementation of quick sort on LL
 // Returns -1 on NULL LL, 0 on success
 int quickSort(void* toSort, int (*comparator)(void*, void*)){
-    printf("start quick\n");
     if(toSort == NULL){
         return -1;
     }
     Node* front = (Node*)toSort;
-    Node* rear = front;
 
+    // Finds last Node in LL
+    Node* rear = front;
     while (rear != NULL && rear->next != NULL)
     {
       rear = rear->next;
     }
-    //int result = recursiveQuickSort(front, front, comparator);
 
+    // Calls recursive quicksort on entire list
     return recursiveQuickSort(front, rear, comparator);
 }
 
 int recursiveQuickSort(Node* left, Node* right, int (*comparator)(void*, void*))
 {
-  //First Node is pivot and leftmost
-
-  printf("start recur quick\n");
-
-  //Pick rightmost Node
-
-  printf("left picked %d\n", (int)left->data);
-  printf("right picked %d\n", (int)right->data);
+  // Declares/initializes return value
   int result = 0;
 
-  //Compare values of left and right until values cross over
+  // Compares values of left and right until values cross over
   if(right != NULL && left != NULL)
   {
-    //printf("right && left\n");
     if(right != left && left != right->next)
     {
-      //Partition Linked List
-      //printf("calling part\n");
+      // Puts first Node in correct position
       Node* part = partition(left, right, comparator);
 
-      //Call recursiveQuickSort on partitioned lists
-
+      // Calls function on the partitioned lists
       if(left != part)
         result = recursiveQuickSort(left, part->prev, comparator);
 
@@ -249,33 +220,27 @@ int recursiveQuickSort(Node* left, Node* right, int (*comparator)(void*, void*))
     }
   }
 
-  printLL(left);
-
   return 0;
 }
 
-//Partition Linked List
+// Partitions Linked List
 Node* partition(Node* left, Node* right, int (*comparator)(void*, void*))
 {
-  printf("partitioning\n");
 
-  //Set pivot to be data of first Node
+  // Sets pivot to first Node
   Node* pivot = left;
 
   Node* fromLeft = left, *fromRight = right;
-
   void* temp;
 
-  //Traverse list
   Node* i, *j;
   do
   {
+    //Finds first value from left larger than pivot
     for(i = fromLeft; i != right->next; i = i->next)
     {
-      //printf("i data: %s, piv data: %s,", i->data, pivot->data);
-      //printf(" comparator %d\n", comparator(i->data, pivot->data));
 
-      //If data of current Node i is less than pivot, break loop
+      //If data of current Node is less than pivot, set value and break
       if(comparator(i->data, pivot->data) > 0)
       {
         fromLeft = i;
@@ -283,49 +248,45 @@ Node* partition(Node* left, Node* right, int (*comparator)(void*, void*))
       }
     }
 
+    // Finds first value from right smaller than pivot
     for(j = fromRight; j != left->prev; j = j->prev)
     {
-      //printf("j data: %s, piv data: %s,", j->data, pivot->data);
-      //printf(" comparator %d\n", comparator(j->data, pivot->data));
+      // Breaks if pointers "cross over"
+      if(i == j)
+        break;
 
-      //If data of current Node i is less than pivot
-      if(i == j) { break; }
-      if(comparator(j->data, pivot->data) < 0) //if current comes after
+      // If data of current Node is greater than pivot, set value and break
+      if(comparator(j->data, pivot->data) < 0)
       {
         fromRight = j;
         break;
       }
     }
 
-    if(i!=j)
+    // Checks reason for break
+    if(i != j)
     {
-      printf("BEFORE SWAP: ");
-      printLL(left);
-
+      // Swaps data of fromRight and fromLeft if pointers have not crossed
       temp = fromLeft->data;
       fromLeft->data = fromRight->data;
       fromRight->data = temp;
-
-      printf("AFTER SWAP: ");
-      printLL(left);
     }
 
   } while(i != j);
 
-  if(i == j) //cross over
+  // Confirms reason for break
+  // Swaps data of pivot and Node before fromLeft; puts pivot in correct position
+  if(i == j)
   {
-    //printf("fR: %s, fL: %s\n", fromRight->data, fromLeft->data);
     temp = pivot->data;
     pivot->data = fromLeft->prev->data;
     fromLeft->prev->data = temp;
-    printLL(left);
   }
 
+  // Returns pivot in new location
   return fromLeft->prev;
 
 }
-
-
 
 // Returns null on failed malloc, head of new LL otherwise
 Node* insert(void* token, Node* head){
@@ -364,7 +325,7 @@ int intCmp(void* thing1, void* thing2){
 void printLL(Node* head){
     while(head != NULL){
         //printf("%s ", (char*)head->data);
-        printf("%d ", (int)head->data);
+        printf("%d ", *((int*)head->data));
         head = head->next;
     }
     printf("\n");
