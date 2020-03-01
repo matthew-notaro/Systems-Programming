@@ -1,24 +1,3 @@
-printf("partitioning\n");
-//Set pivot to be data of first Node
-void* pivot = left->data;
-
-//Set partition node to the first non-pivot Node
-Node* partNode = left;
-
-Node* i;
-
-//Traverse list
-for(i = partNode; i != right; i = i->next)
-{
-  printf("i data: %s, piv data: %s,", i->data, pivot);
-  printf(" comparator %d\n", comparator(i->data, pivot));
-
-  //If data of current Node i is less than pivot
-  if(comparator(i->data, pivot) <= 0) //if current comes before
-  {
-    partNode = partNode->next;
-  }
-}
 //partNode = (partNode == NULL) ? left : partNode->next;
 
 if(partNode == NULL)

@@ -30,7 +30,6 @@ void swapNodeData(Node* a, Node* b);
 
 void printLL(struct Node* head); // Useful function to print out LL
 
-
 // Keep track of number of nodes in linked list
 int size = 0;
 int isIntFile = 0;
@@ -50,18 +49,18 @@ int main(int argc, char** argv){
     //Node* front = extractAndBuild(file_string);
 
     Node* front = NULL;
-    // int a = 0, b = 1, c = 4,  d = 64, f = 192;
-    // front = insert(&a, front);
-    // front = insert(&b, front);
-    // front = insert(&c, front);
-    // front = insert(&d, front);
-    // front = insert(&f, front);
-    front = insert("f", front);
-    front = insert("a", front);
-    front = insert("d", front);
-    front = insert("y", front);
-    front = insert("c", front);
-    front = insert("t", front);
+    int a = 0, b = 1, c = 4,  d = 64, f = 192;
+    front = insert(&a, front);
+    front = insert(&b, front);
+    front = insert(&c, front);
+    front = insert(&d, front);
+    front = insert(&f, front);
+    // front = insert("f", front);
+    // front = insert("a", front);
+    // front = insert("d", front);
+    // front = insert("y", front);
+    // front = insert("c", front);
+    // front = insert("t", front);
 
 
     printLL(front);
@@ -91,7 +90,7 @@ int main(int argc, char** argv){
         -1);
         */
 
-        int result = quickSort(front, stringCmp);
+        int result = quickSort(front, intCmp);
         return 0;
 }
 
@@ -226,8 +225,8 @@ int recursiveQuickSort(Node* left, Node* right, int (*comparator)(void*, void*))
 
   //Pick rightmost Node
 
-  printf("left picked %s\n", (char*)left->data);
-  printf("right picked %s\n", (char*)right->data);
+  printf("left picked %d\n", (int)left->data);
+  printf("right picked %d\n", (int)right->data);
   int result = 0;
 
   //Compare values of left and right until values cross over
@@ -250,6 +249,8 @@ int recursiveQuickSort(Node* left, Node* right, int (*comparator)(void*, void*))
     }
   }
 
+  printLL(left);
+
   return 0;
 }
 
@@ -271,8 +272,8 @@ Node* partition(Node* left, Node* right, int (*comparator)(void*, void*))
   {
     for(i = fromLeft; i != right->next; i = i->next)
     {
-      printf("i data: %s, piv data: %s,", i->data, pivot->data);
-      printf(" comparator %d\n", comparator(i->data, pivot->data));
+      //printf("i data: %s, piv data: %s,", i->data, pivot->data);
+      //printf(" comparator %d\n", comparator(i->data, pivot->data));
 
       //If data of current Node i is less than pivot, break loop
       if(comparator(i->data, pivot->data) > 0)
@@ -284,8 +285,8 @@ Node* partition(Node* left, Node* right, int (*comparator)(void*, void*))
 
     for(j = fromRight; j != left->prev; j = j->prev)
     {
-      printf("j data: %s, piv data: %s,", j->data, pivot->data);
-      printf(" comparator %d\n", comparator(j->data, pivot->data));
+      //printf("j data: %s, piv data: %s,", j->data, pivot->data);
+      //printf(" comparator %d\n", comparator(j->data, pivot->data));
 
       //If data of current Node i is less than pivot
       if(i == j) { break; }
@@ -313,7 +314,7 @@ Node* partition(Node* left, Node* right, int (*comparator)(void*, void*))
 
   if(i == j) //cross over
   {
-    printf("fR: %s, fL: %s\n", fromRight->data, fromLeft->data);
+    //printf("fR: %s, fL: %s\n", fromRight->data, fromLeft->data);
     temp = pivot->data;
     pivot->data = fromLeft->prev->data;
     fromLeft->prev->data = temp;
@@ -324,29 +325,6 @@ Node* partition(Node* left, Node* right, int (*comparator)(void*, void*))
 
 }
 
-
-
-void swapNodeData(Node* one, Node* two)
-{
-  Node* temp = one;
-
-  one->next = two->next;
-  one->prev = two->prev;
-  one->prev->next = two;
-  one->next->prev = two;
-
-  two->next = temp->next;
-  two->prev = temp->prev;
-  two->prev->next = temp;
-  two->next->prev = temp;
-
-  // void* temp;
-  // void* a = one->data;
-  // void* b = two->data;
-  // temp = a;
-  // a = b;
-  // b = temp;
-}
 
 
 // Returns null on failed malloc, head of new LL otherwise
@@ -367,8 +345,6 @@ Node* insert(void* token, Node* head){
 }
 
 
-
-
 //COMPARATORS
 // Returns <0 if t1<t2, 0 if t1=t2, >0 if t1>t2
 int stringCmp(void* thing1, void* thing2){
@@ -387,7 +363,8 @@ int intCmp(void* thing1, void* thing2){
 // Useful little function
 void printLL(Node* head){
     while(head != NULL){
-        printf("%s ", (char*)head->data);
+        //printf("%s ", (char*)head->data);
+        printf("%d ", (int)head->data);
         head = head->next;
     }
     printf("\n");
