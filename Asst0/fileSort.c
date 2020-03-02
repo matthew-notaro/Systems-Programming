@@ -27,6 +27,8 @@ char* readFromFile(char* file);
 Node* extractAndBuild(char* file_string);
 Node* insert(void* num, Node* head);
 
+void freeLL(Node* head){
+
 void printLL(struct Node* head); // Useful function to print out LL
 
 // Keep track of number of nodes in linked list
@@ -49,30 +51,13 @@ int main(int argc, char** argv){
 
     printLL(front);
 
-    /*int sortSuccessful = 0;
-    if(stringCmp(sortingAlgo, "-i")){
-        if(isIntFile)
-            sortSuccessful = insertionSort(head, intCmp);
-        else
-            sortSuccessful = insertionSort(head, stringCmp);
-    }
-    else if(stringCmp(sortingAlgo, "-q"){
-        if(isIntFile)
-            sortSuccessful = quickSort(head, intCmp);
-        else
-            sortSuccessful = quickSort(head, stringCmp);
-    }
-    else {return -1;}
-    return sortSuccessful;*/
-
-    // Can replace 14 previous lines with following 1 statement
-
-    return (stringCmp(sortingAlgo, "-i") == 0) ?
+    int retVal = (stringCmp(sortingAlgo, "-i") == 0) ?
         (isIntFile ? insertionSort(front, intCmp) : insertionSort(front, stringCmp)) :
         ((stringCmp(sortingAlgo, "-q") == 0) ?
         (isIntFile ? quickSort(front, intCmp) : quickSort(front, stringCmp)) :
         -1);
-
+    freeLL(front);
+    return retVal;
 }
 
 // Read entire file into string buffer
@@ -329,4 +314,14 @@ void printLL(Node* head){
         head = head->next;
     }
     printf("\n");
+}
+
+void freeLL(Node* head){
+	Node *prev;
+	while(head != NULL){
+		prev = head;
+		head = head->next;
+		free(prev->data);
+		free(prev);
+	}
 }
