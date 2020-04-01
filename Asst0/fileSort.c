@@ -65,10 +65,15 @@ int main(int argc, char** argv){
 
     Node* head = extractAndBuild(file_string);
 
-    // Sorts
-    int status= (stringCmp(sortingAlgo, "-i") == 0) ?
-        (isIntFile ? insertionSort(head, intCmp) : insertionSort(head, stringCmp)) :
-        (isIntFile ? quickSort(head, intCmp) : quickSort(head, stringCmp));
+    printLL(front);
+
+    int retVal = (stringCmp(sortingAlgo, "-i") == 0) ?
+        (isIntFile ? insertionSort(front, intCmp) : insertionSort(front, stringCmp)) :
+        ((stringCmp(sortingAlgo, "-q") == 0) ?
+        (isIntFile ? quickSort(head, intCmp) : quickSort(head, stringCmp)) :
+        -1);
+    freeLL(front);
+    return retVal;
 
     //printf("intFile: %d\n", isIntFile);
     printLL(head);
@@ -395,6 +400,16 @@ void printLL(Node* head){
     }
 }
 
+
+void freeLL(Node* head){
+	Node *prev;
+	while(head != NULL){
+		prev = head;
+		head = head->next;
+		free(prev->data);
+		free(prev);
+	}
+}
 
 void freeLL(Node* head){
 	Node *prev;
