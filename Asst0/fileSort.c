@@ -20,14 +20,18 @@ int intCmp(void*, void*);
 int insertionSort(void*, int (*comparator)(void*, void*));
 int quickSort(void*, int (*comparator)(void*, void*));
 
-int recursiveQuickSort(Node* left, Node* right, int (*comparator)(void*, void*));
+Node* recursiveQuickSort(Node* left, Node* right, int (*comparator)(void*, void*));
 Node* partition(Node* left, Node* right, int (*comparator)(void*, void*));
 
 char* readFromFile(char* file);
 Node* extractAndBuild(char* file_string);
 Node* insert(void* num, Node* head);
 
+<<<<<<< HEAD
 void freeLL(Node* head){
+=======
+void freeLL(Node*);
+>>>>>>> 79a05017b2f6fb131c42a7fc3fb4033b4880162f
 
 void printLL(struct Node* head); // Useful function to print out LL
 
@@ -42,22 +46,36 @@ int main(int argc, char** argv){
         return -1;
     }
 
+
     char* sortingAlgo = argv[1];
     char* file = argv[2];
 
     // Reads
     char* file_string = readFromFile(file);
-    Node* front = extractAndBuild(file_string);
+    Node* head = extractAndBuild(file_string);
 
+<<<<<<< HEAD
     printLL(front);
 
     int retVal = (stringCmp(sortingAlgo, "-i") == 0) ?
         (isIntFile ? insertionSort(front, intCmp) : insertionSort(front, stringCmp)) :
+=======
+    // Sorts
+    int status = (stringCmp(sortingAlgo, "-i") == 0) ?
+        (isIntFile ? insertionSort(head, intCmp) : insertionSort(head, stringCmp)) :
+>>>>>>> 79a05017b2f6fb131c42a7fc3fb4033b4880162f
         ((stringCmp(sortingAlgo, "-q") == 0) ?
-        (isIntFile ? quickSort(front, intCmp) : quickSort(front, stringCmp)) :
+        (isIntFile ? quickSort(head, intCmp) : quickSort(head, stringCmp)) :
         -1);
+<<<<<<< HEAD
     freeLL(front);
     return retVal;
+=======
+
+    freeLL(head);
+
+    return status;
+>>>>>>> 79a05017b2f6fb131c42a7fc3fb4033b4880162f
 }
 
 // Read entire file into string buffer
@@ -71,6 +89,10 @@ char* readFromFile(char* file)
         return NULL;
     }
     struct stat *buffer = malloc(sizeof(struct stat));
+    if(buffer == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+    }
     stat(file, buffer);
     int size = buffer->st_size;
     // Warning: Empty file
@@ -79,6 +101,10 @@ char* readFromFile(char* file)
     }
     // IO Read Loop
     char* file_buffer = (char*)malloc(size);
+    if(file_buffer == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+    }
     memset(file_buffer, '\0', size);
     int status = 1;
     int readIn = 0;
@@ -89,6 +115,7 @@ char* readFromFile(char* file)
         //printf("readIn: %d\n", readIn);
     } while(status > 0 && readIn < size);
 
+    free(buffer);
     return file_buffer;
 }
 
@@ -96,7 +123,7 @@ char* readFromFile(char* file)
 // Returns head of linked list
 Node* extractAndBuild(char* file_string)
 {
-    Node* head = (Node*)malloc(sizeof(Node));
+    Node* head = NULL;
     int len = strlen(file_string);
     int start = 0, i = 0, j = 0;
 
@@ -116,6 +143,10 @@ Node* extractAndBuild(char* file_string)
         if(file_string[i] == ',' || (i == len-1 && start < len-1)){
             //Malloc space to hold substr from start to location of comma, +1 for '\0'
             char* substring = (char*)malloc(i-start+1);
+            if(substring == NULL){
+                printf("Bad malloc\n");
+                return NULL;
+            }
             memset(substring, '\0', i-start+1);
             //Loops though chars of substring, find non-white spaces
             int substr_cnt = 0;
@@ -130,8 +161,6 @@ Node* extractAndBuild(char* file_string)
             //Increments starting point for next token
             if(i+1 < len)
                 start = i+1;
-
-            free(substring);
         }
     }
     free(file_string);
@@ -146,10 +175,10 @@ int insertionSort(void* toSort, int (*comparator)(void*, void*)){
     if(toSort == NULL){
         return -1;
     }
-    Node* front = (Node*)toSort;
+    Node* head = (Node*)toSort;
     Node* currNode;
     // Iterates through for every element in LL
-    for(currNode = front; currNode != NULL; currNode = currNode->next){
+    for(currNode = head; currNode != NULL; currNode = currNode->next){
         Node* ptr = currNode;                   // Creates ptr to compare previous elements
         void* currData = currNode->data;        // Saves currNode data so it's not lost when overwritten
         // Compares previous values to curr, if prev>curr then shift prev value right by one and continue
@@ -159,7 +188,7 @@ int insertionSort(void* toSort, int (*comparator)(void*, void*)){
         }
         // Sets currData in appropriate order
         ptr->data = currData;
-        printLL(front);
+        printLL(head);
     }
     return 0;
 }
@@ -170,23 +199,25 @@ int quickSort(void* toSort, int (*comparator)(void*, void*)){
     if(toSort == NULL){
         return -1;
     }
-    Node* front = (Node*)toSort;
+    Node* head = (Node*)toSort;
 
     // Finds last Node in LL
-    Node* rear = front;
+    Node* rear = head;
     while (rear != NULL && rear->next != NULL)
     {
       rear = rear->next;
     }
 
-    // Calls recursive quicksort on entire list
-    return recursiveQuickSort(front, rear, comparator);
+    head = recursiveQuickSort(head, rear, comparator);
+    printLL(head);
+
+    return 0;
 }
 
-int recursiveQuickSort(Node* left, Node* right, int (*comparator)(void*, void*))
+Node* recursiveQuickSort(Node* left, Node* right, int (*comparator)(void*, void*))
 {
   // Declares/initializes return value
-  int result = 0;
+  Node* result;
 
   // Compares values of left and right until values cross over
   if(right != NULL && left != NULL)
@@ -198,20 +229,28 @@ int recursiveQuickSort(Node* left, Node* right, int (*comparator)(void*, void*))
 
       // Calls function on the partitioned lists
       if(left != part)
-        result = recursiveQuickSort(left, part->prev, comparator);
+        {
+          if(comparator(left->data, part->prev->data) == 0)
+            result = recursiveQuickSort(left, part->prev->prev, comparator);
+          else
+            result = recursiveQuickSort(left, part->prev, comparator);
+        }
 
-      if(right != part)
-        result = recursiveQuickSort(part->next, right, comparator);
+        if(right != part)
+        {
+          if(comparator(part->next->data, right->data) == 0)
+            result = recursiveQuickSort(part->next->next, right, comparator);
+          else
+            result = recursiveQuickSort(part->next, right, comparator);
+        }
     }
   }
-
-  return 0;
+  return left;
 }
 
 // Partitions Linked List
 Node* partition(Node* left, Node* right, int (*comparator)(void*, void*))
 {
-
   // Sets pivot to first Node
   Node* pivot = left;
 
@@ -241,7 +280,7 @@ Node* partition(Node* left, Node* right, int (*comparator)(void*, void*))
         break;
 
       // If data of current Node is greater than pivot, set value and break
-      if(comparator(j->data, pivot->data) < 0)
+      if(comparator(j->data, pivot->data) <= 0)
       {
         fromRight = j;
         break;
@@ -263,6 +302,7 @@ Node* partition(Node* left, Node* right, int (*comparator)(void*, void*))
   // Swaps data of pivot and Node before fromLeft; puts pivot in correct position
   if(i == j)
   {
+
     temp = pivot->data;
     pivot->data = fromLeft->prev->data;
     fromLeft->prev->data = temp;
@@ -275,7 +315,7 @@ Node* partition(Node* left, Node* right, int (*comparator)(void*, void*))
 
 // Returns null on failed malloc, head of new LL otherwise
 Node* insert(void* token, Node* head){
-  struct Node* newNode = (Node *)malloc(sizeof(Node));
+  Node* newNode = (Node *)malloc(sizeof(Node));
   if(newNode == NULL){
       printf("Bad malloc\n");
       return NULL;
@@ -309,11 +349,22 @@ int intCmp(void* thing1, void* thing2){
 // Useful little function
 void printLL(Node* head){
     while(head != NULL){
-        //printf("%s ", (char*)head->data);
-        printf("%d ", *((int*)head->data));
+        if(!isIntFile)
+          printf("%s\n", (char*)head->data);
+        else
+          printf("%d\n", *((int*)head->data));
         head = head->next;
     }
-    printf("\n");
+}
+
+void freeLL(Node* head){
+	Node *prev;
+	while(head != NULL){
+		prev = head;
+		head = head->next;
+		free(prev->data);
+		free(prev);
+	}
 }
 
 void freeLL(Node* head){
