@@ -1,1 +1,102 @@
-abd, def, ghi, kl
+1. ./fileSort -i ./somefile
+./somefile contents:
+hi,there, every,     one
+tests normal operation passing strings into insertion sort
+output:
+every
+	hi
+	one
+there
+
+2. ./fileSort -q ./somefile
+./somefile contents:
+hi,there, every,     one
+tests normal operation passing strings into quick sort
+output:
+every
+	hi
+	one
+there
+
+3. ./fileSort -i ./somefile
+./somefile contents: 123, 14, 510     , 1
+tests normal operation passing ints into insertion sort
+output should be:
+1
+		14
+		123
+		510
+
+4. ./fileSort -q ./somefile
+./somefile contents: 123, 14, 510     , 1
+tests normal operation passing ints into quick sort
+output should be:
+1
+		14
+		123
+		510
+
+
+
+
+5. ./fileSort -i ./somefile
+./somefile contents:  , ,sfd , ,sdf, , ,f, ,a ,
+tests multiple empty tokens with strings
+output should be:
+
+
+
+
+
+
+
+a
+f
+sdf
+sfd
+
+6. ./fileSort -i ./somefile
+./somefile contents:  , ,234 , ,123, , 12, ,6 ,
+tests multiple empty tokens with integers
+output should be:
+0
+0
+0
+0
+0
+0
+0
+6
+12
+123
+234
+
+
+ERRORS:
+1. ./fileSort ./somefile
+./somefile contents:
+hi,there, every,     one
+tests program’s incorrect number of arguments check
+output should be:
+Fatal Error: expected two arguments, had one
+
+
+2. ./fileSort ./somefile -q
+./somefile contents:
+hi,there, every,     one
+tests program’s invalid sorting flag check
+output should be:
+Fatal Error: "./somefile" is not a valid sort flag
+
+3. ./fileSort -q -q
+./somefile contents:
+hi,there, every,     one
+tests program’s file does not exist check
+output should be:
+Fatal Error: file "-q" does not exist
+
+4. ./fileSort -i ./somefile
+./somefile contents:
+tests passing an empty file into insertion sort
+output should be:
+		Warning: Empty file.
