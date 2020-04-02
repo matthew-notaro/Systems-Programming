@@ -1,6 +1,6 @@
 #include "BST.h"
 
-int numUnique = 0, numTotal = 0; counter = 0;
+int numUnique = 0, numTotal = 0, counter = 0;
 
 // Returns root of resultant BST after inserting/incrementing frequency of given word
 BSTNode* insert(char* word, BSTNode *root){
