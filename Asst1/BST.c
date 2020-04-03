@@ -9,7 +9,7 @@ BSTNode* insert(char* word, BSTNode *root){
         temp->freq = 1;
         temp->token = word;
         numUnique++;
-        numTotal++;        
+        numTotal++;
         return temp;
     }
     if(strcmp(root->token, word) == 0){
