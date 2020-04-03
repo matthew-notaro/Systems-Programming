@@ -78,7 +78,7 @@ void insertHeap(heapNode** heap, heapNode* temp){
 heapNode* deleteMin(heapNode** heap){
     if(heap == NULL){
         printf("heap is NULL\n");
-        return;
+        return NULL;
     }
     heapNode* min = heap[0];
     heap[0] = heap[currLen - 1];
@@ -88,6 +88,9 @@ heapNode* deleteMin(heapNode** heap){
 }
 
 
+int getHeapSize(){
+    return currLen;
+}
 
 // Prints heap in order of array - does not necessarily print in order of freqs
 void printHeap(heapNode** heap){
