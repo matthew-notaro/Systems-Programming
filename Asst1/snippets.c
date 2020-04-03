@@ -11,15 +11,21 @@
 #include "BST.h"
 #include "minHeap.h"
 
-char* readFromFile(char* file_name);
+char* readFromFile(char* file);
 void count_occs(char* file_string);
 BSTNode* insert(char* word, BSTNode *root);
 
 int numUnique = 0, numTotal = 0, counter = 0;
 
 int main(int argc, char** argv){
-  char* file_name = argv[1];
-  char* file_string = "one one two three four";//readFromFile(file_name);
+  char* file = argv[1];
+  char* file_string = readFromFile(file);
+  // Checks for nonexistent file
+  if(file_string == NULL){
+      printf("Fatal Error: file \"%s\" does not exist", file);
+      return -1;
+  }
+
   printf("%s\n", file_string);
   count_occs(file_string);
   return 0;
@@ -32,6 +38,8 @@ BSTNode* insert(char* word, BSTNode *root){
         BSTNode* temp = (BSTNode*)malloc(sizeof(BSTNode));
         temp->freq = 1;
         temp->token = word;
+        temp->left = NULL;
+        temp->right = NULL;
         numUnique++;
         numTotal++;
         return temp;
@@ -81,7 +89,7 @@ char* readFromFile(char* file)
         printf("Fatal Error: File does not exist.\n");
         return NULL;
     }
-    struct stat *buffer = malloc(sizeof(struct stat));
+    struct stat *buffer = (struct stat*)malloc(sizeof(struct stat));
     if(buffer == NULL){
         printf("Bad malloc\n");
         return NULL;
@@ -103,12 +111,11 @@ char* readFromFile(char* file)
     int readIn = 0;
     do{
         status = read(fd, file_buffer+readIn, buffer_size - readIn);
-        //printf("status: %d\n", status);
+        printf("status: %d\n", status);
         readIn += status;
-        //printf("readIn: %d\n", readIn);
+        printf("readIn: %d\n", readIn);
     } while(status > 0 && readIn < buffer_size);
 
-    close(fd);
     free(buffer);
     return file_buffer;
 }
@@ -127,7 +134,7 @@ void count_occs(char* file_string)
     char currChar = file_string[i];
 
     //Extract token
-    if(isspace(currChar) != 0 || (i == len-1 && start < len-1)) //Delimiter found or last token reached
+    if(isspace(currChar) != 0 || (i == len-1 && start <= len-1)) //Delimiter found or last token reached
     {
       //Malloc space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
