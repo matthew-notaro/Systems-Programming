@@ -8,16 +8,18 @@ BSTNode* insert(char* word, BSTNode *root){
         BSTNode* temp = (BSTNode*)malloc(sizeof(BSTNode));
         temp->freq = 1;
         temp->token = word;
+        temp->left = NULL;
+        temp->right = NULL;
         numUnique++;
         numTotal++;
         return temp;
     }
-    if(strcmp(root->token, word) == 0){
+    else if(strcmp(root->token, word) == 0){
         root->freq++;
         numTotal++;
         return root;
     }
-    if(strcmp(root->token, word) > 0)
+    else if(strcmp(root->token, word) > 0)
         root->left = insert(word, root->left);
     else
         root->right = insert(word, root->right);

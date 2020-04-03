@@ -13,6 +13,9 @@ typedef struct heapNode{
 
 heapNode** heapify(BSTNode **arr);
 void heapifyHelper(heapNode** heap, int n, int i);
+heapNode* deleteMin(heapNode** heap);
+void insertHeap(heapNode** heap, heapNode* temp);
 void printHeap(heapNode** heap);
+void freeHeap(heapNode** heap);
 
 #endif

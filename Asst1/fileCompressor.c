@@ -3,7 +3,7 @@
 #include <string.h>
 #include "BST.h"
 #include "minHeap.h"
-
+/*
 typedef struct Node{
   char* token;
   int code;
@@ -24,12 +24,12 @@ char opFlag = '?';
 int r_flag = 0;
 char* path;
 char* codebook;
-
+*/
 // test main for BST
 int main(int argc, char** argv){
   BSTNode *root = NULL;
   root = insert("u", root);
-  root = insert("u", root);
+  root = insert("g", root);
   root = insert("c", root);
   root = insert("c", root);
   root = insert("y", root);
@@ -38,9 +38,19 @@ int main(int argc, char** argv){
   root = insert("g", root);
   root = insert("g", root);
   root = insert("d", root);
-  printBST(root);
   BSTNode** arr = treeToArr(root); // must be freed in main file
+  //printBSTArr(arr);
   heapNode** heap = heapify(arr);
+  heapNode* min = deleteMin(heap);
+  min = deleteMin(heap);
+  heapNode* temp = (heapNode*)malloc(sizeof(heapNode));
+  temp->freq = 7;
+  temp->root = (BSTNode*)malloc(sizeof(BSTNode));
+  temp->root->freq = 7;
+  temp->root->token = " ";
+  insertHeap(heap, temp);
+
+
   printHeap(heap);
   free(arr);
   free(heap);
