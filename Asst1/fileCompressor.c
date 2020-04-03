@@ -3,6 +3,7 @@
 #include <string.h>
 #include "BST.h"
 #include "minHeap.h"
+#include "huff.h"
 /*
 typedef struct Node{
   char* token;
@@ -50,8 +51,12 @@ int main(int argc, char** argv){
   temp->root->token = " ";
   insertHeap(heap, temp);
 
-
   printHeap(heap);
+
+  huffEncode(heap);
+
+  printBST(heap[0]->root);
+
   free(arr);
   free(heap);
 
