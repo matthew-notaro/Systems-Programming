@@ -127,7 +127,20 @@ void count_occs(char* file_string)
 {
   BSTNode* root = NULL;
   int len = strlen(file_string);
-  int start = 0, i = 0, j = 0;
+  int start = 0, i = 0, j = 0, k = 0;
+
+  int emptyFile = 1;
+  for(k = 0; k < len; k++){
+    if(isspace(file_string[k]) == 0)
+    {
+      emptyFile = 0;
+      break;
+    }
+  }
+
+  if(emptyFile == 1){
+    printf("Warning: Empty File.\n");
+  }
 
   //Loop through file string
   for(i = 0; i < len; i++)
@@ -135,8 +148,9 @@ void count_occs(char* file_string)
     char currChar = file_string[i];
 
     //Extract token
-    if(isspace(currChar) != 0 || (i == len-1 && start <= len-1)) //Delimiter found or last token reached
+    if(isspace(currChar) != 0) //Delimiter found
     {
+      printf("delim at %d\n", i);
       //Malloc space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
       int token_cnt = 0;
@@ -148,47 +162,37 @@ void count_occs(char* file_string)
       }
 
       memset(token, '\0', i-start+1);
-
-      if(i == len-1)
+      for(j = start; j < i; j++)
       {
-        for(j = start; j <= i; j++)
-        {
-           token[token_cnt] = file_string[j];
-           token_cnt++;
-        }
-      }
-      else
-      {
-        for(j = start; j < i; j++)
-        {
-           token[token_cnt] = file_string[j];
-           token_cnt++;
-        }
+        token[token_cnt] = file_string[j];
+        token_cnt++;  
       }
 
-      printf("%s\n", token);
-      root = insert(token, root);
-      printf("inserted\n");
+      //Corner case: ending with spaces
+
+      if(strlen(token) > 0)
+      {
+        printf("%s\n", token);
+        root = insert(token, root);
+        printf("inserted\n");
+      }
 
       //Increments starting point for next token
-      if(i+1 < len)
-        start = i+1;
+      //if(i+1 < len)
+      start = i+1;
 
-      //Insert delimiter token
-      if(isspace(currChar)== 1)
+      //Insert delimiter
+      if(currChar == ' ')
       {
-        if(currChar == ' ')
-        {
-          root = insert(escape, root);
-        }
-        else if(currChar == '\n')
-        {
-          root = insert(strcat(escape, "n"), root);
-        }
-        else if(currChar == '\t')
-        {
-          root = insert(strcat(escape, "t"), root);
-        }
+        root = insert(escape, root);
+      }
+      else if(currChar == '\n')
+      {
+        //root = insert(strcat(escape, "n"), root);
+      }
+      else if(currChar == '\t')
+      {
+        //root = insert(strcat(escape, "t"), root);
       }
     }
   }
