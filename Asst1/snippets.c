@@ -16,6 +16,7 @@ void count_occs(char* file_string);
 BSTNode* insert(char* word, BSTNode *root);
 
 int numUnique = 0, numTotal = 0, counter = 0;
+char* escape = "%#$";
 
 int main(int argc, char** argv){
   char* file = argv[1];
@@ -173,6 +174,22 @@ void count_occs(char* file_string)
       if(i+1 < len)
         start = i+1;
 
+      //Insert delimiter token
+      if(isspace(currChar)== 1)
+      {
+        if(currChar == ' ')
+        {
+          root = insert(escape, root);
+        }
+        else if(currChar == '\n')
+        {
+          root = insert(strcat(escape, "n"), root);
+        }
+        else if(currChar == '\t')
+        {
+          root = insert(strcat(escape, "t"), root);
+        }
+      }
     }
   }
   printBST(root);
