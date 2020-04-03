@@ -8,6 +8,8 @@ BSTNode* insert(char* word, BSTNode *root){
         BSTNode* temp = (BSTNode*)malloc(sizeof(BSTNode));
         temp->freq = 1;
         temp->token = word;
+        temp->left = NULL;
+        temp->right = NULL;
         numUnique++;
         numTotal++;
         return temp;
