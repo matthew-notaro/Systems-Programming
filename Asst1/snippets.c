@@ -19,7 +19,7 @@ int numUnique = 0, numTotal = 0, counter = 0;
 
 int main(int argc, char** argv){
   char* file_name = argv[1];
-  char* file_string = readFromFile(file_name);
+  char* file_string = "one one two three four";//readFromFile(file_name);
   printf("%s\n", file_string);
   count_occs(file_string);
   return 0;
@@ -108,6 +108,7 @@ char* readFromFile(char* file)
         //printf("readIn: %d\n", readIn);
     } while(status > 0 && readIn < buffer_size);
 
+    close(fd);
     free(buffer);
     return file_buffer;
 }
@@ -140,11 +141,21 @@ void count_occs(char* file_string)
 
       memset(token, '\0', i-start+1);
 
-      //Loop through token
-      for(j = start; j < i; j++)
+      if(i == len-1)
       {
-         token[token_cnt] = file_string[j];
-         token_cnt++;
+        for(j = start; j <= i; j++)
+        {
+           token[token_cnt] = file_string[j];
+           token_cnt++;
+        }
+      }
+      else
+      {
+        for(j = start; j < i; j++)
+        {
+           token[token_cnt] = file_string[j];
+           token_cnt++;
+        }
       }
 
       printf("%s\n", token);
@@ -154,6 +165,7 @@ void count_occs(char* file_string)
       //Increments starting point for next token
       if(i+1 < len)
         start = i+1;
+
     }
   }
   printBST(root);
