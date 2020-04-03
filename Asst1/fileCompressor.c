@@ -1,11 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <dirent.h>
-#include <bst.h>
+#include "BST.h"
+#include "minHeap.h"
 
-typedef struct Node
-{
+typedef struct Node{
   char* token;
   int code;
   int occurrences;
@@ -17,7 +16,7 @@ Node* build_tree();
 void build_codebook();
 void compress();
 void decompress();
-void recurse(DIR* dd);
+void recurse(struct DIR* dd);
 void read_file(char* file_name);
 void count_occs(char* file_string);
 
@@ -26,6 +25,29 @@ int r_flag = 0;
 char* path;
 char* codebook;
 
+// test main for BST
+int main(int argc, char** argv){
+  BSTNode *root = NULL;
+  root = insert("u", root);
+  root = insert("u", root);
+  root = insert("c", root);
+  root = insert("c", root);
+  root = insert("y", root);
+  root = insert("g", root);
+  root = insert("g", root);
+  root = insert("g", root);
+  root = insert("g", root);
+  root = insert("d", root);
+  printBST(root);
+  BSTNode** arr = treeToArr(root); // must be freed in main file
+  heapNode** heap = heapify(arr);
+  printHeap(heap);
+  free(arr);
+  free(heap);
+
+  return 0;
+}
+  /*
 int main(int argc, char** argv){
   // min args - ./file -b <path>, max args - ./file -R -d <path> <codebook>
   if(argc < 3 || argc > 5){
@@ -48,17 +70,16 @@ int main(int argc, char** argv){
           codebook = argv[argc-1];
         }
       }
-      else{
+      else{ // bad flag if not b,c,d,R
         printf("Invalid flag\n");
         return -1;
       }
     }
-    else if(opFlag == '?'){
+    else if(opFlag == '?'){ // no opFlag found
       printf("Operation not specified\n");
       return -1;
     }
   }
-
 
 
   DIR* dd = opendir("./");
@@ -148,3 +169,5 @@ void count_occs(char* file_string)
   }
 
 }
+
+*/
