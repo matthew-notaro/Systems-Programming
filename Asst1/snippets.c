@@ -28,7 +28,6 @@ int main(int argc, char** argv){
 // Returns root of resultant BST after inserting/incrementing frequency of given word
 BSTNode* insert(char* word, BSTNode *root){
     if(root == NULL){
-      printf("insert checkpoint: first\n");
         BSTNode* temp = (BSTNode*)malloc(sizeof(BSTNode));
         temp->freq = 1;
         temp->token = word;
@@ -37,7 +36,6 @@ BSTNode* insert(char* word, BSTNode *root){
         return temp;
     }
     if(strcmp(root->token, word) == 0){
-      printf("insert checkpoint: same\n");
         root->freq++;
         numTotal++;
         return root;
@@ -46,13 +44,11 @@ BSTNode* insert(char* word, BSTNode *root){
         root->left = insert(word, root->left);
     else
         root->right = insert(word, root->right);
-    return NULL;
 }
 
 // Prints BST inorder
 void printBST(BSTNode* root){
-    if(root == NULL)
-      return;
+    if(root == NULL) return;
     printBST(root->left);
     printf("token: %s, freq: %d\n", root->token, root->freq);
     printBST(root->right);
@@ -60,9 +56,9 @@ void printBST(BSTNode* root){
 
 // Read entire file into string buffer
 // Returns NULL if file does not exist, string otherwise
-char* readFromFile(char* file_name)
+char* readFromFile(char* file)
 {
-    int fd = open(file_name, O_RDONLY);    // Returns -1 on failure, >0 on success
+    int fd = open(file, O_RDONLY);    // Returns -1 on failure, >0 on success
     // Fatal Error if file does not exist
     if(fd < 0){
         printf("Fatal Error: File does not exist.\n");
@@ -73,7 +69,7 @@ char* readFromFile(char* file_name)
         printf("Bad malloc\n");
         return NULL;
     }
-    stat(file_name, buffer);
+    stat(file, buffer);
     int buffer_size = buffer->st_size;
     // Warning: Empty file
     if(buffer_size == 0){
@@ -90,7 +86,9 @@ char* readFromFile(char* file_name)
     int readIn = 0;
     do{
         status = read(fd, file_buffer+readIn, buffer_size - readIn);
+        //printf("status: %d\n", status);
         readIn += status;
+        //printf("readIn: %d\n", readIn);
     } while(status > 0 && readIn < buffer_size);
 
     free(buffer);
@@ -101,9 +99,9 @@ char* readFromFile(char* file_name)
 //Inserts token if new, increments occurrences otherwise
 void count_occs(char* file_string)
 {
-  int start = 0, i = 0, j = 0;
-  int len = strlen(file_string);
   BSTNode* root = NULL;
+  int len = strlen(file_string);
+  int start = 0, i = 0, j = 0;
 
   //Loop through file string
   for(i = 0; i < len; i++)
@@ -116,7 +114,6 @@ void count_occs(char* file_string)
       //Malloc space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
       int token_cnt = 0;
-      BSTNode* entry = NULL;
 
       if(token == NULL)
       {
@@ -134,12 +131,32 @@ void count_occs(char* file_string)
       }
 
       printf("%s\n", token);
-      root = insert(token, root);
+      root = insert("one", root);
       printf("inserted\n");
 
       //Increments starting point for next token
       if(i+1 < len)
         start = i+1;
+    }
+    if(i == len-1 && start < len-1){
+        char* token = (char*)malloc(i-start+1);
+        if(token == NULL){
+            printf("Bad malloc\n");
+            return NULL;
+        }
+        memset(token, '\0', i-start+1);
+        //Loops though chars of token, find non-white spaces
+        int token_cnt = 0;
+        for(j = start; j <= i; j++){
+                token[token_cnt] = file_string[j];
+                token_cnt++;
+        }
+        //Inserts into linked list
+        //printf("try to insert: %s:\n", token);
+        root = insert(token, root);
+        //Increments starting point for next token
+        if(i+1 < len)
+            start = i+1;
     }
   }
   printBST(root);
