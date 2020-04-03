@@ -128,8 +128,9 @@ void count_occs(char* file_string)
   BSTNode* root = NULL;
   int len = strlen(file_string);
   int start = 0, i = 0, j = 0, k = 0;
-
   int emptyFile = 1;
+
+  //Check if file is empty
   for(k = 0; k < len; k++){
     if(isspace(file_string[k]) == 0)
     {
@@ -153,6 +154,8 @@ void count_occs(char* file_string)
       printf("delim at %d\n", i);
       //Malloc space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
+      char* delim = malloc(sizeof(char)*1);
+      char* esc_text = malloc(sizeof(delim)+sizeof(escape)+1);
       int token_cnt = 0;
 
       if(token == NULL)
@@ -165,11 +168,10 @@ void count_occs(char* file_string)
       for(j = start; j < i; j++)
       {
         token[token_cnt] = file_string[j];
-        token_cnt++;  
+        token_cnt++;
       }
 
-      //Corner case: ending with spaces
-
+      //If token is not empty, insert to BST
       if(strlen(token) > 0)
       {
         printf("%s\n", token);
@@ -182,17 +184,27 @@ void count_occs(char* file_string)
       start = i+1;
 
       //Insert delimiter
-      if(currChar == ' ')
+      if(currChar == '\n')
       {
-        root = insert(escape, root);
-      }
-      else if(currChar == '\n')
-      {
-        //root = insert(strcat(escape, "n"), root);
+        delim = "n";
+        strcpy(esc_text, escape);
+        strcat(esc_text, delim);
+
+        if(strlen(esc_text) > 0)
+          root = insert(esc_text, root);
       }
       else if(currChar == '\t')
       {
-        //root = insert(strcat(escape, "t"), root);
+        delim = "t";
+        strcpy(esc_text, escape);
+        strcat(esc_text, delim);
+
+        if(strlen(esc_text) > 0)
+          root = insert(esc_text, root);
+      }
+      else if(currChar == ' ')
+      {
+        root = insert(escape, root);
       }
     }
   }
