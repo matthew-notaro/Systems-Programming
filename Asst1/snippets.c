@@ -19,7 +19,7 @@ int numUnique = 0, numTotal = 0, counter = 0;
 
 int main(int argc, char** argv){
   char* file_name = argv[1];
-  char* file_string = readFromFile(file_name);
+  char* file_string = "one one two three four";//readFromFile(file_name);
   printf("%s\n", file_string);
   count_occs(file_string);
   return 0;
@@ -28,6 +28,7 @@ int main(int argc, char** argv){
 // Returns root of resultant BST after inserting/incrementing frequency of given word
 BSTNode* insert(char* word, BSTNode *root){
     if(root == NULL){
+        printf("check: null\n");
         BSTNode* temp = (BSTNode*)malloc(sizeof(BSTNode));
         temp->freq = 1;
         temp->token = word;
@@ -36,14 +37,23 @@ BSTNode* insert(char* word, BSTNode *root){
         return temp;
     }
     if(strcmp(root->token, word) == 0){
+        printf("check: same\n");
         root->freq++;
         numTotal++;
         return root;
     }
     if(strcmp(root->token, word) > 0)
-        root->left = insert(word, root->left);
+    {
+      printf("check: left\n");
+      root->left = insert(word, root->left);
+    }
     else
-        root->right = insert(word, root->right);
+    {
+      printf("check: right\n");
+      root->right = insert(word, root->right);
+    }
+
+    return root;
 }
 
 // Prints BST inorder
@@ -52,6 +62,13 @@ void printBST(BSTNode* root){
     printBST(root->left);
     printf("token: %s, freq: %d\n", root->token, root->freq);
     printBST(root->right);
+}
+
+void freeBST(BSTNode* root){
+    if(root == NULL) return;
+    freeBST(root->left);
+    free(root);
+    freeBST(root->right);
 }
 
 // Read entire file into string buffer
@@ -91,6 +108,7 @@ char* readFromFile(char* file)
         //printf("readIn: %d\n", readIn);
     } while(status > 0 && readIn < buffer_size);
 
+    close(fd);
     free(buffer);
     return file_buffer;
 }
@@ -109,7 +127,7 @@ void count_occs(char* file_string)
     char currChar = file_string[i];
 
     //Extract token
-    if(isspace(currChar) != 0) //Delimiter found
+    if(isspace(currChar) != 0 || (i == len-1 && start < len-1)) //Delimiter found or last token reached
     {
       //Malloc space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
@@ -123,41 +141,33 @@ void count_occs(char* file_string)
 
       memset(token, '\0', i-start+1);
 
-      //Loop through token
-      for(j = start; j < i; j++)
+      if(i == len-1)
       {
-         token[token_cnt] = file_string[j];
-         token_cnt++;
+        for(j = start; j <= i; j++)
+        {
+           token[token_cnt] = file_string[j];
+           token_cnt++;
+        }
+      }
+      else
+      {
+        for(j = start; j < i; j++)
+        {
+           token[token_cnt] = file_string[j];
+           token_cnt++;
+        }
       }
 
       printf("%s\n", token);
-      root = insert("one", root);
+      root = insert(token, root);
       printf("inserted\n");
 
       //Increments starting point for next token
       if(i+1 < len)
         start = i+1;
-    }
-    if(i == len-1 && start < len-1){
-        char* token = (char*)malloc(i-start+1);
-        if(token == NULL){
-            printf("Bad malloc\n");
-            return NULL;
-        }
-        memset(token, '\0', i-start+1);
-        //Loops though chars of token, find non-white spaces
-        int token_cnt = 0;
-        for(j = start; j <= i; j++){
-                token[token_cnt] = file_string[j];
-                token_cnt++;
-        }
-        //Inserts into linked list
-        //printf("try to insert: %s:\n", token);
-        root = insert(token, root);
-        //Increments starting point for next token
-        if(i+1 < len)
-            start = i+1;
+
     }
   }
   printBST(root);
+  freeBST(root);
 }
