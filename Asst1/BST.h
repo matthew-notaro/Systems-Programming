@@ -9,6 +9,7 @@ typedef struct BSTNode{
     struct BSTNode *left, *right;
     int freq;
     char *token;
+    char *huffCode;
 } BSTNode;
 
 BSTNode* insert(char* word, BSTNode *root);

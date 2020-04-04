@@ -1,6 +1,6 @@
 #include "BST.h"
 
-int numUnique = 0, numTotal = 0, counter = 0;
+int numUnique = 0, numTotal = 0; // numTotal probably not necessary but useful to compare to final freq
 
 // Returns root of resultant BST after inserting/incrementing frequency of given word
 BSTNode* insert(char* word, BSTNode *root){
@@ -29,7 +29,7 @@ BSTNode* insert(char* word, BSTNode *root){
 void printBST(BSTNode* root){
     if(root == NULL) return;
     printBST(root->left);
-    printf("token: %s, freq: %d\n", root->token, root->freq);
+    printf("token: %s, freq: %d, code: %s\n", root->token, root->freq, root->huffCode);
     printBST(root->right);
 }
 // Frees BST
