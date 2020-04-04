@@ -10,85 +10,43 @@
 
 #include "BST.h"
 #include "minHeap.h"
+#include "huff.h"
 
 char* readFromFile(char* file);
 BSTNode* count_occs(char* file_string);
 BSTNode* insert(char* word, BSTNode *root);
+int build_codebook(int fd, BSTNode* huffTree);
+int compress(struct dirent* file)
 
-int build_tree(BSTNode* root);
-
-int numUnique = 0, numTotal = 0, counter = 0;
 char* escape = "%#$";
 
 int main(int argc, char** argv){
-  char* file = argv[1];
+  /*char* file = argv[1];
   char* file_string = readFromFile(file);
   // Checks for nonexistent file
   if(file_string == NULL){
       printf("Fatal Error: file \"%s\" does not exist", file);
       return -1;
-  }
+  }*/
 
-  printf("%s\n", file_string);
-  BSTNode* root = count_occs(file_string); //call from somewhere else
-  heapNode* tree = build_tree(root);
+  //printf("%s\n", file_string);
+  //BSTNode* root = count_occs(file_string); //call from somewhere else
+
+  BSTNode *huff = NULL;
+  huff = insert("aa", huff);
+  huff = insert("bb", huff);
+  huff = insert("cc", huff);
+  huff = insert("haaa", huff);
+  huff = insert("y", huff);
+  // huff = insert("g", huff);
+  // huff = insert("g", huff);
+
+  int fd = open("./HuffmanCodebook", O_RDWR|O_CREAT|O_APPEND, 00600);
+
+  int status = build_codebook(fd, huff);
+
+
   return 0;
-}
-
-// Returns root of resultant BST after inserting/incrementing frequency of given word
-BSTNode* insert(char* word, BSTNode *root){
-    if(root == NULL){
-        BSTNode* temp = (BSTNode*)malloc(sizeof(BSTNode));
-        temp->freq = 1;
-        temp->token = word;
-        temp->left = NULL;
-        temp->right = NULL;
-        numUnique++;
-        numTotal++;
-        return temp;
-    }
-    if(strcmp(root->token, word) == 0){
-        root->freq++;
-        numTotal++;
-        return root;
-    }
-    if(strcmp(root->token, word) > 0)
-      root->left = insert(word, root->left);
-    else
-      root->right = insert(word, root->right);
-
-
-    return root;
-}
-
-// Returns inorder sequence of a BST as an array of BSTNode pointers
-BSTNode** treeToArr(BSTNode* root){
-    BSTNode** arr = (BSTNode**)malloc(numUnique*sizeof(BSTNode*));
-    counter = 0;
-    return treeToArrHelper(root, arr);
-}
-// Helper so that counter can be set to 0 before computation
-BSTNode** treeToArrHelper(BSTNode* root, BSTNode** arr){
-    if(root == NULL) return NULL;
-    treeToArrHelper(root->left, arr);
-    arr[counter++] = root;
-    treeToArrHelper(root->right, arr);
-    return arr;
-}
-
-// Prints BST inorder
-void printBST(BSTNode* root){
-    if(root == NULL) return;
-    printBST(root->left);
-    printf("token: %s, freq: %d\n", root->token, root->freq);
-    printBST(root->right);
-}
-
-void freeBST(BSTNode* root){
-    if(root == NULL) return;
-    freeBST(root->left);
-    free(root);
-    freeBST(root->right);
 }
 
 // Reads entire file into string buffer
@@ -182,7 +140,7 @@ BSTNode* count_occs(char* file_string)
       if(strlen(token) > 0)
       {
         root = insert(token, root);
-        printf("%s inserted\n", token);
+        //printf("%s inserted\n", token);
       }
 
       //Increments starting point for next token
@@ -213,30 +171,175 @@ BSTNode* count_occs(char* file_string)
       }
     }
   }
-  printBST(root);
+  //printBST(root);
   return root;
 }
 
-heapNode* build_tree(BSTNode* root)
+int build_codebook(int fd, BSTNode* huffTree)
 {
-  BSTNode** token_array = treeToArr(root);
-  heapNode** token_heap = heapify(token_array);
 
-  heapNode* root = NULL, left = NULL, right = NULL;
+  if(huffTree == NULL)
+    return -1;
 
-  while(getSize(token_heap) > 1)
+  if(huffTree->right)
   {
-    left = deleteMin(token_heap);
-    right = deleteMin(token_heap);
-    // create new heap node with left and right children
+    //write(fd, "1", 2);
+    build_codebook(fd, huffTree->right);
   }
-  root = deleteMin(token_heap);
-  return root;
-}
 
-int build_tree(BSTNode* root)
-{
-  int fd = open("./HuffmanCodebook", O_RDWR|O_CREAT, 00600);
+  if(huffTree->left)
+  {
+    //write(fd, "0", 2);
+    build_codebook(fd, huffTree->right);
+  }
+
+  //Token found
+  int size = strlen(huffTree->token) + 1;
+
+  write(fd, "temp", 5);
+  write(fd, "\t", 2);
+  write(fd, huffTree->token, size);
+  write(fd, "\n", 2);
 
   return 0;
+}
+
+int compress(struct dirent* file, *char codebook)
+{
+  int fd = open("./newfile", O_RDWR|O_CREAT|O_APPEND, 00600);
+  char* file_name = file->name;
+  char* file_string = readFromFile(file);
+
+  int len = strlen(file_string);
+  int start = 0, i = 0, j = 0, k = 0;
+
+  //Loops through file string
+  for(i = 0; i < len; i++)
+  {
+    char currChar = file_string[i];
+
+    //Extracts token
+    if(isspace(currChar) != 0) //Delimiter found
+    {
+      //Mallocs space to hold substr from start to location of delimiter, +1 for '\0'
+      char* token = (char*)malloc(i-start+1);
+      int token_cnt = 0;
+
+      //Mallocs memory for delimiter and escape string
+      char* delim = malloc(sizeof(char)*1);
+      char* esc_text = malloc(sizeof(delim)+sizeof(escape)+1);
+
+      if(token == NULL)
+      {
+        printf("Bad malloc\n");
+        return NULL;
+      }
+      memset(token, '\0', i-start+1);
+
+      //Loops through file segment to extract token
+      for(j = start; j < i; j++)
+      {
+        token[token_cnt] = file_string[j];
+        token_cnt++;
+      }
+
+      //If token is not empty, inserts to BST
+      if(strlen(token) > 0)
+      {
+        //getCode(token, codebook);
+        //write to new file
+      }
+
+      //Increments starting point for next token
+      start = i+1;
+
+      //Inserts delimiter
+      if(currChar == '\n')
+      {
+        delim = "n";
+        strcpy(esc_text, escape);
+        strcat(esc_text, delim);
+
+        if(strlen(esc_text) > 0)
+        //getCode(esc_token, huffTree);
+        //write to new file
+      }
+      else if(currChar == '\t')
+      {
+        delim = "t";
+        strcpy(esc_text, escape);
+        strcat(esc_text, delim);
+
+        if(strlen(esc_text) > 0)
+        //getCode(esc_text, codebook);
+        //write to new file
+      }
+      else if(currChar == ' ')
+      {
+        //getCode(escape, codebook);
+        //write to new file
+      }
+    }
+  }
+}
+
+int decompress(struct dirent* file, *char codebook)
+{
+  int fd = open("./newfile", O_RDWR|O_CREAT|O_APPEND, 00600);
+  char* file_name = file->name;
+  char* file_string = readFromFile(file);
+
+  //read one bit at a time
+
+}
+
+int readCode()
+{
+  if(huffTree == NULL)
+    return -1;
+
+  if(huffTree->right)
+  {
+    //write(fd, "1", 2);
+    build_codebook(fd, huffTree->right);
+  }
+
+  if(huffTree->left)
+  {
+    //write(fd, "0", 2);
+    build_codebook(fd, huffTree->right);
+  }
+}
+
+char* getCodeFromBook(char* token, char* codebook)
+{
+  int fd = open("codebook");
+  int cb_string = readFromFile(codebook);
+  if(strstr(codebook, word) != NULL)
+  {
+    //backtrack until new line?
+    //then read characters until they are no longer ints
+    //return code
+  }
+}
+
+void recurse(DIR* dd)
+{
+  readdir(dd);
+  readdir(dd);
+  struct dirent* currItem = NULL;
+
+  do{
+    currItem = readdir(dd);
+    if(currItem->d_type == DT_REG)
+    {
+      //readFromFile
+    }
+    else if(currItem->d_type == DT_DIR)
+    {
+      recurse(currItem);
+    }
+
+  }while(currItem != NULL);
+
 }
