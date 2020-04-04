@@ -14,12 +14,12 @@ BSTNode* insert(char* word, BSTNode *root){
         numTotal++;
         return temp;
     }
-    if(strcmp(root->token, word) == 0){
+    else if(strcmp(root->token, word) == 0){
         root->freq++;
         numTotal++;
         return root;
     }
-    if(strcmp(root->token, word) > 0)
+    else if(strcmp(root->token, word) > 0)
         root->left = insert(word, root->left);
     else
         root->right = insert(word, root->right);
