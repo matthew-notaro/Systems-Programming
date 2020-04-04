@@ -12,8 +12,10 @@
 #include "minHeap.h"
 
 char* readFromFile(char* file);
-void count_occs(char* file_string);
+BSTNode* count_occs(char* file_string);
 BSTNode* insert(char* word, BSTNode *root);
+
+int build_tree(BSTNode* root);
 
 int numUnique = 0, numTotal = 0, counter = 0;
 char* escape = "%#$";
@@ -28,14 +30,14 @@ int main(int argc, char** argv){
   }
 
   printf("%s\n", file_string);
-  count_occs(file_string);
+  BSTNode* root = count_occs(file_string); //call from somewhere else
+  heapNode* tree = build_tree(root);
   return 0;
 }
 
 // Returns root of resultant BST after inserting/incrementing frequency of given word
 BSTNode* insert(char* word, BSTNode *root){
     if(root == NULL){
-        printf("check: null\n");
         BSTNode* temp = (BSTNode*)malloc(sizeof(BSTNode));
         temp->freq = 1;
         temp->token = word;
@@ -46,23 +48,32 @@ BSTNode* insert(char* word, BSTNode *root){
         return temp;
     }
     if(strcmp(root->token, word) == 0){
-        printf("check: same\n");
         root->freq++;
         numTotal++;
         return root;
     }
     if(strcmp(root->token, word) > 0)
-    {
-      printf("check: left\n");
       root->left = insert(word, root->left);
-    }
     else
-    {
-      printf("check: right\n");
       root->right = insert(word, root->right);
-    }
+
 
     return root;
+}
+
+// Returns inorder sequence of a BST as an array of BSTNode pointers
+BSTNode** treeToArr(BSTNode* root){
+    BSTNode** arr = (BSTNode**)malloc(numUnique*sizeof(BSTNode*));
+    counter = 0;
+    return treeToArrHelper(root, arr);
+}
+// Helper so that counter can be set to 0 before computation
+BSTNode** treeToArrHelper(BSTNode* root, BSTNode** arr){
+    if(root == NULL) return NULL;
+    treeToArrHelper(root->left, arr);
+    arr[counter++] = root;
+    treeToArrHelper(root->right, arr);
+    return arr;
 }
 
 // Prints BST inorder
@@ -80,110 +91,104 @@ void freeBST(BSTNode* root){
     freeBST(root->right);
 }
 
-// Read entire file into string buffer
+// Reads entire file into string buffer
 // Returns NULL if file does not exist, string otherwise
 char* readFromFile(char* file)
 {
     int fd = open(file, O_RDONLY);    // Returns -1 on failure, >0 on success
+
     // Fatal Error if file does not exist
     if(fd < 0){
         printf("Fatal Error: File does not exist.\n");
         return NULL;
     }
+
+    //Allocates memory for file buffer
     struct stat *buffer = (struct stat*)malloc(sizeof(struct stat));
     if(buffer == NULL){
         printf("Bad malloc\n");
         return NULL;
     }
+
+    //Determines size of file
     stat(file, buffer);
     int buffer_size = buffer->st_size;
+
     // Warning: Empty file
     if(buffer_size == 0){
         printf("Warning: Empty file.\n");
     }
-    // IO Read Loop
+
+    //Mallocs and memsets file buffer for actual file contents
     char* file_buffer = (char*)malloc(buffer_size);
     if(file_buffer == NULL){
         printf("Bad malloc\n");
         return NULL;
     }
     memset(file_buffer, '\0', buffer_size);
+
+    // IO Read Loop
     int status = 1;
     int readIn = 0;
     do{
         status = read(fd, file_buffer+readIn, buffer_size - readIn);
-        printf("status: %d\n", status);
         readIn += status;
-        printf("readIn: %d\n", readIn);
     } while(status > 0 && readIn < buffer_size);
 
     free(buffer);
     return file_buffer;
 }
 
-//Counts occurrences of each unique token
+//Counts occurrences of each unique token (including delimiters)
 //Inserts token if new, increments occurrences otherwise
-void count_occs(char* file_string)
+//Returns root of resulting BST on success, NULL on failure
+BSTNode* count_occs(char* file_string)
 {
   BSTNode* root = NULL;
   int len = strlen(file_string);
   int start = 0, i = 0, j = 0, k = 0;
-  int emptyFile = 1;
 
-  //Check if file is empty
-  for(k = 0; k < len; k++){
-    if(isspace(file_string[k]) == 0)
-    {
-      emptyFile = 0;
-      break;
-    }
-  }
-
-  if(emptyFile == 1){
-    printf("Warning: Empty File.\n");
-  }
-
-  //Loop through file string
+  //Loops through file string
   for(i = 0; i < len; i++)
   {
     char currChar = file_string[i];
 
-    //Extract token
+    //Extracts token
     if(isspace(currChar) != 0) //Delimiter found
     {
-      printf("delim at %d\n", i);
-      //Malloc space to hold substr from start to location of delimiter, +1 for '\0'
+      //Mallocs space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
+      int token_cnt = 0;
+
+      //Mallocs memory for delimiter and escape string
       char* delim = malloc(sizeof(char)*1);
       char* esc_text = malloc(sizeof(delim)+sizeof(escape)+1);
-      int token_cnt = 0;
 
       if(token == NULL)
       {
         printf("Bad malloc\n");
-        return;
+        return NULL;
       }
-
       memset(token, '\0', i-start+1);
+
+      //Loops through file segment to extract token
       for(j = start; j < i; j++)
       {
         token[token_cnt] = file_string[j];
         token_cnt++;
       }
 
-      //If token is not empty, insert to BST
+      //If token is not empty, inserts to BST
       if(strlen(token) > 0)
       {
-        printf("%s\n", token);
         root = insert(token, root);
-        printf("inserted\n");
+        printf("%s inserted\n", token);
       }
 
       //Increments starting point for next token
-      //if(i+1 < len)
       start = i+1;
 
-      //Insert delimiter
+      //Inserts delimiter
       if(currChar == '\n')
       {
         delim = "n";
@@ -209,5 +214,30 @@ void count_occs(char* file_string)
     }
   }
   printBST(root);
-  freeBST(root);
+  return root;
+}
+
+heapNode* build_tree(BSTNode* root)
+{
+  BSTNode** token_array = treeToArr(root);
+  heapNode** token_heap = heapify(token_array);
+
+  heapNode* root = NULL, left = NULL, right = NULL;
+
+  while(getSize(token_heap) > 1)
+  {
+    left = deleteMin(token_heap);
+    right = deleteMin(token_heap);
+    // create new heap node with left and right children
+  }
+
+  root = deleteMin(token_heap);
+  return root;
+}
+
+int build_tree(BSTNode* root)
+{
+  int fd = open("./HuffmanCodebook", O_RDWR|O_CREAT, 00600);
+  
+  return 0;
 }
