@@ -4,30 +4,28 @@ int currLen = 0;
 int maxLen = 0;
 // Returns heapified array of heapNodes from given array of BSTNodes
 // Converts each element of arr to a heapNode
-heapNode** heapify(BSTNode **arr){
+heapNode** BSTToHeap(BSTNode *root){
     maxLen = getNumUnique();
     if(maxLen == 0){
         printf("empty BST\n");
         return NULL;
     }
-    currLen = maxLen;
     heapNode** heap = (heapNode**)malloc(maxLen*sizeof(heapNode*));
-    int i;
-    for(i = 0; i < maxLen; i++){   // Copies BST arr to heap array with unique trees
-        heap[i] = (heapNode*)malloc(sizeof(heapNode));
-        heap[i]->freq = arr[i]->freq;
-        heap[i]->root = (BSTNode*)malloc(sizeof(BSTNode));
-        heap[i]->root->freq = arr[i]->freq;
-        heap[i]->root->token = arr[i]->token;
+    BSTToHeapHelper(root, heap);
+    if(currLen != maxLen){
+        printf("currLne != maxLen\n");
+        return NULL;
     }
+    //Heapifies each parent node up to the root
+    int i;
     for(i = maxLen/2 - 1; i >= 0; i--){
-        heapifyHelper(heap, maxLen, i);
+        heapify(heap, maxLen, i);
     }
     return heap;
 }
 // Compares root to children, swaps if necessary, then recursively heapifies if swap
 // n - length of arr, i - current parent
-void heapifyHelper(heapNode** heap, int n, int i){
+void heapify(heapNode** heap, int n, int i){
     int min = i, left = 2*i + 1, right = 2*i + 2;
     if(left < n && heap[left]->freq < heap[min]->freq)
         min = left;
@@ -37,8 +35,24 @@ void heapifyHelper(heapNode** heap, int n, int i){
         heapNode* temp = heap[i];
         heap[i] = heap[min];
         heap[min] = temp;
-        heapifyHelper(heap, n, min);
+        heapify(heap, n, min);
     }
+}
+
+
+// Wraps each BSTNode in a heapNode
+void BSTToHeapHelper(BSTNode* root, heapNode** heap){
+    if(root == NULL) return;
+    BSTToHeapHelper(root->left, heap);
+    heap[currLen] = (heapNode*)malloc(sizeof(heapNode));
+    heap[currLen]->freq = root->freq;
+    heap[currLen]->root = (BSTNode*)malloc(sizeof(BSTNode));
+    heap[currLen]->root->freq = root->freq;
+    heap[currLen]->root->token = root->token;
+    heap[currLen]->root->left = NULL;
+    heap[currLen]->root->right = NULL;
+    currLen++;
+    BSTToHeapHelper(root->right, heap);
 }
 
 // Add node to be inserted to last available index, then heapifies up from insert node's parent
@@ -83,7 +97,7 @@ heapNode* deleteMin(heapNode** heap){
     heapNode* min = heap[0];
     heap[0] = heap[currLen - 1];
     currLen--;
-    heapifyHelper(heap, currLen, 0); // only call once on root since children guaranteed to be heaps
+    heapify(heap, currLen, 0); // only call once on root since children guaranteed to be heaps
     return min;
 }
 

@@ -25,33 +25,12 @@ BSTNode* insert(char* word, BSTNode *root){
         root->right = insert(word, root->right);
 }
 
-// Returns inorder sequence of a BST as an array of BSTNode pointers
-BSTNode** treeToArr(BSTNode* root){
-    BSTNode** arr = (BSTNode**)malloc(numUnique*sizeof(BSTNode*));
-    counter = 0;
-    return treeToArrHelper(root, arr);
-}
-// Helper so that counter can be set to 0 before computation
-BSTNode** treeToArrHelper(BSTNode* root, BSTNode** arr){
-    if(root == NULL) return NULL;
-    treeToArrHelper(root->left, arr);
-    arr[counter++] = root;
-    treeToArrHelper(root->right, arr);
-    return arr;
-}
-
 // Prints BST inorder
 void printBST(BSTNode* root){
     if(root == NULL) return;
     printBST(root->left);
     printf("token: %s, freq: %d\n", root->token, root->freq);
     printBST(root->right);
-}
-// Prints array of BSTNode pointers
-void printBSTArr(BSTNode** arr){
-    int i;
-    for(i = 0; i < numUnique; i++)
-        printf("token: %s, freq: %d\n", arr[i]->token, arr[i]->freq);
 }
 // Frees BST
 void freeBST(BSTNode* root){

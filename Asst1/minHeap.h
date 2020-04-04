@@ -11,8 +11,9 @@ typedef struct heapNode{
     BSTNode *root;
 } heapNode;
 
-heapNode** heapify(BSTNode **arr);
-void heapifyHelper(heapNode** heap, int n, int i);
+heapNode** BSTToHeap(BSTNode *root);
+void heapify(heapNode** heap, int n, int i);
+void BSTToHeapHelper(BSTNode* root, heapNode** heap);
 heapNode* deleteMin(heapNode** heap);
 void insertHeap(heapNode** heap, heapNode* temp);
 int getHeapSize();

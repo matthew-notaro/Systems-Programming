@@ -12,11 +12,7 @@ typedef struct BSTNode{
 } BSTNode;
 
 BSTNode* insert(char* word, BSTNode *root);
-BSTNode** treeToArr(BSTNode* root);
-BSTNode** treeToArrHelper(BSTNode* root, BSTNode** arr);
-
 void printBST(BSTNode* root);
-void printBSTArr(BSTNode** arr);
 void freeBST(BSTNode* root);
 int getNumUnique();
 int getNumTotal();
