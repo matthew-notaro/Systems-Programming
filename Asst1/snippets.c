@@ -230,7 +230,6 @@ heapNode* build_tree(BSTNode* root)
     right = deleteMin(token_heap);
     // create new heap node with left and right children
   }
-
   root = deleteMin(token_heap);
   return root;
 }
@@ -238,6 +237,6 @@ heapNode* build_tree(BSTNode* root)
 int build_tree(BSTNode* root)
 {
   int fd = open("./HuffmanCodebook", O_RDWR|O_CREAT, 00600);
-  
+
   return 0;
 }
