@@ -4,9 +4,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <ctype.h>
 #include "BST.h"
 #include "minHeap.h"
 #include "huff.h"
@@ -15,7 +17,7 @@
 void buildCodebook(char* path);
 char* readFromFile(char* file){
 BSTNode* stringToBST(char* fileString){
-int writeBookToFile(int fd, BSTNode* huffTree){
+void writeBookToFile(int fd, BSTNode* huffTree){
 
 
 #endif

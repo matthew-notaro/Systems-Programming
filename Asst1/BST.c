@@ -37,10 +37,12 @@ void printBST(BSTNode* root){
 void freeBST(BSTNode* root){
     if(root == NULL) return;
     freeBST(root->left);
-/*  need to free malloced codes
+    /*  
+    // need to free malloced codes
     if(strlen(root->huffCode) > 1){
         free(root->huffCode);
-    }*/
+    }
+    */
     free(root);
     freeBST(root->right);
 }

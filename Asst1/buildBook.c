@@ -15,7 +15,7 @@ void buildCodebook(char* path){
     huffEncode(heap);                               // heap -> huffman tree contained in heap[0]->root
 
     int huffFD = open("./HuffmanCodebook", O_WRONLY | O_CREAT | O_APPEND, 00600);
-    int huffResult = writeBookToFile(huffFD, heap[0]);
+    writeBookToFile(huffFD, heap[0]->root);
 
     //printBST(heap[0]->root);
     freeHeap(heap);
@@ -84,8 +84,7 @@ BSTNode* stringToBST(char* fileString){
     char currChar = fileString[i];
     
     //Extracts token
-    if(isspace(currChar) != 0) //Delimiter found
-    {
+    if(isspace(currChar) != 0){ //Delimiter found
       //Mallocs space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
       int token_cnt = 0;
@@ -94,23 +93,20 @@ BSTNode* stringToBST(char* fileString){
       char* delim = malloc(sizeof(char)*1);
       char* esc_text = malloc(sizeof(delim)+sizeof(escape)+1);
 
-      if(token == NULL)
-      {
+      if(token == NULL){
         printf("Bad malloc\n");
         return NULL;
       }
       memset(token, '\0', i-start+1);
 
       //Loops through file segment to extract token
-      for(j = start; j < i; j++)
-      {
+      for(j = start; j < i; j++){
         token[token_cnt] = fileString[j];
         token_cnt++;
       }
 
       //If token is not empty, inserts to BST
-      if(strlen(token) > 0)
-      {
+      if(strlen(token) > 0){
         root = insert(token, root);
         //printf("%s inserted\n", token);
       }
@@ -119,26 +115,23 @@ BSTNode* stringToBST(char* fileString){
       start = i+1;
 
       //Inserts delimiter
-      if(currChar == '\n')
-      {
+      if(currChar == '\n'){
         delim = "n";
         strcpy(esc_text, escape);
         strcat(esc_text, delim);
-
-        if(strlen(esc_text) > 0)
+        if(strlen(esc_text) > 0){
           root = insert(esc_text, root);
+        }
       }
-      else if(currChar == '\t')
-      {
+      else if(currChar == '\t'){
         delim = "t";
         strcpy(esc_text, escape);
         strcat(esc_text, delim);
-
-        if(strlen(esc_text) > 0)
+        if(strlen(esc_text) > 0){
           root = insert(esc_text, root);
+        }
       }
-      else if(currChar == ' ')
-      {
+      else if(currChar == ' '){
         root = insert(escape, root);
       }
     }
@@ -148,18 +141,19 @@ BSTNode* stringToBST(char* fileString){
 }
 
 // Writes token and code from BST to file
-int writeBookToFile(int fd, BSTNode* huffTree){
-  if(huffTree == NULL){
-    return -1;
+void writeBookToFile(int fd, BSTNode* huffTree){
+  if(huffTree == NULL) {
+    return;
   }
   // Leaf Node - found token node
   if(huffTree->left == NULL){
     int size = strlen(huffTree->token) + 1;
-
     write(fd, huffTree->huffCode, strlen(huffTree->huffCode));
     write(fd, "\t", 1);
     write(fd, huffTree->token, size);
     write(fd, "\n", 1);
+    return;
   }
-  return writeBookToFile(fd, huffTree->right) && writeBookToFile(fd, huffTree->right);
+  writeBookToFile(fd, huffTree->left);
+  writeBookToFile(fd, huffTree->right);
 }
