@@ -19,7 +19,27 @@ void huffEncode(heapNode** heap){
         insertHeap(heap, min1);
         free(min2);
     }
+    calculateCodes(heap[0]->root->left, "0");
+    calculateCodes(heap[0]->root->right, "1");
 }
+void calculateCodes(BSTNode* root, char* bitString){
+    if(root == NULL) return;
+    if(root->left == NULL){
+        root->huffCode = bitString;
+        return;
+    }
+    calculateCodes(root->left, appendBit(bitString, '0'));
+    calculateCodes(root->right, appendBit(bitString, '1'));
+}
+char* appendBit(char* bitString, char bit){
+    int oldLen = strlen(bitString);
+    int newLen = oldLen + 1;
+    char* newString = (char*)malloc(newLen * sizeof(char));
+    memcpy(newString, bitString, strlen(bitString));
+    newString[strlen(bitString)] = bit;
+    return newString;
+}
+
 
 void printHuff(heapNode* huffTree){
     printf("total freq: %d\n", huffTree->freq);

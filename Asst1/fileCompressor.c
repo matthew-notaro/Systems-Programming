@@ -28,7 +28,11 @@ char* codebook;
 */
 // test main for BST
 int main(int argc, char** argv){
-  BSTNode *root = NULL;
+  char* test = malloc(sizeof(char));
+  test = "";
+  printf("len: %d\n", strlen(test));
+  printf("string: %s\n", test);
+  /*BSTNode *root = NULL;
   root = insert("u", root);
   root = insert("g", root);
   root = insert("c", root);
@@ -39,9 +43,9 @@ int main(int argc, char** argv){
   root = insert("g", root);
   root = insert("g", root);
   root = insert("d", root);
-  BSTNode** arr = treeToArr(root); // must be freed in main file
-  //printBSTArr(arr);
-  heapNode** heap = heapify(arr);
+  //BSTNode** arr = treeToArr(root); // must be freed in main file
+  printBST(root);
+  heapNode** heap = BSTToHeap(root);
   heapNode* min = deleteMin(heap);
   min = deleteMin(heap);
   heapNode* temp = (heapNode*)malloc(sizeof(heapNode));
@@ -50,14 +54,43 @@ int main(int argc, char** argv){
   temp->root->freq = 7;
   temp->root->token = " ";
   insertHeap(heap, temp);
+  */
+  
+  heapNode** heap = (heapNode**)malloc(6*sizeof(heapNode*));
+  int i;
+  for(i = 0; i < 6; i++){
+    heap[i] = (heapNode*)malloc(sizeof(heapNode));
+    heap[i]->root = (BSTNode*)malloc(sizeof(BSTNode));
+    heap[i]->root->left = NULL;
+    heap[i]->root->right = NULL;
+  }
+  heap[0]->freq = 5;
+  heap[0]->root->freq = 5;
+  heap[0]->root->token = "a";
+  heap[1]->freq = 9;
+  heap[1]->root->freq = 9;
+  heap[1]->root->token = "dog";
+  heap[2]->freq = 12;
+  heap[2]->root->freq = 12;
+  heap[2]->root->token = "cat";
+  heap[3]->freq = 13;
+  heap[3]->root->freq = 13;
+  heap[3]->root->token = "button";
+  heap[4]->freq = 16;
+  heap[4]->root->freq = 16;
+  heap[4]->root->token = "ball";
+  heap[5]->freq = 45;
+  heap[5]->root->freq = 45;
+  heap[5]->root->token = "and";
 
   printHeap(heap);
 
+  printf("Encoding:\n");
   huffEncode(heap);
+  printHuff(heap[0]);
+  //printBST(heap[0]->root);
 
-  printBST(heap[0]->root);
-
-  free(arr);
+  //free(arr);
   free(heap);
 
   return 0;

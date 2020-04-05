@@ -1,7 +1,7 @@
 #include "minHeap.h"
 
-int currLen = 0;
-int maxLen = 0;
+int currLen = 6;
+int maxLen = 6;
 // Returns heapified array of heapNodes from given array of BSTNodes
 // Converts each element of arr to a heapNode
 heapNode** BSTToHeap(BSTNode *root){
@@ -13,7 +13,7 @@ heapNode** BSTToHeap(BSTNode *root){
     heapNode** heap = (heapNode**)malloc(maxLen*sizeof(heapNode*));
     BSTToHeapHelper(root, heap);
     if(currLen != maxLen){
-        printf("currLne != maxLen\n");
+        printf("currLine != maxLen\n");
         return NULL;
     }
     //Heapifies each parent node up to the root
