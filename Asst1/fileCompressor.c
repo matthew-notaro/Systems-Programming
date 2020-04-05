@@ -6,8 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <ctype.h>
-#include <unistd.h>
-#include <dirent.h>
+//#include <dirent.h>
 #include "BST.h"
 #include "minHeap.h"
 #include "huff.h"
@@ -122,7 +121,8 @@ int main(int argc, char** argv){
       return -1;
     }
   }
-
+  printf("OpFlag: %c, RFlag: %d\n");
+  /*
   // If recursive flag set, then open given directory and apply operation to each file
   if(r_flag){
     DIR* currentDir = openDir(path);
@@ -148,6 +148,8 @@ int main(int argc, char** argv){
   else{
     doOp();
   }
+  doOp();
+  */
   return 0;
 }
 
