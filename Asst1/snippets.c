@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #include "BST.h"
 #include "minHeap.h"
@@ -177,21 +178,14 @@ BSTNode* count_occs(char* file_string)
 
 int build_codebook(int fd, BSTNode* huffTree)
 {
-
   if(huffTree == NULL)
     return -1;
 
   if(huffTree->right)
-  {
-    //write(fd, "1", 2);
     build_codebook(fd, huffTree->right);
-  }
 
   if(huffTree->left)
-  {
-    //write(fd, "0", 2);
     build_codebook(fd, huffTree->right);
-  }
 
   //Token found
   int size = strlen(huffTree->token) + 1;
@@ -206,7 +200,9 @@ int build_codebook(int fd, BSTNode* huffTree)
 
 int compress(struct dirent* file, *char codebook)
 {
-  int fd = open("./newfile", O_RDWR|O_CREAT|O_APPEND, 00600);
+  int fd = open("./newfile", O_RDWR|O_CREAT|O_APPEND, 00600); //create new file
+  int fd = open("codebook");
+  int cb_string = readFromFile(codebook);
   char* file_name = file->name;
   char* file_string = readFromFile(file);
 
@@ -283,13 +279,46 @@ int compress(struct dirent* file, *char codebook)
   }
 }
 
+char* getCodeFromBook(char* token, char* codebook)
+{
+  int i = 0, count = 0;
+  char* currChar = strstr(cb_string, word); //Finds token within codebook
+
+  if(currChar != NULL)
+  {
+    //Skips tab so that currChar points to last digit in code
+    currChar--;
+
+    //Decrements pointer until it passes beginning of codebook
+    //Check if this works if previous token in book is a digit --> should because \n
+    while(isdigit(currChar) != 0)
+    {
+      currChar--;
+      int count++;
+    }
+
+    //Sets currChar to first digit of code
+    currChar++;
+
+    //Mallocs
+    char* code = malloc(count+1);
+    for(i = 0; i < count, i++)
+    {
+      code[i] = currChar+1;
+    }
+  }
+    //then read characters until they are no longer ints
+    //return code
+}
+
 int decompress(struct dirent* file, *char codebook)
 {
   int fd = open("./newfile", O_RDWR|O_CREAT|O_APPEND, 00600);
   char* file_name = file->name;
   char* file_string = readFromFile(file);
 
-  //read one bit at a time
+  //read num by num
+  //hm.
 
 }
 
@@ -311,18 +340,8 @@ int readCode()
   }
 }
 
-char* getCodeFromBook(char* token, char* codebook)
-{
-  int fd = open("codebook");
-  int cb_string = readFromFile(codebook);
-  if(strstr(codebook, word) != NULL)
-  {
-    //backtrack until new line?
-    //then read characters until they are no longer ints
-    //return code
-  }
-}
 
+/*
 void recurse(DIR* dd)
 {
   readdir(dd);
@@ -342,4 +361,4 @@ void recurse(DIR* dd)
 
   }while(currItem != NULL);
 
-}
+}*/
