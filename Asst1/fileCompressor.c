@@ -1,7 +1,13 @@
-/*#include <stdlib.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-//#include <dirent.h>
+#include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <ctype.h>
+#include <unistd.h>
+#include <dirent.h>
 #include "BST.h"
 #include "minHeap.h"
 #include "huff.h"
