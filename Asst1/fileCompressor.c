@@ -1,6 +1,13 @@
-#include <stdlib.h>
+/*#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
+#include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <ctype.h>
 #include "BST.h"
 #include "minHeap.h"
 #include "huff.h"
@@ -55,7 +62,7 @@ int main(int argc, char** argv){
   temp->root->token = " ";
   insertHeap(heap, temp);
   */
-  
+
   heapNode** heap = (heapNode**)malloc(6*sizeof(heapNode*));
   int i;
   for(i = 0; i < 6; i++){
@@ -218,4 +225,5 @@ void count_occs(char* file_string)
 
 }
 
+*/
 */
