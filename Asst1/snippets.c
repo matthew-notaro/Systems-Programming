@@ -197,6 +197,9 @@ int build_codebook(int fd, BSTNode* huffTree)
   return 0;
 }
 
+//Compresses given file using given codebook
+//Writes new file <filename>.hcz
+//Returns 0 on success, -1 on failure
 int compress(char* file, char* codebook)
 {
   //Mallocs memory to hold <filename>.hcz
@@ -231,6 +234,7 @@ int compress(char* file, char* codebook)
       //Mallocs memory for delimiter and escape string
       char* delim = malloc(sizeof(char)*1);
       char* esc_text = malloc(sizeof(delim)+sizeof(escape)+1);
+
       char* code = NULL;
       int codeSize = 0;
 
@@ -248,11 +252,11 @@ int compress(char* file, char* codebook)
         token_cnt++;
       }
 
-      //If token is not empty, inserts to BST
+      //If token is not empty, find its code in codebook and writes to file
       if(strlen(token) > 0)
       {
         code = getCodeFromBook(token, cb_string);
-        int codeSize = strlen(code)+1;
+        codeSize = strlen(code)+1;
         write(fd, code, codeSize);
       }
 
@@ -264,7 +268,7 @@ int compress(char* file, char* codebook)
       memset(delim, '\0', (sizeof(char)+1));
       delim[0] = currChar;
 
-      //Get code
+      //Gets delimiter's corresponding code and writes to file
       code = getCodeFromBook(delim, cb_string);
       codeSize = strlen(code)+1;
       write(fd, code, codeSize);
@@ -273,6 +277,8 @@ int compress(char* file, char* codebook)
   return 0;
 }
 
+//Searches for given token in codebook and extracts corresponding code
+//Returns string representation of code on success, NULL on failure
 char* getCodeFromBook(char* token, char* codebook)
 {
   int i = 0, count = 0;
@@ -282,7 +288,7 @@ char* getCodeFromBook(char* token, char* codebook)
   //Special case: token is a delimiter
   if(isspace(token[0]) != 0)
   {
-    char* esc_token, *escape, *codebookPtr, *delim_check;
+    char* esc_token = NULL, *escape = NULL, *codebookPtr = NULL, *delim_check = NULL;
     char* delim = malloc(sizeof(char));
     int size = 0, delim_count = 0;
     codebookPtr = codebook;
@@ -294,8 +300,6 @@ char* getCodeFromBook(char* token, char* codebook)
       codebookPtr++;
       delim_count++;
     }
-    printf("codebookPtr: %s\n", codebookPtr);
-
 
     //Extracts escape character
     escape = malloc(delim_count+1);
@@ -304,9 +308,7 @@ char* getCodeFromBook(char* token, char* codebook)
       escape[i] = codebook[i];
     }
 
-    printf("escape: %s\n", escape);
-
-    //Sets esc_token to be searched for in codebook
+    //Sets esc_token to the value to be searched for in the codebook
     if(token[0] == '\n')
     {
       size = strlen(escape)+2;
@@ -324,46 +326,41 @@ char* getCodeFromBook(char* token, char* codebook)
       strcat(esc_token, delim);
     }
     else if(token[0] == ' ')
-    {
       esc_token = escape;
-    }
 
     currCharPtr = strstr(codebookPtr, esc_token);
 
-    //Case: space is represented by escape character alone
-    //currCharPtr may be pointing to a different delimiter
+    //Checks delimiter
+      //Since ' ' is represented by the escape character alone,
+      //currCharPtr may be pointing to the wrong delimiter
     delim_check = currCharPtr+strlen(esc_token);
     if(isspace(delim_check[0]) == 0)
     {
       while(isspace(delim_check[0]) == 0)
       {
+        //Finds next token within codebook, checks until correct token found
         currCharPtr = strstr(delim_check, esc_token);
         delim_check = currCharPtr+strlen(esc_token);
       }
     }
   }
-
   else
     currCharPtr = strstr(codebook, token); //Finds token within codebook
-    //printf("%s\n", currChar);
 
-  printf("currCharPtr: %s\n", currCharPtr);
-
+  //Token has been found
   if(currCharPtr != NULL)
   {
-    //Skips tab so that currChar points to last digit in code
-    //problem w/ pointer arith
+    //Skips tab so that currCharPtr points to last digit in code
     currCharPtr-=2;
 
     //Decrements pointer until it passes beginning of codebook
-    //Check if this works if previous token in book is a digit --> should because \n
     while(currCharPtr[0] >= '0' && currCharPtr[0] <= '9')
     {
       currCharPtr--;
       count++;
     }
 
-    //Sets currChar to first digit of code
+    //Sets currCharPtr to first digit of code
     currCharPtr++;
 
     //Mallocs space for code string
@@ -372,10 +369,7 @@ char* getCodeFromBook(char* token, char* codebook)
     {
       code[i] = currCharPtr[i];
     }
-    printf("code: %s\n", code);
-    return code;
   }
-
   return code;
 }
 
