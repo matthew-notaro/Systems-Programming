@@ -10,6 +10,7 @@ BSTNode* insert(char* word, BSTNode *root){
         temp->token = word;
         temp->left = NULL;
         temp->right = NULL;
+        temp->huffCode = NULL;
         numUnique++;
         numTotal++;
         return temp;
@@ -36,6 +37,10 @@ void printBST(BSTNode* root){
 void freeBST(BSTNode* root){
     if(root == NULL) return;
     freeBST(root->left);
+/*  need to free malloced codes
+    if(strlen(root->huffCode) > 1){
+        free(root->huffCode);
+    }*/
     free(root);
     freeBST(root->right);
 }

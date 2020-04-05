@@ -28,6 +28,10 @@ char* codebook;
 */
 // test main for BST
 int main(int argc, char** argv){
+  char* test = malloc(sizeof(char));
+  test = "";
+  printf("len: %d\n", strlen(test));
+  printf("string: %s\n", test);
   /*BSTNode *root = NULL;
   root = insert("u", root);
   root = insert("g", root);
