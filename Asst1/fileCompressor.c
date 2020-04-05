@@ -5,36 +5,21 @@
 #include "BST.h"
 #include "minHeap.h"
 #include "huff.h"
+#include "buildBook.h"
 
-typedef struct Node{
-  char* token;
-  int code;
-  int occurrences;
-  struct Node* left;
-  struct Node* right;
-} Node;
+void doOp();
 
-Node* build_tree();
-void build_codebook();
-void compress();
-void decompress();
-void recurse(struct DIR* dd);
-void read_file(char* file_name);
-void count_occs(char* file_string);
-
-char opFlag = '?';
+int i;
 int r_flag = 0;
+char opFlag = '?';
 char* path;
 char* codebook;
 
-
-// test main for BST/*
+/*
+// test main for BST
 int main(int argc, char** argv){
-  char* test = malloc(sizeof(char));
-  test = "";
-  printf("len: %d\n", strlen(test));
-  printf("string: %s\n", test);
-  /*BSTNode *root = NULL;
+  
+  BSTNode *root = NULL;
   root = insert("u", root);
   root = insert("g", root);
   root = insert("c", root);
@@ -56,8 +41,6 @@ int main(int argc, char** argv){
   temp->root->freq = 7;
   temp->root->token = " ";
   insertHeap(heap, temp);
-  */
-  
   heapNode** heap = (heapNode**)malloc(6*sizeof(heapNode*));
   int i;
   for(i = 0; i < 6; i++){
@@ -97,14 +80,16 @@ int main(int argc, char** argv){
 
   return 0;
 }
-  
+*/
+
 // REAL MAIN
 int main(int argc, char** argv){
   // min args - ./file -b <path>, max args - ./file -R -d <path> <codebook>
   if(argc < 3 || argc > 5){
       return -1;
   }
-  int i;
+
+  // Find flags and set appropriately
   for(i = 1; i < argc - 1; i++){
     if(strlen(argv[i]) == 2 && argv[i][0] == '-'){ // found a potential flag
       char flag = argv[i][1];
@@ -167,42 +152,4 @@ void doOp(){
     case 'c': compress(path, codebook);
     case 'd': decompress(path, codebook);
   }
-}
-
-// Read entire file into string buffer
-// Returns NULL if file does not exist, string otherwise
-char* readFromFile(char* file_name){
-  int fd = open(file_name, O_RDONLY);    // Returns -1 on failure, >0 on success
-  // Fatal Error if file does not exist
-  if(fd < 0){
-      printf("Fatal Error: File does not exist.\n");
-      return NULL;
-  }
-  struct stat *buffer = malloc(sizeof(struct stat));
-  if(buffer == NULL){
-      printf("Bad malloc\n");
-      return NULL;
-  }
-  stat(file, buffer);
-  int buffer_size = buffer->st_size;
-  // Warning: Empty file
-  if(buffer_size == 0){
-      printf("Warning: Empty file.\n");
-  }
-  // IO Read Loop
-  char* file_buffer = (char*)malloc(buffer_size);
-  if(file_buffer == NULL){
-      printf("Bad malloc\n");
-      return NULL;
-  }
-  memset(file_buffer, '\0', buffer_size);
-  int status = 1;
-  int readIn = 0;
-  do{
-      status = read(fd, file_buffer+readIn, buffer_size - readIn);
-      readIn += status;
-  } while(status > 0 && readIn < buffer_size);
-
-  free(buffer);
-  return file_buffer;
 }
