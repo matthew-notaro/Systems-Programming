@@ -1,45 +1,25 @@
 /*#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <dirent.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <ctype.h>
+//#include <dirent.h>
 #include "BST.h"
 #include "minHeap.h"
 #include "huff.h"
-/*
-typedef struct Node{
-  char* token;
-  int code;
-  int occurrences;
-  struct Node* left;
-  struct Node* right;
-} Node;
+#include "buildBook.h"
 
-Node* build_tree();
-void build_codebook();
-void compress();
-void decompress();
-void recurse(struct DIR* dd);
-void read_file(char* file_name);
-void count_occs(char* file_string);
+void doOp();
 
-char opFlag = '?';
+int i;
 int r_flag = 0;
+char opFlag = '?';
 char* path;
 char* codebook;
-*/
+
+/*
 // test main for BST
 int main(int argc, char** argv){
-  char* test = malloc(sizeof(char));
-  test = "";
-  printf("len: %d\n", strlen(test));
-  printf("string: %s\n", test);
-  /*BSTNode *root = NULL;
+
+  BSTNode *root = NULL;
   root = insert("u", root);
   root = insert("g", root);
   root = insert("c", root);
@@ -61,8 +41,6 @@ int main(int argc, char** argv){
   temp->root->freq = 7;
   temp->root->token = " ";
   insertHeap(heap, temp);
-  */
-
   heapNode** heap = (heapNode**)malloc(6*sizeof(heapNode*));
   int i;
   for(i = 0; i < 6; i++){
@@ -102,15 +80,18 @@ int main(int argc, char** argv){
 
   return 0;
 }
-  /*
+*/
+
+// REAL MAIN
 int main(int argc, char** argv){
   // min args - ./file -b <path>, max args - ./file -R -d <path> <codebook>
   if(argc < 3 || argc > 5){
       return -1;
   }
-  int i;
+
+  // Find flags and set appropriately
   for(i = 1; i < argc - 1; i++){
-    if(strlen(argv[i]) == 2 && argv[i][0] == '-'){ // found a flag
+    if(strlen(argv[i]) == 2 && argv[i][0] == '-'){ // found a potential flag
       char flag = argv[i][1];
       if(flag == 'R' && !r_flag){ // flag is R and has not been set yet
         r_flag = 1;
@@ -136,94 +117,39 @@ int main(int argc, char** argv){
     }
   }
 
-
-  DIR* dd = opendir("./");
-
-  //recurse(dd);
-
+  // If recursive flag set, then open given directory and apply operation to each file
+  if(r_flag){
+    DIR* currentDir = openDir(path);
+    if(currentDir == NULL){
+      printf("Error: invalid path\n");
+      return -1;
+    }
+    struct dirent* currentThing = NULL;
+    readdir(currentDir);
+    readdir(currentDir);
+    currentThing = readdir(currentDir);
+    while(currentThing != NULL){
+      if(currentThing->d_type == DT_REG){
+        doOp();
+      }
+      else if(currentThing->d_type == DT_DIR){
+        // do nothing?
+      }
+      currentThing = readdir(currentDir);
+    }
+  }
+  // If r not set, just do once
+  else{
+    doOp();
+  }
   return 0;
 }
 
-void recurse(DIR* dd)
-{
-
-  readdir(dd);
-  readdir(dd);
-  struct dirent* currItem = NULL;
-
-  do{
-    currItem = readdir(dd);
-    if(currItem->d_type == DT_REG)
-    {
-      //readFromFile
-    }
-    else if(currItem->d_type == DT_DIR)
-    {
-      recurse(currItem);
-    }
-
-  }while(currItem != NULL);
-
-}
-
-// Read entire file into string buffer
-// Returns NULL if file does not exist, string otherwise
-char* readFromFile(char* file_name)
-{
-    int fd = open(file_name, O_RDONLY);    // Returns -1 on failure, >0 on success
-    // Fatal Error if file does not exist
-    if(fd < 0){
-        printf("Fatal Error: File does not exist.\n");
-        return NULL;
-    }
-    struct stat *buffer = malloc(sizeof(struct stat));
-    if(buffer == NULL){
-        printf("Bad malloc\n");
-        return NULL;
-    }
-    stat(file, buffer);
-    int buffer_size = buffer->st_size;
-    // Warning: Empty file
-    if(buffer_size == 0){
-        printf("Warning: Empty file.\n");
-    }
-    // IO Read Loop
-    char* file_buffer = (char*)malloc(buffer_size);
-    if(file_buffer == NULL){
-        printf("Bad malloc\n");
-        return NULL;
-    }
-    memset(file_buffer, '\0', buffer_size);
-    int status = 1;
-    int readIn = 0;
-    do{
-        status = read(fd, file_buffer+readIn, buffer_size - readIn);
-        readIn += status;
-    } while(status > 0 && readIn < buffer_size);
-
-    free(buffer);
-    return file_buffer;
-}
-
-//Counts occurrences of each unique token
-//Inserts token if new, increments occurrences otherwise
-void count_occs(char* file_string)
-{
-  int i = 0;
-  int start = 0;
-  int len = strlen(file_string);
-
-  for(i = 0; i < len; i++)
-  {
-    char currChar = file_string[0];
-    if(isspace(currChar))
-    {
-      //get token
-      //get delimiter
-    }
+// Performs b/c/d based on given operation determined by flag from command line
+void doOp(){
+  switch(opFlag){
+    case 'b': build_codebook(path);
+    case 'c': compress(path, codebook);
+    case 'd': decompress(path, codebook);
   }
-
 }
-
-*/
-*/
