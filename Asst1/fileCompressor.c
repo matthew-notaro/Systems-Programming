@@ -154,11 +154,8 @@ int main(int argc, char** argv){
   //  buildCodebook(finalBST);
   //}
 
-  BSTNode* root = NULL;
-  root = insertCode(0, "100", "pls", root);
-  root = insertCode(0, "011", "word", root);
-  root = insertCode(0, "010", "REALLY", root);
-  printCodeTree(root);
+  finalBST = addToBook(path);
+  buildCodebook(finalBST);
 
   return 0;
 }

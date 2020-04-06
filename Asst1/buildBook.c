@@ -24,7 +24,7 @@ void buildCodebook(BSTNode* finalBST){
     writeBookToFile(huffFD, heap[0]->root);
 
     //printBST(heap[0]->root);
-    freeHeap(heap);
+    //freeHeap(heap);
     close(huffFD);
 }
 
@@ -162,10 +162,9 @@ void writeBookToFile(int fd, BSTNode* huffTree){
   }
   // Leaf Node - found token node
   if(huffTree->left == NULL){
-    int size = strlen(huffTree->token) + 1;
     write(fd, huffTree->huffCode, strlen(huffTree->huffCode));
     write(fd, "\t", 1);
-    write(fd, huffTree->token, size);
+    write(fd, huffTree->token, strlen(huffTree->token));
     write(fd, "\n", 1);
     return;
   }
