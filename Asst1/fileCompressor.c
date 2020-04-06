@@ -87,13 +87,12 @@ int main(int argc, char** argv){
     doOp();
   }
   if(opFlag == 'b'){
-    //buildCodebook(finalBST);
+    buildCodebook(finalBST);
   }
 
   //finalBST = addToBook(path, finalBST);
   //buildCodebook(finalBST);
 
-	//int status = compress("./test.txt", "../HuffmanCodebook");
   return 0;
 }
 
@@ -106,13 +105,11 @@ void printCodeTree(BSTNode* root){
 
 // Performs b/c/d based on given operation determined by flag from command line
 void doOp(){
-  /*switch(opFlag){
+  switch(opFlag){
     case 'b': finalBST = addToBook(path, finalBST);
     case 'c': compress(path, codebook);
     case 'd': decompress(path, codebook);
-  }*/
-	printf("calling decompress\n");
-	int status = decompress(path, codebook);
+  }
 }
 
 //Decompresses given file using given codebook
@@ -134,7 +131,6 @@ int decompress(char* file, char* codebook)
 
   //Reads given file into string
   char* file_string = readFromFile(file);
-	printf("file string %s\n",file_string);
 
   //Builds Huffman Tree using given codebook
   BSTNode* huffTree = bookToBST(codebook);
@@ -142,7 +138,6 @@ int decompress(char* file, char* codebook)
 		printf("Error: Unable to interpret codebook.");
 
   BSTNode* ptr = huffTree;
-	printBST(huffTree);
   int len = strlen(file_string);
 	char currBit;
 
@@ -206,9 +201,6 @@ int compress(char* file, char* codebook)
   //Reads given file and codebook into strings
   char* file_string = readFromFile(file);
   char* cb_string = readFromFile(codebook);
-
-	printf("file string %s\n", file_string);
-	//printf("%s\n\n", cb_string);
 
   int len = strlen(file_string);
   int start = 0, i = 0, j = 0, k = 0;
