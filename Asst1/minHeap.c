@@ -1,7 +1,7 @@
 #include "minHeap.h"
 
-int currLen = 6;
-int maxLen = 6;
+int currLen = 0;
+int maxLen = 0;
 // Returns heapified array of heapNodes from given array of BSTNodes
 // Converts each element of arr to a heapNode
 heapNode** BSTToHeap(BSTNode *root){

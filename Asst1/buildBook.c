@@ -1,6 +1,6 @@
 #include "buildBook.h"
 
-char* escape = "$420$";
+char* escape = "$420$\0";
 
 // Returns updated BST after inserting file's contents
 BSTNode* addToBook(char* path, BSTNode* oldBST){
@@ -17,10 +17,11 @@ BSTNode* addToBook(char* path, BSTNode* oldBST){
 // Given BST with data from all files, creates codebook
 void buildCodebook(BSTNode* finalBST){
     heapNode** heap = BSTToHeap(finalBST);          // BST -> heap
-    printHeap(heap);
+//    printHeap(heap);
     huffEncode(heap);                               // heap -> huffman tree contained in heap[0]->root
 
     int huffFD = open("./HuffmanCodebook", O_WRONLY | O_CREAT | O_APPEND, 00600);
+
     write(huffFD, escape, strlen(escape));
     write(huffFD, "\n", 1);
     writeBookToFile(huffFD, heap[0]->root);
@@ -84,60 +85,69 @@ char* readFromFile(char* file){
 BSTNode* stringToBST(char* fileString, BSTNode* root){
   int len = strlen(fileString);
   int start = 0, i = 0, j = 0, token_cnt;
-  char* delim;
+  char delim;
   //Loops through file string
   for(i = 0; i < len; i++){
     char currChar = fileString[i];
 
     // if currChar is space, insert delim
-    if(isspace(currChar) != 0){
+    if(isspace(currChar)){
 
       // malloc for escape string
       char* esc_text;
       if(currChar == ' '){
-        esc_text = (char*)malloc(strlen(escape) * sizeof(char));
+        esc_text = (char*)malloc((strlen(escape)+1) * sizeof(char));
+memset(esc_text, '\0', strlen(escape)+1);
         if(esc_text == NULL){
           printf("Bad malloc\n");
           return NULL;
         }
-        memcpy(esc_text, escape, strlen(escape));
+	strcpy(esc_text, escape);
         root = insert(esc_text, root);
       }
       else{
-        esc_text = (char*)malloc((strlen(escape) + 1) * sizeof(char));
+        esc_text = (char*)malloc((strlen(escape)+2) * sizeof(char));
+memset(esc_text, '\0', strlen(escape)+2);
         if(esc_text == NULL){
           printf("Bad malloc\n");
           return NULL;
         }
         delim = (currChar == '\n') ? 'n' : 't';
-        memcpy(esc_text, escape, strlen(escape));
+strcpy(esc_text, escape);
+//        memcpy(esc_text, escape, strlen(escape));
         esc_text[strlen(escape)] = delim;
         root = insert(esc_text, root);
       }
+printf("insert delim .%s.\n", esc_text);
       start = i + 1;
     }
 
     // insert substr [s, i]
-    else if(i+1==len || isspace(fileString[i+1]) != 0){
+    else if(i+1==len || isspace(fileString[i+1])){
       //Mallocs space to hold substr from start to location of delimiter, +1 for including i in substr      '\0'
-      char* token = (char*)malloc(i-start+1);
+      char* token = (char*)malloc(i-start+2);
       if(token == NULL){
         printf("Bad malloc\n");
         return NULL;
       }
-      //memset(token, '\0', i-start+1);
+memset(token, '\0', i-start+2);
       token_cnt = 0;
       //Loops through file segment to extract token
-      for(j = start; j <= i; j++){
-        token[token_cnt] = fileString[j];
-        token_cnt++;
-      }
+      while(start <= i){
+	token[token_cnt++] = fileString[start++];
+      }      
+
+//for(j = start; j <= i; j++){
+//        token[token_cnt] = fileString[j];
+//        token_cnt++;
+//      }
       //If token is not empty, inserts to BST
       if(strlen(token) > 0){
         root = insert(token, root);
       }
       //Increments starting point for next token
-      start = i + 1;
+printf("insert word .%s.\n", token);
+//      start = i + 1;
     }
   }
   return root;

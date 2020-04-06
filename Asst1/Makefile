@@ -14,4 +14,4 @@ buildBook.o: buildBook.c
 	gcc -c buildBook.c
 
 clean:
-	rm fileCompressor; rm BST.o; rm minHeap.o; rm huff.o; rm buildbook.o; rm HuffmanCodebook
+	rm fileCompressor; rm BST.o; rm minHeap.o; rm huff.o; rm buildBook.o; rm HuffmanCodebook
