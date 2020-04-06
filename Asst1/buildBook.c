@@ -3,15 +3,15 @@
 char* escape = "$420$";
 
 // Returns updated BST after inserting file's contents
-BSTNode* addToBook(char* path){
+BSTNode* addToBook(char* path, BSTNode* oldBST){
   // Gets long string from contents of path
   char* fileString = readFromFile(path);
   if(fileString == NULL){
     return;
   }
-  BSTNode* final = stringToBST(fileString);     // fileString -> BST
+  BSTNode* newBST = stringToBST(fileString, oldBST);     // fileString -> BST
   free(fileString);
-  return final;
+  return newBST;
 }
 
 // Given BST with data from all files, creates codebook
@@ -21,6 +21,8 @@ void buildCodebook(BSTNode* finalBST){
     huffEncode(heap);                               // heap -> huffman tree contained in heap[0]->root
 
     int huffFD = open("./HuffmanCodebook", O_WRONLY | O_CREAT | O_APPEND, 00600);
+    write(huffFD, escape, strlen(escape));
+    write(huffFD, "\n", 1);
     writeBookToFile(huffFD, heap[0]->root);
 
     //printBST(heap[0]->root);
@@ -79,8 +81,7 @@ char* readFromFile(char* file){
 //Counts occurrences of each unique token (including delimiters)
 //Inserts token if new, increments occurrences otherwise
 //Returns root of resulting BST on success, NULL on failure
-BSTNode* stringToBST(char* fileString){
-  BSTNode* root = NULL;
+BSTNode* stringToBST(char* fileString, BSTNode* root){
   int len = strlen(fileString);
   int start = 0, i = 0, j = 0, k = 0;
 

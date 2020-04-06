@@ -154,7 +154,7 @@ int main(int argc, char** argv){
   //  buildCodebook(finalBST);
   //}
 
-  finalBST = addToBook(path);
+  finalBST = addToBook(path, finalBST);
   buildCodebook(finalBST);
 
   return 0;
@@ -171,7 +171,7 @@ void printCodeTree(BSTNode* root){
 // Performs b/c/d based on given operation determined by flag from command line
 void doOp(){
   switch(opFlag){
-    case 'b': finalBST = addToBook(path);
+    case 'b': finalBST = addToBook(path, finalBST);
     //case 'c': compress(path, codebook);
     //case 'd': decompress(path, codebook);
   }
