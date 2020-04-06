@@ -87,12 +87,13 @@ int main(int argc, char** argv){
     doOp();
   }
   if(opFlag == 'b'){
-    buildCodebook(finalBST);
+    //buildCodebook(finalBST);
   }
 
-  finalBST = addToBook(path, finalBST);
-  buildCodebook(finalBST);
+  //finalBST = addToBook(path, finalBST);
+  //buildCodebook(finalBST);
 
+	//int status = compress("./test.txt", "../HuffmanCodebook");
   return 0;
 }
 
@@ -103,14 +104,15 @@ void printCodeTree(BSTNode* root){
   printCodeTree(root->right);
 }
 
-
 // Performs b/c/d based on given operation determined by flag from command line
 void doOp(){
-  switch(opFlag){
+  /*switch(opFlag){
     case 'b': finalBST = addToBook(path, finalBST);
-    //case 'c': compress(path, codebook);
-    //case 'd': decompress(path, codebook);
-  }
+    case 'c': compress(path, codebook);
+    case 'd': decompress(path, codebook);
+  }*/
+	printf("calling compress\n");
+	int status = compress(path, codebook);
 }
 
 //Decompresses given file using given codebook
@@ -187,6 +189,9 @@ int compress(char* file, char* codebook)
   char* file_string = readFromFile(file);
   char* cb_string = readFromFile(codebook);
 
+	printf("file string %s\n\n", file_string);
+	//printf("%s\n\n", cb_string);
+
   int len = strlen(file_string);
   int start = 0, i = 0, j = 0, k = 0;
 
@@ -198,6 +203,7 @@ int compress(char* file, char* codebook)
     //Extracts token
     if(isspace(currChar) != 0) //Delimiter found
     {
+			printf("checkpoint\n");
       //Mallocs space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
       if(token == NULL){
@@ -229,6 +235,7 @@ int compress(char* file, char* codebook)
       {
         code = getCodeFromBook(token, cb_string);
         codeSize = strlen(code)+1;
+				printf("code: %s\n", code);
         write(fd, code, codeSize);
       }
 
@@ -247,6 +254,7 @@ int compress(char* file, char* codebook)
       //Gets delimiter's corresponding code and writes to file
       code = getCodeFromBook(delim, cb_string);
       codeSize = strlen(code)+1;
+			printf("code: %s\n", code);
       write(fd, code, codeSize);
 
       free(token);
