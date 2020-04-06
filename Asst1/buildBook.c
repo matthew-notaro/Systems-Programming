@@ -7,7 +7,7 @@ BSTNode* addToBook(char* path, BSTNode* oldBST){
   // Gets long string from contents of path
   char* fileString = readFromFile(path);
   if(fileString == NULL){
-    return NULL;
+    return;
   }
   BSTNode* newBST = stringToBST(fileString, oldBST);     // fileString -> BST
   free(fileString);
@@ -83,30 +83,52 @@ char* readFromFile(char* file){
 //Returns root of resulting BST on success, NULL on failure
 BSTNode* stringToBST(char* fileString, BSTNode* root){
   int len = strlen(fileString);
-  int start = 0, i = 0, j = 0, k = 0;
-
+  int start = 0, i = 0, j = 0, token_cnt;
+  char* delim;
   //Loops through file string
   for(i = 0; i < len; i++){
     char currChar = fileString[i];
 
-    //Extracts token
-    if(isspace(currChar) != 0){ //Delimiter found
-      //Mallocs space to hold substr from start to location of delimiter, +1 for '\0'
+    // if currChar is space, insert delim
+    if(isspace(currChar) != 0){
+
+      // malloc for escape string
+      char* esc_text;
+      if(currChar == ' '){
+        esc_text = (char*)malloc(strlen(escape) * sizeof(char));
+        if(esc_text == NULL){
+          printf("Bad malloc\n");
+          return NULL;
+        }
+        memcpy(esc_text, escape, strlen(escape));
+        root = insert(esc_text, root);
+      }
+      else{
+        esc_text = (char*)malloc((strlen(escape) + 1) * sizeof(char));
+        if(esc_text == NULL){
+          printf("Bad malloc\n");
+          return NULL;
+        }
+        delim = (currChar == '\n') ? 'n' : 't';
+        memcpy(esc_text, escape, strlen(escape));
+        esc_text[strlen(escape)] = delim;
+        root = insert(esc_text, root);
+      }
+      start = i + 1;
+    }
+
+    // insert substr [s, i]
+    else if(i+1==len || isspace(fileString[i+1]) != 0){
+      //Mallocs space to hold substr from start to location of delimiter, +1 for including i in substr      '\0'
       char* token = (char*)malloc(i-start+1);
       if(token == NULL){
         printf("Bad malloc\n");
         return NULL;
       }
-      memset(token, '\0', i-start+1);
-      int token_cnt = 0;
-      //Mallocs memory for delimiter
-      char* delim = malloc(sizeof(char)*1);
-      if(delim == NULL){
-        printf("Bad malloc\n");
-        return NULL;
-      }
+      //memset(token, '\0', i-start+1);
+      token_cnt = 0;
       //Loops through file segment to extract token
-      for(j = start; j < i; j++){
+      for(j = start; j <= i; j++){
         token[token_cnt] = fileString[j];
         token_cnt++;
       }
@@ -115,38 +137,9 @@ BSTNode* stringToBST(char* fileString, BSTNode* root){
         root = insert(token, root);
       }
       //Increments starting point for next token
-      start = i+1;
-
-      // malloc for escape string
-      char* esc_text = (currChar == ' ') ? (char*)malloc(strlen(escape) * sizeof(char)) : (char*)malloc((strlen(escape)+1) * sizeof(char));
-      if(esc_text == NULL){
-        printf("Bad malloc\n");
-        return NULL;
-      }
-      // Inserts delim
-      if(currChar == ' '){
-          memcpy(esc_text, escape, strlen(escape));
-          root = insert(esc_text, root);
-      }
-      else{
-          if(currChar == '\n'){
-            delim = "n";
-          }
-          else if(currChar == '\t'){
-            delim = "t";
-          }
-          strcpy(esc_text, escape);
-          strcat(esc_text, delim);
-          if(strlen(esc_text) > 0){
-          root = insert(esc_text, root);
-        }
-      }
-      free(token);
-      free(delim);
-      free(esc_text);
+      start = i + 1;
     }
   }
-  //printBST(root);
   return root;
 }
 
