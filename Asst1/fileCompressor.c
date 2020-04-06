@@ -150,9 +150,16 @@ int main(int argc, char** argv){
   else{
     doOp();
   }*/
-  if(opFlag = 'b'){
-    buildCodebook(finalBST);
-  }
+  //if(opFlag = 'b'){
+  //  buildCodebook(finalBST);
+  //}
+
+  BSTNode* root = NULL;
+  root = insertCode(0, "100", "pls", root);
+  root = insertCode(0, "011", "word", root);
+  root = insertCode(0, "010", "REALLY", root);
+  printCodeTree(root);
+
   return 0;
 }
 
@@ -167,7 +174,7 @@ void printCodeTree(BSTNode* root){
 // Performs b/c/d based on given operation determined by flag from command line
 void doOp(){
   switch(opFlag){
-    case 'b': finalBST = add(path);
+    case 'b': finalBST = addToBook(path);
     //case 'c': compress(path, codebook);
     //case 'd': decompress(path, codebook);
   }
