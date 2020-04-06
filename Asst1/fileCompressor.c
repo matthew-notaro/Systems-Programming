@@ -19,7 +19,7 @@ int r_flag = 0;
 char opFlag = '?';
 char* path;
 char* codebook;
-
+BSTNode* finalBST = NULL;
 /*
 // test main for BST
 int main(int argc, char** argv){
@@ -149,7 +149,9 @@ int main(int argc, char** argv){
   else{
     doOp();
   }*/
-  //doOp();
+  if(opFlag = 'b'){
+    buildCodebook(finalBST);
+  }
   return 0;
 }
 
@@ -164,7 +166,7 @@ void printCodeTree(BSTNode* root){
 // Performs b/c/d based on given operation determined by flag from command line
 void doOp(){
   switch(opFlag){
-    case 'b': buildCodebook(path);
+    case 'b': finalBST = add(path);
     //case 'c': compress(path, codebook);
     //case 'd': decompress(path, codebook);
   }
