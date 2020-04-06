@@ -173,8 +173,6 @@ void writeBookToFile(int fd, BSTNode* huffTree){
 }
 
 
-
-
 BSTNode* bookToBST(char* bookPath){
   char* bookString = readFromFile(bookPath);
   BSTNode* root = NULL;
