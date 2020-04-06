@@ -111,8 +111,8 @@ void doOp(){
     case 'c': compress(path, codebook);
     case 'd': decompress(path, codebook);
   }*/
-	printf("calling compress\n");
-	int status = compress(path, codebook);
+	printf("calling decompress\n");
+	int status = decompress(path, codebook);
 }
 
 //Decompresses given file using given codebook
@@ -134,6 +134,7 @@ int decompress(char* file, char* codebook)
 
   //Reads given file into string
   char* file_string = readFromFile(file);
+	printf("file string %s\n",file_string);
 
   //Builds Huffman Tree using given codebook
   BSTNode* huffTree = bookToBST(codebook);
@@ -141,6 +142,7 @@ int decompress(char* file, char* codebook)
 		printf("Error: Unable to interpret codebook.");
 
   BSTNode* ptr = huffTree;
+	printBST(huffTree);
   int len = strlen(file_string);
 	char currBit;
 
@@ -155,9 +157,25 @@ int decompress(char* file, char* codebook)
 		if(ptr->left == NULL && ptr->right == NULL)
 		{
 			//Token found; write to file
-			tokenSize = strlen(ptr->token) + 1;
-			write(fd, ptr->token, tokenSize);
-			ptr = huffTree;
+			if(isspace(ptr->token[0]) != 0 && ptr->token[1])
+			{
+				if(ptr->token[1] == 'n')
+				{
+					write(fd, "\n", 1);
+					ptr = huffTree;
+				}
+				else if(ptr->token[1] == 't')
+				{
+					write(fd, "\t", 1);
+					ptr = huffTree;
+				}
+			}
+			else
+			{
+				tokenSize = strlen(ptr->token) + 1;
+				write(fd, ptr->token, tokenSize);
+				ptr = huffTree;
+			}
     }
   }
 	free(newFileName);
@@ -189,7 +207,7 @@ int compress(char* file, char* codebook)
   char* file_string = readFromFile(file);
   char* cb_string = readFromFile(codebook);
 
-	printf("file string %s\n\n", file_string);
+	printf("file string %s\n", file_string);
 	//printf("%s\n\n", cb_string);
 
   int len = strlen(file_string);

@@ -63,7 +63,7 @@ char* readFromFile(char* file){
         printf("Bad malloc\n");
         return NULL;
     }
-    memset(file_buffer, '\0', buffer_size);
+    memset(file_buffer, 'x', buffer_size);
 
     // IO Read Loop
     int status = 1;
@@ -213,15 +213,14 @@ BSTNode* bookToBST(char* bookPath){
           free(token);
           token = (char*)malloc(sizeof(char));
           switch (specialChar){
-              case 'n': *token = '\n';
-              case 't': *token = '\t';
+             case 'n': *token = '\n';
+             case 't': *token = '\t';
           }
         }
         else{
             printf("something bad happened extracting special char from escape char\n");
         }
       }
-
       root = insertCode(0, code, token, root);
     }
   }
