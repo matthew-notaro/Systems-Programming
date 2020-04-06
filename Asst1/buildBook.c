@@ -2,14 +2,20 @@
 
 char* escape = "$420$";
 
-// Takes file path and outputs codebook
-void buildCodebook(char* path){
-    // Gets long string from contents of path
-    char* fileString = readFromFile(path);
-    if(fileString == NULL){
-        return;
-    }
-    BSTNode* finalBST = stringToBST(fileString);     // fileString -> BST
+// Returns updated BST after inserting file's contents
+BSTNode* addToBook(char* path){
+  // Gets long string from contents of path
+  char* fileString = readFromFile(path);
+  if(fileString == NULL){
+    return;
+  }
+  BSTNode* final = stringToBST(fileString);     // fileString -> BST
+  free(fileString);
+  return final;
+}
+
+// Given BST with data from all files, creates codebook
+void buildCodebook(BSTNode* finalBST){
     heapNode** heap = BSTToHeap(finalBST);          // BST -> heap
     printHeap(heap);
     huffEncode(heap);                               // heap -> huffman tree contained in heap[0]->root
@@ -19,7 +25,6 @@ void buildCodebook(char* path){
 
     //printBST(heap[0]->root);
     freeHeap(heap);
-    free(fileString);
     close(huffFD);
 }
 
