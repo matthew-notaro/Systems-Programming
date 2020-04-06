@@ -7,7 +7,7 @@ BSTNode* addToBook(char* path){
   // Gets long string from contents of path
   char* fileString = readFromFile(path);
   if(fileString == NULL){
-    return;
+    return NULL;
   }
   BSTNode* final = stringToBST(fileString);     // fileString -> BST
   free(fileString);
