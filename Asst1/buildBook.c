@@ -16,6 +16,7 @@ BSTNode* addToBook(char* path, BSTNode* oldBST){
 
 // Given BST with data from all files, creates codebook
 void buildCodebook(BSTNode* finalBST){
+
     heapNode** heap = BSTToHeap(finalBST);          // BST -> heap
 //    printHeap(heap);
     huffEncode(heap);                               // heap -> huffman tree contained in heap[0]->root
@@ -64,7 +65,7 @@ char* readFromFile(char* file){
         printf("Bad malloc\n");
         return NULL;
     }
-    memset(file_buffer, 'x', buffer_size);
+    memset(file_buffer, '\0', buffer_size);
 
     // IO Read Loop
     int status = 1;
@@ -97,28 +98,28 @@ BSTNode* stringToBST(char* fileString, BSTNode* root){
       char* esc_text;
       if(currChar == ' '){
         esc_text = (char*)malloc((strlen(escape)+1) * sizeof(char));
-memset(esc_text, '\0', strlen(escape)+1);
+				memset(esc_text, '\0', strlen(escape)+1);
         if(esc_text == NULL){
           printf("Bad malloc\n");
           return NULL;
         }
-	strcpy(esc_text, escape);
+				strcpy(esc_text, escape);
         root = insert(esc_text, root);
       }
       else{
         esc_text = (char*)malloc((strlen(escape)+2) * sizeof(char));
-memset(esc_text, '\0', strlen(escape)+2);
+				memset(esc_text, '\0', strlen(escape)+2);
         if(esc_text == NULL){
           printf("Bad malloc\n");
           return NULL;
         }
         delim = (currChar == '\n') ? 'n' : 't';
-strcpy(esc_text, escape);
+				strcpy(esc_text, escape);
 //        memcpy(esc_text, escape, strlen(escape));
         esc_text[strlen(escape)] = delim;
         root = insert(esc_text, root);
       }
-printf("insert delim .%s.\n", esc_text);
+			printf("insert delim .%s.\n", esc_text);
       start = i + 1;
     }
 
@@ -130,12 +131,12 @@ printf("insert delim .%s.\n", esc_text);
         printf("Bad malloc\n");
         return NULL;
       }
-memset(token, '\0', i-start+2);
+			memset(token, '\0', i-start+2);
       token_cnt = 0;
       //Loops through file segment to extract token
       while(start <= i){
-	token[token_cnt++] = fileString[start++];
-      }      
+				token[token_cnt++] = fileString[start++];
+      }
 
 //for(j = start; j <= i; j++){
 //        token[token_cnt] = fileString[j];
@@ -146,7 +147,7 @@ memset(token, '\0', i-start+2);
         root = insert(token, root);
       }
       //Increments starting point for next token
-printf("insert word .%s.\n", token);
+			printf("insert word .%s.\n", token);
 //      start = i + 1;
     }
   }

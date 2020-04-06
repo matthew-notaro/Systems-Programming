@@ -106,9 +106,9 @@ void printCodeTree(BSTNode* root){
 // Performs b/c/d based on given operation determined by flag from command line
 void doOp(){
   switch(opFlag){
-    case 'b': finalBST = addToBook(path, finalBST);
-    case 'c': compress(path, codebook);
-    case 'd': decompress(path, codebook);
+    case 'b': finalBST = addToBook(path, finalBST); break;
+    case 'c': compress(path, codebook); break;
+    case 'd': decompress(path, codebook); break;
   }
 }
 
@@ -213,7 +213,6 @@ int compress(char* file, char* codebook)
     //Extracts token
     if(isspace(currChar) != 0) //Delimiter found
     {
-			printf("checkpoint\n");
       //Mallocs space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
       if(token == NULL){
