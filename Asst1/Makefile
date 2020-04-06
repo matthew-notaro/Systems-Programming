@@ -1,5 +1,5 @@
 all: fileCompressor.c BST.o minHeap.o huff.o buildBook.o
-	gcc -g fileCompressor.c BST.o minHeap.o huff.o -o fileCompressor
+	gcc -g fileCompressor.c BST.o minHeap.o huff.o buildBook.o -o fileCompressor
 
 BST.o: BST.c
 	gcc -c BST.c
