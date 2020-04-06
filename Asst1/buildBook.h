@@ -15,9 +15,9 @@
 #include "buildBook.h"
 
 void buildCodebook(char* path);
-char* readFromFile(char* file){
-BSTNode* stringToBST(char* fileString){
-void writeBookToFile(int fd, BSTNode* huffTree){
+char* readFromFile(char* file);
+BSTNode* stringToBST(char* fileString);
+void writeBookToFile(int fd, BSTNode* huffTree);
 
 
 #endif

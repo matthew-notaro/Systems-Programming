@@ -15,9 +15,8 @@
 
 char* readFromFile(char* file);
 BSTNode* count_occs(char* file_string);
-BSTNode* insert(char* word, BSTNode *root);
-int build_codebook(int fd, BSTNode* huffTree);
 int compress(char* file, char* codebook);
+int decompress(char* file, char* codebook);
 char* getCodeFromBook(char* token, char* codebook);
 
 char* escape = "%#$";
@@ -43,7 +42,7 @@ int main(int argc, char** argv){
   // huff = insert("g", huff);
   // huff = insert("g", huff);
 
-  int status = compress("test.txt", "HuffmanCodebook");
+  int status = compress("test.txt", "../HuffmanCodebook");
 
   return 0;
 }
@@ -115,11 +114,23 @@ BSTNode* count_occs(char* file_string)
     {
       //Mallocs space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
+      if(token == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+      }
       int token_cnt = 0;
 
       //Mallocs memory for delimiter and escape string
       char* delim = malloc(sizeof(char)*1);
+      if(delim == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+      }
       char* esc_text = malloc(sizeof(delim)+sizeof(escape)+1);
+      if(esc_text == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+      }
 
       if(token == NULL)
       {
@@ -168,33 +179,13 @@ BSTNode* count_occs(char* file_string)
       {
         root = insert(escape, root);
       }
+      free(token);
+      free(delim);
+      free(esc_text);
     }
   }
   //printBST(root);
   return root;
-}
-
-int build_codebook(int fd, BSTNode* huffTree)
-{
-  if(huffTree == NULL)
-    return -1;
-
-  if(huffTree->right)
-    build_codebook(fd, huffTree->right);
-
-  if(huffTree->left)
-    build_codebook(fd, huffTree->right);
-
-  //Token found
-  int tokenSize = strlen(huffTree->token) + 1;
-  //int codeSize = sizeof();
-
-  //write(fd, huffTree->huffCode, codeSize);
-  write(fd, "\t", 2);
-  write(fd, huffTree->token, tokenSize);
-  write(fd, "\n", 2);
-
-  return 0;
 }
 
 //Compresses given file using given codebook
@@ -204,6 +195,10 @@ int compress(char* file, char* codebook)
 {
   //Mallocs memory to hold <filename>.hcz
   char* newFileName = malloc(strlen(file)+5);
+  if(newFileName == NULL){
+    printf("Bad malloc\n");
+    return -1;
+  }
   char* hcz = malloc(5);
   hcz = ".hcz";
   strcat(newFileName, file);
@@ -229,21 +224,27 @@ int compress(char* file, char* codebook)
     {
       //Mallocs space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
-      int token_cnt = 0;
-
-      //Mallocs memory for delimiter and escape string
-      char* delim = malloc(sizeof(char)*1);
-      char* esc_text = malloc(sizeof(delim)+sizeof(escape)+1);
-
-      char* code = NULL;
-      int codeSize = 0;
-
-      if(token == NULL)
-      {
+      if(token == NULL){
         printf("Bad malloc\n");
         return -1;
       }
       memset(token, '\0', i-start+1);
+      int token_cnt = 0;
+
+      //Mallocs memory for delimiter and escape string
+      char* delim = malloc(sizeof(char)*1);
+      if(delim == NULL){
+        printf("Bad malloc\n");
+        return -1;
+      }
+      char* esc_text = malloc(sizeof(delim)+sizeof(escape)+1);
+      if(esc_text == NULL){
+        printf("Bad malloc\n");
+        return -1;
+      }
+
+      char* code = NULL;
+      int codeSize = 0;
 
       //Loops through file segment to extract token
       for(j = start; j < i; j++)
@@ -265,6 +266,10 @@ int compress(char* file, char* codebook)
 
       //Convert delimiter char to a string
       delim = malloc(sizeof(char)+1);
+      if(delim == NULL){
+        printf("Bad malloc\n");
+        return -1;
+      }
       memset(delim, '\0', (sizeof(char)+1));
       delim[0] = currChar;
 
@@ -272,8 +277,17 @@ int compress(char* file, char* codebook)
       code = getCodeFromBook(delim, cb_string);
       codeSize = strlen(code)+1;
       write(fd, code, codeSize);
+
+      free(token);
+      free(delim);
+      free(esc_text);
+      free(code);
     }
   }
+  free(newFileName);
+  free(file_string);
+  free(cb_string);
+
   return 0;
 }
 
@@ -290,6 +304,10 @@ char* getCodeFromBook(char* token, char* codebook)
   {
     char* esc_token = NULL, *escape = NULL, *codebookPtr = NULL, *delim_check = NULL;
     char* delim = malloc(sizeof(char));
+    if(delim == NULL){
+      printf("Bad malloc\n");
+      return NULL;
+    }
     int size = 0, delim_count = 0;
     codebookPtr = codebook;
 
@@ -303,6 +321,10 @@ char* getCodeFromBook(char* token, char* codebook)
 
     //Extracts escape character
     escape = malloc(delim_count+1);
+    if(escape == NULL){
+      printf("Bad malloc\n");
+      return NULL;
+    }
     for(i = 0; i < delim_count; i++)
     {
       escape[i] = codebook[i];
@@ -313,17 +335,26 @@ char* getCodeFromBook(char* token, char* codebook)
     {
       size = strlen(escape)+2;
       esc_token = malloc(size);
+      if(esc_token == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+      }
       delim = "n";
       strcpy(esc_token, escape);
       strcat(esc_token, delim);
+      free(esc_token);
     }
     else if(token[0] == '\t')
     {
       size = strlen(escape)+2;
-      esc_token = malloc(size);
+      if(esc_token == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+      }
       delim = "t";
       strcpy(esc_token, escape);
       strcat(esc_token, delim);
+      free(esc_token);
     }
     else if(token[0] == ' ')
       esc_token = escape;
@@ -343,6 +374,7 @@ char* getCodeFromBook(char* token, char* codebook)
         delim_check = currCharPtr+strlen(esc_token);
       }
     }
+    free(escape);
   }
   else
     currCharPtr = strstr(codebook, token); //Finds token within codebook
@@ -370,36 +402,61 @@ char* getCodeFromBook(char* token, char* codebook)
       code[i] = currCharPtr[i];
     }
   }
+  else
+    printf("Error: code not found.\n");
+
   return code;
 }
-
 /*
-int decompress(struct dirent* file, *char codebook)
+int decompress(char* file, *char codebook)
 {
-  int fd = open("./newfile", O_RDWR|O_CREAT|O_APPEND, 00600);
-  char* file_name = file->name;
+  //Mallocs memory to hold <filename>
+  char* newFileName = malloc(strlen(file)-3);
+  if(newFileName == NULL){
+    printf("Bad malloc\n");
+    return NULL;
+  }
+  newFileName = file;
+  int i = 0, tokenSize = 0;
+
+  //Opens new file
+  int fd = open(newFileName, O_RDWR|O_CREAT|O_APPEND, 00600); //create new file
+
+  //Reads given file into string
   char* file_string = readFromFile(file);
+  //char* cb_string = readFromFile(codebook);
 
-  //read num by num
-  //hm.
+  //Build huffTree using given codebook
+  Node* huffTree = build_tree(codebook);
+  Node* ptr = NULL;
 
-}
+  int len = strlen(file_string);
 
-int readCode()
-{
-  if(huffTree == NULL)
-    return -1;
-
-  if(huffTree->right)
+  for(i = 0; i < len; i++)
   {
-    //write(fd, "1", 2);
-    build_codebook(fd, huffTree->right);
-  }
+    ptr = NULL;
+    char currBit = file_string[i];
+    do {
+      if(currBit == '0')
+      {
+        ptr = huffTree->left;
+      }
+      else if(currBit == '1')
+      {
+        ptr = huffTree->right;
+      }
+      else if(isspace(currBit) == 0) //Not a 1, 0, or white space char
+      {
+        printf("Error: file is not formatted correctly.\n");
+        return -1;
+      }
+    } while(ptr != NULL);
 
-  if(huffTree->left)
-  {
-    //write(fd, "0", 2);
-    build_codebook(fd, huffTree->right);
+    if(ptr != NULL) // Leaf node found
+    {
+      tokenSize = strlen(huffTree->token)+1;
+      write(fd, huffTree->token, tokenSize);
+    }
   }
-}
-*/
+  return 0;
+}*/
