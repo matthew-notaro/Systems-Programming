@@ -19,31 +19,69 @@ int decompress(char* file, char* codebook);
 char* getCodeFromBook(char* token, char* codebook);
 
 int main(int argc, char** argv){
-  /*char* file = argv[1];
-  char* file_string = readFromFile(file);
-  // Checks for nonexistent file
-  if(file_string == NULL){
-      printf("Fatal Error: file \"%s\" does not exist", file);
-      return -1;
-  }*/
 
-  //printf("%s\n", file_string);
-  //BSTNode* root = stringToBST(file_string); //call from somewhere else
+	// BSTNode* root = NULL;
+  // root = insertCode(0, "100", "pls", root);
+  // root = insertCode(0, "011", "word", root);
+  // root = insertCode(0, "010", "REALLY", root);
 
-  // BSTNode *huff = NULL;
-  // huff = insert("aa", huff);
-  // huff = insert("bb", huff);
-  // huff = insert("cc", huff);
-  // huff = insert("haaa", huff);
-  // huff = insert("y", huff);
-  // huff = insert("g", huff);
-  // huff = insert("g", huff);
-
-  int status = compress("./test.txt", "../HuffmanCodebook");
+  int status = decompress("../test.txt.hcz", "../HuffmanCodebook");
 
   return 0;
 }
 
+int decompress(char* file, char* codebook)
+{
+  int sizeOfNewFile = strlen(file)-4, j = 0, i = 0, tokenSize = 0;
+
+  //Extract name of new file from given file
+  char* newFileName = malloc(sizeOfNewFile);
+  for(j = 0; j < sizeOfNewFile; j++)
+  {
+    newFileName[j] = file[j];
+  }
+
+  //Opens new file
+  int fd = open(newFileName, O_RDWR|O_CREAT|O_APPEND, 00600); //create new file
+
+  //Reads given file into string
+  char* file_string = readFromFile(file);
+
+  //Build huffTree using given codebook
+  BSTNode* huffTree = bookToBST(codebook);
+	printBST(huffTree);
+  BSTNode* ptr = NULL;
+
+  int len = strlen(file_string);
+/*
+  for(i = 0; i < len; i++)
+  {
+    ptr = NULL;
+    char currBit = file_string[i];
+    do {
+      if(currBit == '0')
+      {
+        ptr = huffTree->left;
+      }
+      else if(currBit == '1')
+      {
+        ptr = huffTree->right;
+      }
+      else if(isspace(currBit) == 0) //Not a 1, 0, or white space char
+      {
+        printf("Error: file is not formatted correctly.\n");
+        return -1;
+      }
+    } while(ptr != NULL);
+
+    if(ptr != NULL) // Leaf node found
+    {
+      tokenSize = strlen(huffTree->token)+1;
+      write(fd, huffTree->token, tokenSize);
+    }
+  }*/
+  return 0;
+}
 
 //Compresses given file using given codebook
 //Writes new file <filename>.hcz
@@ -94,11 +132,6 @@ int compress(char* file, char* codebook)
         printf("Bad malloc\n");
         return -1;
       }
-      char* esc_text = malloc(sizeof(delim)+sizeof(escape)+1);
-      if(esc_text == NULL){
-        printf("Bad malloc\n");
-        return -1;
-      }
 
       char* code = NULL;
       int codeSize = 0;
@@ -137,7 +170,6 @@ int compress(char* file, char* codebook)
 
       free(token);
       free(delim);
-      free(esc_text);
       free(code);
     }
   }
@@ -264,56 +296,3 @@ char* getCodeFromBook(char* token, char* codebook)
 
   return code;
 }
-/*
-int decompress(char* file, *char codebook)
-{
-  //Mallocs memory to hold <filename>
-  char* newFileName = malloc(strlen(file)-3);
-  if(newFileName == NULL){
-    printf("Bad malloc\n");
-    return NULL;
-  }
-  newFileName = file;
-  int i = 0, tokenSize = 0;
-
-  //Opens new file
-  int fd = open(newFileName, O_RDWR|O_CREAT|O_APPEND, 00600); //create new file
-
-  //Reads given file into string
-  char* file_string = readFromFile(file);
-  //char* cb_string = readFromFile(codebook);
-
-  //Build huffTree using given codebook
-  Node* huffTree = build_tree(codebook);
-  Node* ptr = NULL;
-
-  int len = strlen(file_string);
-
-  for(i = 0; i < len; i++)
-  {
-    ptr = NULL;
-    char currBit = file_string[i];
-    do {
-      if(currBit == '0')
-      {
-        ptr = huffTree->left;
-      }
-      else if(currBit == '1')
-      {
-        ptr = huffTree->right;
-      }
-      else if(isspace(currBit) == 0) //Not a 1, 0, or white space char
-      {
-        printf("Error: file is not formatted correctly.\n");
-        return -1;
-      }
-    } while(ptr != NULL);
-
-    if(ptr != NULL) // Leaf node found
-    {
-      tokenSize = strlen(huffTree->token)+1;
-      write(fd, huffTree->token, tokenSize);
-    }
-  }
-  return 0;
-}*/

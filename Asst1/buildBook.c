@@ -169,8 +169,6 @@ void writeBookToFile(int fd, BSTNode* huffTree){
 }
 
 
-
-
 BSTNode* bookToBST(char* bookPath){
   char* bookString = readFromFile(bookPath);
   BSTNode* root = NULL;
@@ -232,7 +230,7 @@ BSTNode* bookToBST(char* bookPath){
         }
       }
 
-      root = insertCode(0, currChar, token, root);
+      root = insertCode(0, code, token, root);
     }
   }
   return root;

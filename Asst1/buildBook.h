@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <unistd.h>
 #include "BST.h"
 #include "minHeap.h"
 #include "huff.h"
