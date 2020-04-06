@@ -3,15 +3,15 @@
 char* escape = "$420$";
 
 // Returns updated BST after inserting file's contents
-BSTNode* addToBook(char* path){
+BSTNode* addToBook(char* path, BSTNode* oldBST){
   // Gets long string from contents of path
   char* fileString = readFromFile(path);
   if(fileString == NULL){
     return NULL;
   }
-  BSTNode* final = stringToBST(fileString);     // fileString -> BST
+  BSTNode* newBST = stringToBST(fileString, oldBST);     // fileString -> BST
   free(fileString);
-  return final;
+  return newBST;
 }
 
 // Given BST with data from all files, creates codebook
@@ -21,10 +21,12 @@ void buildCodebook(BSTNode* finalBST){
     huffEncode(heap);                               // heap -> huffman tree contained in heap[0]->root
 
     int huffFD = open("./HuffmanCodebook", O_WRONLY | O_CREAT | O_APPEND, 00600);
+    write(huffFD, escape, strlen(escape));
+    write(huffFD, "\n", 1);
     writeBookToFile(huffFD, heap[0]->root);
 
     //printBST(heap[0]->root);
-    freeHeap(heap);
+    //freeHeap(heap);
     close(huffFD);
 }
 
@@ -79,8 +81,7 @@ char* readFromFile(char* file){
 //Counts occurrences of each unique token (including delimiters)
 //Inserts token if new, increments occurrences otherwise
 //Returns root of resulting BST on success, NULL on failure
-BSTNode* stringToBST(char* fileString){
-  BSTNode* root = NULL;
+BSTNode* stringToBST(char* fileString, BSTNode* root){
   int len = strlen(fileString);
   int start = 0, i = 0, j = 0, k = 0;
 
@@ -98,54 +99,48 @@ BSTNode* stringToBST(char* fileString){
       }
       memset(token, '\0', i-start+1);
       int token_cnt = 0;
-
-      //Mallocs memory for delimiter and escape string
+      //Mallocs memory for delimiter
       char* delim = malloc(sizeof(char)*1);
       if(delim == NULL){
         printf("Bad malloc\n");
         return NULL;
       }
-      char* esc_text = malloc(sizeof(delim)+sizeof(escape)+1);
-      if(esc_text == NULL){
-        printf("Bad malloc\n");
-        return NULL;
-      }
-
       //Loops through file segment to extract token
       for(j = start; j < i; j++){
         token[token_cnt] = fileString[j];
         token_cnt++;
       }
-
       //If token is not empty, inserts to BST
       if(strlen(token) > 0){
         root = insert(token, root);
       }
-
       //Increments starting point for next token
       start = i+1;
 
-      //Inserts delimiter
-      if(currChar == '\n'){
-        delim = "n";
-        strcpy(esc_text, escape);
-        strcat(esc_text, delim);
-        if(strlen(esc_text) > 0){
+      // malloc for escape string
+      char* esc_text = (currChar == ' ') ? (char*)malloc(strlen(escape) * sizeof(char)) : (char*)malloc((strlen(escape)+1) * sizeof(char));
+      if(esc_text == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+      }
+      // Inserts delim
+      if(currChar == ' '){
+          memcpy(esc_text, escape, strlen(escape));
+          root = insert(esc_text, root);
+      }
+      else{
+          if(currChar == '\n'){
+            delim = "n";
+          }
+          else if(currChar == '\t'){
+            delim = "t";
+          }
+          strcpy(esc_text, escape);
+          strcat(esc_text, delim);
+          if(strlen(esc_text) > 0){
           root = insert(esc_text, root);
         }
       }
-      else if(currChar == '\t'){
-        delim = "t";
-        strcpy(esc_text, escape);
-        strcat(esc_text, delim);
-        if(strlen(esc_text) > 0){
-          root = insert(esc_text, root);
-        }
-      }
-      else if(currChar == ' '){
-        root = insert(escape, root);
-      }
-
       free(token);
       free(delim);
       free(esc_text);
@@ -162,10 +157,9 @@ void writeBookToFile(int fd, BSTNode* huffTree){
   }
   // Leaf Node - found token node
   if(huffTree->left == NULL){
-    int size = strlen(huffTree->token) + 1;
     write(fd, huffTree->huffCode, strlen(huffTree->huffCode));
     write(fd, "\t", 1);
-    write(fd, huffTree->token, size);
+    write(fd, huffTree->token, strlen(huffTree->token));
     write(fd, "\n", 1);
     return;
   }

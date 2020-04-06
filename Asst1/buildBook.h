@@ -14,10 +14,10 @@
 #include "minHeap.h"
 #include "huff.h"
 
-BSTNode* addToBook(char* path);
+BSTNode* addToBook(char* path, BSTNode* oldBST);
 void buildCodebook(BSTNode* finalBST);
 char* readFromFile(char* file);
-BSTNode* stringToBST(char* fileString);
+BSTNode* stringToBST(char* fileString, BSTNode* root);
 void writeBookToFile(int fd, BSTNode* huffTree);
 
 BSTNode* bookToBST(char* bookPath);
