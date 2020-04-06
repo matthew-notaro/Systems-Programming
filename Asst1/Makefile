@@ -1,5 +1,5 @@
-all: snippets.c BST.o minHeap.o huff.o buildBook.o
-	gcc -g snippets.c BST.o minHeap.o huff.o buildBook.o -o snippets
+all: fileCompressor.c BST.o minHeap.o huff.o buildBook.o
+	gcc -g fileCompressor.c BST.o minHeap.o huff.o buildBook.o -o fileCompressor
 
 BST.o: BST.c
 	gcc -c BST.c

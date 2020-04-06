@@ -167,3 +167,100 @@ void writeBookToFile(int fd, BSTNode* huffTree){
   writeBookToFile(fd, huffTree->left);
   writeBookToFile(fd, huffTree->right);
 }
+
+
+
+
+BSTNode* bookToBST(char* bookPath){
+  char* bookString = readFromFile(bookPath);
+  BSTNode* root = NULL;
+  int len = strlen(bookString);
+  int start = 0, i = 0, j = 0, k = 0, copyIndex;
+  char* token, *code, *escapeString, *checkEscape;
+
+  // Reads escape string then breaks
+  for(i = 0; i < len; i++){
+    if(bookString[i] == '\n'){
+      escapeString = (char*)malloc(i * sizeof(char));
+      memcpy(escapeString, bookString, i);
+      i++;
+      break;
+    }
+  }
+  start = i;
+  //Loops through bookString starting from 1st char of 1st code
+  for(; i < len; i++){
+    char currChar = bookString[i];
+
+    if(currChar == '\t'){ // extract code that was just passed
+      code = (char*)malloc((i - start) * sizeof(char));
+      copyIndex = 0;
+      // start catch up to i while copying
+      while(start < i){
+        code[copyIndex++] = bookString[start++];
+      }
+      // After copying, start is at index of \t, so start++ to have it point to index of 1st char of token
+      start++;
+    }
+    else if(currChar == '\n'){ // extract token that was just passed
+      token = (char*)malloc((i - start) * sizeof(char));
+      copyIndex = 0;
+      while(start < i){
+        token[copyIndex++] = bookString[start++];
+      }
+      // After copying, start is at index of \t, so start++ to have it point to index of 1st char of token
+      start++;
+      // Check if special char
+      checkEscape = strstr(token, escapeString);
+      if(checkEscape != NULL){ // found special char
+        if(strlen(token) == strlen(escapeString)){ // special char is a space
+          free(token);
+          token = (char*)malloc(sizeof(char));
+          *token = ' ';
+        }
+        else if(strlen(token) == (strlen(escapeString) + 1)){ // special char is not a space
+          char specialChar = token[strlen(escapeString)];
+          free(token);
+          token = (char*)malloc(sizeof(char));
+          switch (specialChar){
+              case 'n': *token = '\n';
+              case 't': *token = '\t';
+          }
+        }
+        else{
+            printf("something bad happened extracting special char from escape char\n");
+        }
+      }
+
+      root = insertCode(0, currChar, token, root);
+    }
+  }
+  return root;
+}
+
+// Inserts huffcode and token into given BST, creating additional placeholder nodes along the way
+// Returns resultant BST
+BSTNode* insertCode(int index, char* codeString, char* token, BSTNode* root){
+    // make new node if not made
+    if(root == NULL){
+      root = (BSTNode*)malloc(sizeof(BSTNode));
+      root->token = "x";
+      root->huffCode = NULL;
+      root->right = NULL;
+      root->left = NULL;
+    }
+    // Insert node in correct space
+    if(index == strlen(codeString)){
+      root->huffCode = codeString;
+      root->token = token;
+      return root;
+    }
+    // Recurse left/right depending on bit at current index
+    if(codeString[index] == '0'){
+      root->left = insertCode(index+1, codeString, token, root->left);
+    }
+    else if(codeString[index] == '1'){
+      root->right = insertCode(index+1, codeString, token, root->right);
+    }
+    return root;
+}

@@ -24,6 +24,7 @@ BSTNode* insert(char* word, BSTNode *root){
         root->left = insert(word, root->left);
     else
         root->right = insert(word, root->right);
+    return root;
 }
 
 // Prints BST inorder

@@ -14,8 +14,8 @@
 #include "buildBook.h"
 
 void doOp();
+void printCodeTree(BSTNode* root);
 
-int i;
 int r_flag = 0;
 char opFlag = '?';
 char* path;
@@ -92,9 +92,10 @@ int main(int argc, char** argv){
 int main(int argc, char** argv){
   // min args - ./file -b <path>, max args - ./file -R -d <path> <codebook>
   if(argc < 3 || argc > 5){
-      return -1;
+    printf("Invalid arguments\n");
+    return -1;
   }
-
+  int i;
   // Find flags and set appropriately
   for(i = 1; i < argc - 1; i++){
     if(strlen(argv[i]) == 2 && argv[i][0] == '-'){ // found a potential flag
@@ -122,7 +123,7 @@ int main(int argc, char** argv){
       return -1;
     }
   }
-  printf("OpFlag: %c, RFlag: %d\n");
+  printf("OpFlag: %c, RFlag: %d\n", opFlag, r_flag);
   /*
   // If recursive flag set, then open given directory and apply operation to each file
   if(r_flag){
@@ -148,17 +149,24 @@ int main(int argc, char** argv){
   // If r not set, just do once
   else{
     doOp();
-  }
-  doOp();
-  */
+  }*/
+  //doOp();
   return 0;
 }
+
+void printCodeTree(BSTNode* root){
+  if(root == NULL) return;
+  printCodeTree(root->left);
+  printf("code: %s\ttoken: %s\n", root->huffCode, root->token);
+  printCodeTree(root->right);
+}
+
 
 // Performs b/c/d based on given operation determined by flag from command line
 void doOp(){
   switch(opFlag){
-    case 'b': build_codebook(path);
-    case 'c': compress(path, codebook);
-    case 'd': decompress(path, codebook);
+    case 'b': buildCodebook(path);
+    //case 'c': compress(path, codebook);
+    //case 'd': decompress(path, codebook);
   }
 }
