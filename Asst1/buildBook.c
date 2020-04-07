@@ -170,10 +170,10 @@ void writeBookToFile(int fd, BSTNode* huffTree){
   writeBookToFile(fd, huffTree->right);
 }
 
-
 BSTNode* bookToBST(char* bookPath){
   char* bookString = readFromFile(bookPath);
-  if(bookString == NULL) return NULL;
+if(bookString == NULL) return NULL;
+printf("after read\n");
   BSTNode* root = NULL;
   int len = strlen(bookString);
   int start = 0, i = 0, j = 0, k = 0, copyIndex;
@@ -182,9 +182,9 @@ BSTNode* bookToBST(char* bookPath){
   // Reads escape string then breaks
   for(i = 0; i < len; i++){
     if(bookString[i] == '\n'){
-      escapeString = (char*)malloc((i+1) * sizeof(char));
-      memset(escapeString, '\0', i+1);
-      memcpy(escapeString, bookString, i);
+      escapeString = (char*)malloc(i * sizeof(char));
+memset(escapeString, '\0', i+1);      
+memcpy(escapeString, bookString, i);
       i++;
       break;
     }
@@ -195,8 +195,8 @@ BSTNode* bookToBST(char* bookPath){
     char currChar = bookString[i];
 
     if(currChar == '\t'){ // extract code that was just passed
-      code = (char*)malloc((i - start + 1) * sizeof(char));
-      memset(code, '\0', i - start + 1);      
+      code = (char*)malloc((i - start +1) * sizeof(char));
+memset(code, '\0', i - start + 1);
       copyIndex = 0;
       // start catch up to i while copying
       while(start < i){
@@ -207,12 +207,12 @@ BSTNode* bookToBST(char* bookPath){
     }
     else if(currChar == '\n'){ // extract token that was just passed
       token = (char*)malloc((i - start + 1) * sizeof(char));
-      memset(token, '\0', i - start + 1);
+memset(token, '\0', i - start + 1);
       copyIndex = 0;
       while(start < i){
         token[copyIndex++] = bookString[start++];
       }
-      // After copying, start is at index of \n, so start++ to have it point to index of 1st char of token
+      // After copying, start is at index of \t, so start++ to have it point to index of 1st char of token
       start++;
       // Check if special char
       checkEscape = strstr(token, escapeString);
@@ -225,16 +225,17 @@ BSTNode* bookToBST(char* bookPath){
         else if(strlen(token) == (strlen(escapeString) + 1)){ // special char is not a space
           char specialChar = token[strlen(escapeString)];
           free(token);
-          token = (char*)malloc(@*sizeof(char));
+          token = (char*)malloc(2*sizeof(char));
           switch (specialChar){
-             case 'n': *token = " n";
-             case 't': *token = " t";
+             case 'n': token = " n";
+             case 't': token = " t";
           }
         }
         else{
             printf("something bad happened extracting special char from escape char\n");
         }
       }
+printf("code: .%s., token: .%s.\n", code, token);
       root = insertCode(0, code, token, root);
     }
   }
