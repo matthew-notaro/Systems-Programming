@@ -113,9 +113,15 @@ void printCodeTree(BSTNode* root){
 // Performs b/c/d based on given operation determined by flag from command line
 void doOp(char* path){
   switch(opFlag){
+<<<<<<< HEAD
     case 'b': {finalBST = addToBook(path, finalBST); break;}
     case 'c': {compress(path, codebook); break;}
     case 'd': {decompress(path, codebook); break;}
+=======
+    case 'b': finalBST = addToBook(path, finalBST); break;
+    case 'c': compress(path, codebook); break;
+    case 'd': decompress(path, codebook); break;
+>>>>>>> 140951943da50c1f5078ba2aae1b8830bf689db2
   }
 }
 
@@ -218,9 +224,8 @@ int compress(char* file, char* codebook)
     char currChar = file_string[i];
 
     //Extracts token
-    if(isspace(currChar) != 0) //Delimiter found
+    if(isspace(currChar) != 0 || i == len-1) //Delimiter found or EOF
     {
-			printf("checkpoint\n");
       //Mallocs space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
       if(token == NULL){
@@ -246,6 +251,8 @@ int compress(char* file, char* codebook)
         token[token_cnt] = file_string[j];
         token_cnt++;
       }
+			
+			printf("token: %s\n", token);
 
       //If token is not empty, find its code in codebook and writes to file
       if(strlen(token) > 0)
@@ -380,7 +387,7 @@ char* getCodeFromBook(char* token, char* codebook)
     //Skips tab so that currCharPtr points to last digit in code
     currCharPtr-=2;
 
-    //Decrements pointer until it passes beginning of codebook
+    //Decrements pointer until it passes beginning of code
     while(currCharPtr[0] >= '0' && currCharPtr[0] <= '9')
     {
       currCharPtr--;
