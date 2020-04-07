@@ -62,11 +62,23 @@ testDir
         test3.txt
 
 Then tested:
-    ./fileCompressor -R -b testDir(exists)
+		./fileCompressor -R -b testDir(exists)
 with easily countable contents of the files and compared the frequencies to the intended frequencies.
+				
+Recursive build:
+		./fileCompressor -R -b testDir(exists)
+with easily countable contents of the files and compared the frequencies to the intended frequencies.
+				
+Recursive compress:
+	 ./fileCompressor -R -c testDir HuffmanCodebook
+Very similar process to single file compress but with multiple files.
+		
+Recursive decompress:
+	 	Very similar process to single file decompress but with multiple files.
+
+
 
 Then tested:
-
 		./fileCompressor -R -c testDir HuffmanCodebook -> Correct ()
 		
 Then tested:
@@ -75,12 +87,3 @@ Then tested:
 		./fileCompressor -R -d testDir HuffmanCodebook -> Correct
 
 
-
-recursive build:
-    /.fileCompressor -R -b testDir(exists)
-with easily countable contents of the files and compared the frequencies to the intended frequencies.
-
-recursive compress:
-    Very similar process to single file compress but with multiple files.
-recursive decompress:
-    Very similar process to single file decompress but with multiple files.
