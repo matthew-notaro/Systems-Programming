@@ -69,7 +69,7 @@ char* path;
       return -1;
     }
   }
-  printf("OpFlag: %c, RFlag: %d\n", opFlag, r_flag);
+  //printf("OpFlag: %c, RFlag: %d\n", opFlag, r_flag);
 
   // If recursive flag set, then open given directory and apply operation to each file
   if(r_flag){
@@ -156,7 +156,7 @@ int decompress(char* file, char* codebook)
 	if(huffTree == NULL)
 		printf("Error: Unable to interpret codebook.");
 
-	printBST(huffTree);
+//printBST(huffTree);
   BSTNode* ptr = huffTree;
   int len = strlen(file_string);
 	char currBit;
@@ -414,7 +414,7 @@ char* getCodeFromBook(char* token, char* codebook)
 	}
 
 	
-	printf("currCharPtr: %s\n", currCharPtr);
+//printf("currCharPtr: %s\n", currCharPtr);
 
   //Token has been found
   if(currCharPtr != NULL)
