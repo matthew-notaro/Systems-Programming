@@ -1,6 +1,15 @@
-<<<<<<< HEAD
 main:
-
+Tested command-line interface's ability to read flags/file names by entering various correct and incorrect series of flags and files that may or may not exist.
+/.fileCompressor -R -b test.txt(exists)         -> Correct
+/.fileCompressor -b -R test.txt(exists)         -> Correct
+/.fileCompressor -R -b test.txt(not exist)      -> Fatal Error: File does not exist.
+/.fileCompressor -R -r test.txt                 -> Invalid flag
+/.fileCompressor -b -c test.txt(not exist)      -> Invalid flag
+/.fileCompressor -c test.txt HuffmanCodebook    -> Input correct book
+/.fileCompressor -c HuffmanCodebook test.txt    -> Correct
+/.fileCompressor -R -R test.txt                 -> Operation not specified
+/.fileCompressor -c test.txt                    -> Not enough arguments
+/.fileCompressor -d test.txt                    -> Not enough arguments
 
 
 
@@ -23,6 +32,3 @@ recursive flag:
 
 
 
-=======
-1. 
->>>>>>> 229132e2dc43345606c8dadec09a6b2c286ae42d

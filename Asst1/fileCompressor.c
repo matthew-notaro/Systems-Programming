@@ -55,6 +55,15 @@ char* path;
         return -1;
       }
     }
+    if(opFlag != 'b' && !(strcmp(codebook, "HuffmanCodebook") == 0 ||
+      strcmp(codebook, "./HuffmanCodebook") == 0)){
+      printf("Input correct book\n");
+      return -1;
+    }
+    if(opFlag != 'b' && argc < 4){
+      printf("Not enough arguments\n");
+      return -1;
+    }
     else if(opFlag == '?'){ // no opFlag found
       printf("Operation not specified\n");
       return -1;
