@@ -183,8 +183,8 @@ printf("after read\n");
   for(i = 0; i < len; i++){
     if(bookString[i] == '\n'){
       escapeString = (char*)malloc(i * sizeof(char));
-memset(escapeString, '\0', i+1);      
-memcpy(escapeString, bookString, i);
+      memset(escapeString, '\0', i+1);      
+      memcpy(escapeString, bookString, i);
       i++;
       break;
     }
@@ -196,7 +196,7 @@ memcpy(escapeString, bookString, i);
 
     if(currChar == '\t'){ // extract code that was just passed
       code = (char*)malloc((i - start +1) * sizeof(char));
-memset(code, '\0', i - start + 1);
+      memset(code, '\0', i - start + 1);
       copyIndex = 0;
       // start catch up to i while copying
       while(start < i){
