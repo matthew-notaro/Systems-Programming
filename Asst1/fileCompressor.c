@@ -98,7 +98,6 @@ void recursion(char* name){
   struct dirent* currentThing = NULL;
   readdir(currentDir);
   readdir(currentDir);
-  currentThing = readdir(currentDir);
   while((currentThing = readdir(currentDir)) != NULL){
     char buff[1024];
     snprintf(buff, sizeof(buff), "%s/%s", name, currentThing->d_name);

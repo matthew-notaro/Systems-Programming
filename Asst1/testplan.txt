@@ -12,10 +12,10 @@ Tested command-line interface's ability to read flags/file names by entering var
 /.fileCompressor -d test.txt                    -> Not enough arguments
 
 
-
 build:
-
-
+Individually tested functions (BST: insert | Heap: heapify, delete, etc. | Huffman: encode) by passing in correctly formatted parameter data structures 
+    and analyzing the result with the intented result. 
+Tested a variety of test text files: empty, 
 
 
 compress:
@@ -31,6 +31,15 @@ decompress:
 
 
 recursive flag:
+First tested recursively reading the names of all of the files in a given directory containing:
+testDir
+    test1.txt
+    test2.txt
+    testSubDir
+        test3.txt
 
+Then tested:
+    /.fileCompressor -R -b testDir(exists)
+with easily countable contents of the files and compared the frequencies to the intended frequencies.
 
 
