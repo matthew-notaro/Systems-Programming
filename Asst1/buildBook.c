@@ -225,7 +225,7 @@ BSTNode* bookToBST(char* bookPath){
         else if(strlen(token) == (strlen(escapeString) + 1)){ // special char is not a space
           char specialChar = token[strlen(escapeString)];
           free(token);
-          token = (char*)malloc(@*sizeof(char));
+          token = (char*)malloc(2*sizeof(char));
           switch (specialChar){
              case 'n': *token = " n";
              case 't': *token = " t";

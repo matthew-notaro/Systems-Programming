@@ -255,6 +255,9 @@ int compress(char* file, char* codebook)
         token_cnt++;
       }
 			
+			if(i == len-1)
+				token[token_cnt] = file_string[len-1];
+			
 			printf("token: %s\n", token);
 
       //If token is not empty, find its code in codebook and writes to file
@@ -301,13 +304,12 @@ int compress(char* file, char* codebook)
 char* getCodeFromBook(char* token, char* codebook)
 {
   int i = 0, count = 0;
-  char* currCharPtr = NULL;
-  char* code = NULL;
+  char* currCharPtr = NULL, *code = NULL, *check = NULL;
 
   //Special case: token is a delimiter
   if(isspace(token[0]) != 0)
   {
-    char* esc_token = NULL, *escape = NULL, *codebookPtr = NULL, *delim_check = NULL;
+    char* esc_token = NULL, *escape = NULL, *codebookPtr = NULL;
     char* delim = malloc(sizeof(char));
     if(delim == NULL){
       printf("Bad malloc\n");
@@ -370,20 +372,37 @@ char* getCodeFromBook(char* token, char* codebook)
     //Checks delimiter
       //Since ' ' is represented by the escape character alone,
       //currCharPtr may be pointing to the wrong delimiter
-    delim_check = currCharPtr+strlen(esc_token);
-    if(isspace(delim_check[0]) == 0)
+    check = currCharPtr+strlen(esc_token);
+    if(isspace(check[0]) == 0)
     {
-      while(isspace(delim_check[0]) == 0)
+      while(isspace(check[0]) == 0)
       {
         //Finds next token within codebook, checks until correct token found
-        currCharPtr = strstr(delim_check, esc_token);
-        delim_check = currCharPtr+strlen(esc_token);
+        currCharPtr = strstr(check, esc_token);
+        check = currCharPtr+strlen(esc_token);
       }
     }
     free(escape);
   }
   else
-    currCharPtr = strstr(codebook, token); //Finds token within codebook
+	{
+		currCharPtr = strstr(codebook, token); //Finds token within codebook
+
+		//Checks token to make sure it is not part of another token
+    check = currCharPtr+strlen(token);
+    if(isspace(check[0]) == 0)
+    {
+      while(isspace(check[0]) == 0)
+      {
+        //Finds next token within codebook, checks until correct token found
+        currCharPtr = strstr(check, token);
+        check = currCharPtr+strlen(token);
+      }
+    }
+	}
+
+	
+	printf("currCharPtr: %s\n", currCharPtr);
 
   //Token has been found
   if(currCharPtr != NULL)
@@ -396,8 +415,6 @@ char* getCodeFromBook(char* token, char* codebook)
     {
       currCharPtr--;
       count++;
-			printf("count %d\n", count);
-			
     }
 
     //Sets currCharPtr to first digit of code
