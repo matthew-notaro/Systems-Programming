@@ -271,7 +271,7 @@ int compress(char* file, char* codebook)
 
       //Gets delimiter's corresponding code and writes to file
       code = getCodeFromBook(delim, cb_string);
-      codeSize = strlen(code)+1;
+      codeSize = strlen(code);
 			printf("code: %s\n", code);
       write(fd, code, codeSize);
 
@@ -343,6 +343,7 @@ char* getCodeFromBook(char* token, char* codebook)
     else if(token[0] == '\t')
     {
       size = strlen(escape)+2;
+			esc_token = malloc(size);
       if(esc_token == NULL){
         printf("Bad malloc\n");
         return NULL;
@@ -386,6 +387,8 @@ char* getCodeFromBook(char* token, char* codebook)
     {
       currCharPtr--;
       count++;
+			printf("count %d\n", count);
+			
     }
 
     //Sets currCharPtr to first digit of code
@@ -393,6 +396,7 @@ char* getCodeFromBook(char* token, char* codebook)
 
     //Mallocs space for code string
     code = malloc(count+1);
+		memset(code, '\0', count+1);
     for(i = 0; i < count; i++)
     {
       code[i] = currCharPtr[i];
