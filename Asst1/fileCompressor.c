@@ -13,7 +13,8 @@
 #include "huff.h"
 #include "buildBook.h"
 
-void doOp();
+void doOp(char* path);
+void recursion(char* file);
 void printCodeTree(BSTNode* root);
 int compress(char* file, char* codebook);
 int decompress(char* file, char* codebook);
@@ -21,7 +22,6 @@ char* getCodeFromBook(char* token, char* codebook);
 
 int r_flag = 0;
 char opFlag = '?';
-char* path;
 char* codebook;
 BSTNode* finalBST = NULL;
 
@@ -32,6 +32,7 @@ int main(int argc, char** argv){
     return -1;
   }
   int i;
+char* path;
   // Find flags and set appropriately
   for(i = 1; i < argc - 1; i++){
     if(strlen(argv[i]) == 2 && argv[i][0] == '-'){ // found a potential flag
@@ -63,24 +64,7 @@ int main(int argc, char** argv){
 
   // If recursive flag set, then open given directory and apply operation to each file
   if(r_flag){
-    DIR* currentDir = opendir(path);
-    if(currentDir == NULL){
-      printf("Error: invalid path\n");
-      return -1;
-    }
-    struct dirent* currentThing = NULL;
-    readdir(currentDir);
-    readdir(currentDir);
-    currentThing = readdir(currentDir);
-    while(currentThing != NULL){
-      if(currentThing->d_type == DT_REG){
-        doOp();
-      }
-      else if(currentThing->d_type == DT_DIR){
-        // do nothing?
-      }
-      currentThing = readdir(currentDir);
-    }
+    recursion(path);
   }
   // If r not set, just do once
   else{
@@ -96,6 +80,29 @@ int main(int argc, char** argv){
   return 0;
 }
 
+void recursion(char* name){
+  DIR* currentDir = opendir(name);
+    if(currentDir == NULL){
+    printf("Error: invalid path\n");
+    return;
+  }
+  struct dirent* currentThing = NULL;
+  readdir(currentDir);
+  readdir(currentDir);
+  currentThing = readdir(currentDir);
+  while((currentThing = readdir(currentDir)) != NULL){
+    char buff[1024];
+    snprintf(buff, sizeof(buff), "%s/%s", name, currentThing->d_name);
+    if(currentThing->d_type == DT_REG){
+      doOp(buff);
+    }
+    else if(currentThing->d_type == DT_DIR){
+      recursion(buff);
+    }
+  }
+  closedir(dir);
+}
+
 void printCodeTree(BSTNode* root){
   if(root == NULL) return;
   printCodeTree(root->left);
@@ -104,11 +111,11 @@ void printCodeTree(BSTNode* root){
 }
 
 // Performs b/c/d based on given operation determined by flag from command line
-void doOp(){
+void doOp(char* path){
   switch(opFlag){
-    case 'b': finalBST = addToBook(path, finalBST);
-    case 'c': compress(path, codebook);
-    case 'd': decompress(path, codebook);
+    case 'b': {finalBST = addToBook(path, finalBST); break;}
+    case 'c': {compress(path, codebook); break;}
+    case 'd': {decompress(path, codebook); break;}
   }
 }
 
