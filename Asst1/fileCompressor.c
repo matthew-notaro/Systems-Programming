@@ -68,7 +68,7 @@ char* path;
   }
   // If r not set, just do once
   else{
-    doOp();
+    doOp(path);
   }
   if(opFlag == 'b'){
     buildCodebook(finalBST);
@@ -100,7 +100,7 @@ void recursion(char* name){
       recursion(buff);
     }
   }
-  closedir(dir);
+  closedir(currentDir);
 }
 
 void printCodeTree(BSTNode* root){
@@ -113,15 +113,9 @@ void printCodeTree(BSTNode* root){
 // Performs b/c/d based on given operation determined by flag from command line
 void doOp(char* path){
   switch(opFlag){
-<<<<<<< HEAD
     case 'b': {finalBST = addToBook(path, finalBST); break;}
     case 'c': {compress(path, codebook); break;}
     case 'd': {decompress(path, codebook); break;}
-=======
-    case 'b': finalBST = addToBook(path, finalBST); break;
-    case 'c': compress(path, codebook); break;
-    case 'd': decompress(path, codebook); break;
->>>>>>> 140951943da50c1f5078ba2aae1b8830bf689db2
   }
 }
 
