@@ -148,6 +148,7 @@ int decompress(char* file, char* codebook)
 	if(huffTree == NULL)
 		printf("Error: Unable to interpret codebook.");
 
+	printBST(huffTree);
   BSTNode* ptr = huffTree;
   int len = strlen(file_string);
 	char currBit;
@@ -157,9 +158,15 @@ int decompress(char* file, char* codebook)
   {
 		//Traverses Huffman Tree according to bit until leaf node is reachedß
 		if(file_string[i] == '0')
-       ptr = ptr->left;
+		{
+			ptr = ptr->left;
+			printf("LEFT\n");
+		}
   	else if(file_string[i] == '1')
-       ptr = ptr->right;
+		{
+			ptr = ptr->right;
+			printf("RIGHT\n");
+		}
 		if(ptr->left == NULL && ptr->right == NULL)
 		{
 			//Token found; write to file
@@ -179,7 +186,7 @@ int decompress(char* file, char* codebook)
 			else
 			{
 				tokenSize = strlen(ptr->token) + 1;
-				//printf("%s\n", ptr->token);
+				printf("%s\n", ptr->token);
 				write(fd, ptr->token, tokenSize);
 				ptr = huffTree;
 			}
