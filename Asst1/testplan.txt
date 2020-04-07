@@ -52,6 +52,9 @@ Then tested:
 with easily countable contents of the files and compared the frequencies to the intended frequencies.
 
 Then tested:
-
-
-
+		./fileCompressor -R -c testDir HuffmanCodebook -> Correct ()
+		
+Then tested:
+		./fileCompressor -R -d testDir HuffmanCodebook -> Correct
+		./fileCompressor -R -d testDir HuffmanCodebook -> Correct
+		./fileCompressor -R -d testDir HuffmanCodebook -> Correct
