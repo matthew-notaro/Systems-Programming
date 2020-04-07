@@ -179,6 +179,7 @@ int decompress(char* file, char* codebook)
 			else
 			{
 				tokenSize = strlen(ptr->token) + 1;
+				//printf("%s\n", ptr->token);
 				write(fd, ptr->token, tokenSize);
 				ptr = huffTree;
 			}
