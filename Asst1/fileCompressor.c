@@ -165,6 +165,7 @@ int decompress(char* file, char* codebook)
 	//Loops through each bit in compressed file
   for(i = 0; i < len; i++)
   {
+		printf("i %d len %d", i, len);
 		//Traverses Huffman Tree according to bit until leaf node is reachedß
 		if(file_string[i] == '0')
 		{
