@@ -19,9 +19,11 @@ build:
 
 
 compress:
-
-
-
+Tested how 
+./fileCompressor -c test.txt HuffmanCodebook		->
+./fileCompressor -c test.txt HuffmanCodebook		->
+./fileCompressor -c test.txt HuffmanCodebook		->
+./fileCompressor -c test.txt HuffmanCodebook		->
 
 decompress:
 
