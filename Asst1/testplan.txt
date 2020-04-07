@@ -1,34 +1,43 @@
 main:
 Tested command-line interface's ability to read flags/file names by entering various correct and incorrect series of flags and files that may or may not exist.
-/.fileCompressor -R -b test.txt(exists)         -> Correct
-/.fileCompressor -b -R test.txt(exists)         -> Correct
-/.fileCompressor -R -b test.txt(not exist)      -> Fatal Error: File does not exist.
-/.fileCompressor -R -r test.txt                 -> Invalid flag
-/.fileCompressor -b -c test.txt(not exist)      -> Invalid flag
-/.fileCompressor -c test.txt HuffmanCodebook    -> Input correct book
-/.fileCompressor -c HuffmanCodebook test.txt    -> Correct
-/.fileCompressor -R -R test.txt                 -> Operation not specified
-/.fileCompressor -c test.txt                    -> Not enough arguments
-/.fileCompressor -d test.txt                    -> Not enough arguments
+./fileCompressor -R -b test.txt(exists)         -> Correct
+./fileCompressor -b -R test.txt(exists)         -> Correct
+./fileCompressor -R -b test.txt(not exist)      -> Fatal Error: File does not exist.
+./fileCompressor -R -r test.txt                 -> Invalid flag
+./fileCompressor -b -c test.txt(not exist)      -> Invalid flag
+./fileCompressor -c HuffmanCodebook test.txt    -> Input correct book
+./fileCompressor -c test.txt HuffmanCodebook    -> Correct
+./fileCompressor -R -R test.txt                 -> Operation not specified
+./fileCompressor -c test.txt                    -> Not enough arguments
+./fileCompressor -d test.txt                    -> Not enough arguments
 
 
 build:
 Individually tested functions (BST: insert | Heap: heapify, delete, etc. | Huffman: encode) by passing in correctly formatted parameter data structures 
-    and analyzing the result with the intented result. 
+    and analyzing the result with the intended result. 
 Tested a variety of test text files: empty, 
 
 
 compress:
-Tested how 
-./fileCompressor -c test.txt HuffmanCodebook		->
-./fileCompressor -c test.txt HuffmanCodebook		->
-./fileCompressor -c test.txt HuffmanCodebook		->
-./fileCompressor -c test.txt HuffmanCodebook		->
+Tested how program would react to errors in the codebook
+./fileCompressor -c test.txt HuffmanCodebook (formatted incorrectly)	    		 	 -> Error: Unable to interpret codebook.
+./fileCompressor -c test.txt HuffmanCodebook (missing codes)					   				 -> Error: Code not found.
+Tested how program would react to variation in the file
+./fileCompressor -c test.txt HuffmanCodebook (contains only delimiters) 				 -> Correct
+./fileCompressor -c test.txt HuffmanCodebook (contains single-character tokens)  -> Correct
+./fileCompressor -c test.txt HuffmanCodebook (contains one token) 							 -> Correct
+./fileCompressor -c test.txt HuffmanCodebook (contains unique & repeated tokens) -> Correct
+./fileCompressor -c test.txt HuffmanCodebook (contains one token, repeated) 		 -> Correct
+./fileCompressor -c test.txt HuffmanCodebook (empty) 														 -> Correct (creates empty file)
 
 decompress:
-
-
-
+Tested how program would react to errors in the codebook
+./fileCompressor -d test.txt.hcz HuffmanCodebook (formatted incorrectly)	    			 -> Error: Unable to interpret codebook.
+./fileCompressor -d test.txt.hcz HuffmanCodebook (missing codes)										 -> Error: Code not found.
+Tested how program would react to variation in the file
+./fileCompressor -d test.txt.hcz HuffmanCodebook (contains codes found in book) 		 -> Correct
+./fileCompressor -d test.txt.hcz HuffmanCodebook (contains chars other than 1 and 0) -> Error: File formatted incorrectly
+./fileCompressor -d test.txt.hcz HuffmanCodebook (contains codes not in tree)	 			 -> Error: Code not found.
 
 recursive flag:
 First tested recursively reading the names of all of the files in a given directory containing:
@@ -39,7 +48,10 @@ testDir
         test3.txt
 
 Then tested:
-    /.fileCompressor -R -b testDir(exists)
+    ./fileCompressor -R -b testDir(exists)
 with easily countable contents of the files and compared the frequencies to the intended frequencies.
+
+Then tested:
+
 
 

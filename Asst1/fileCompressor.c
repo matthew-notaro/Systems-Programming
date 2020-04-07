@@ -173,6 +173,11 @@ int decompress(char* file, char* codebook)
 		{
 			ptr = ptr->right;
 		}
+		else
+		{
+			printf("Error: File formatted incorrectly.");
+			return -1;
+		}
 		if(ptr->left == NULL && ptr->right == NULL)
 		{
 			//Token found; write to file
@@ -225,6 +230,11 @@ int compress(char* file, char* codebook)
     printf("File does not exist.\n"); 
     return -1;
   }
+	
+	//Builds Huffman Tree using given codebook to check correct formatting
+  BSTNode* huffTree = bookToBST(codebook);
+	if(huffTree == NULL)
+		printf("Error: Unable to interpret codebook.");
 
   //Reads given file and codebook into strings
   char* file_string = readFromFile(file);
@@ -268,16 +278,13 @@ int compress(char* file, char* codebook)
       }
 			
 			if(i == len-1)
-				token[token_cnt] = file_string[len-1];
-			
-			printf("token: %s\n", token);
+				token[token_cnt] = file_string[len-1];	
 
       //If token is not empty, find its code in codebook and writes to file
       if(strlen(token) > 0)
       {
         code = getCodeFromBook(token, cb_string);
         codeSize = strlen(code)+1;
-				printf("code: %s\n", code);
         write(fd, code, codeSize);
       }
 
@@ -296,7 +303,6 @@ int compress(char* file, char* codebook)
       //Gets delimiter's corresponding code and writes to file
       code = getCodeFromBook(delim, cb_string);
       codeSize = strlen(code);
-			printf("code: %s\n", code);
       write(fd, code, codeSize);
 
       free(token);
@@ -413,8 +419,6 @@ char* getCodeFromBook(char* token, char* codebook)
     }
 	}
 
-	
-	printf("currCharPtr: %s\n", currCharPtr);
 
   //Token has been found
   if(currCharPtr != NULL)
@@ -441,7 +445,7 @@ char* getCodeFromBook(char* token, char* codebook)
     }
   }
   else
-    printf("Error: code not found.\n");
+    printf("Error: Code not found.\n");
 
   return code;
 }
