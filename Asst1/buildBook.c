@@ -16,9 +16,8 @@ BSTNode* addToBook(char* path, BSTNode* oldBST){
 
 // Given BST with data from all files, creates codebook
 void buildCodebook(BSTNode* finalBST){
-
     heapNode** heap = BSTToHeap(finalBST);          // BST -> heap
-//    printHeap(heap);
+ //    printHeap(heap);
     huffEncode(heap);                               // heap -> huffman tree contained in heap[0]->root
 
     int huffFD = open("./HuffmanCodebook", O_WRONLY | O_CREAT | O_APPEND, 00600);
@@ -182,7 +181,8 @@ BSTNode* bookToBST(char* bookPath){
   // Reads escape string then breaks
   for(i = 0; i < len; i++){
     if(bookString[i] == '\n'){
-      escapeString = (char*)malloc(i * sizeof(char));
+      escapeString = (char*)malloc((i+1) * sizeof(char));
+      memset(escapeString, '\0', i+1);
       memcpy(escapeString, bookString, i);
       i++;
       break;
@@ -194,7 +194,8 @@ BSTNode* bookToBST(char* bookPath){
     char currChar = bookString[i];
 
     if(currChar == '\t'){ // extract code that was just passed
-      code = (char*)malloc((i - start) * sizeof(char));
+      code = (char*)malloc((i - start + 1) * sizeof(char));
+      memset(code, '\0', i - start + 1);      
       copyIndex = 0;
       // start catch up to i while copying
       while(start < i){
@@ -204,12 +205,13 @@ BSTNode* bookToBST(char* bookPath){
       start++;
     }
     else if(currChar == '\n'){ // extract token that was just passed
-      token = (char*)malloc((i - start) * sizeof(char));
+      token = (char*)malloc((i - start + 1) * sizeof(char));
+      memset(token, '\0', i - start + 1);
       copyIndex = 0;
       while(start < i){
         token[copyIndex++] = bookString[start++];
       }
-      // After copying, start is at index of \t, so start++ to have it point to index of 1st char of token
+      // After copying, start is at index of \n, so start++ to have it point to index of 1st char of token
       start++;
       // Check if special char
       checkEscape = strstr(token, escapeString);
