@@ -211,7 +211,7 @@ int compress(char* file, char* codebook)
     char currChar = file_string[i];
 
     //Extracts token
-    if(isspace(currChar) != 0) //Delimiter found
+    if(isspace(currChar) != 0 || i == len-1) //Delimiter found or EOF
     {
       //Mallocs space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
@@ -238,6 +238,8 @@ int compress(char* file, char* codebook)
         token[token_cnt] = file_string[j];
         token_cnt++;
       }
+			
+			printf("token: %s\n", token);
 
       //If token is not empty, find its code in codebook and writes to file
       if(strlen(token) > 0)
@@ -372,7 +374,7 @@ char* getCodeFromBook(char* token, char* codebook)
     //Skips tab so that currCharPtr points to last digit in code
     currCharPtr-=2;
 
-    //Decrements pointer until it passes beginning of codebook
+    //Decrements pointer until it passes beginning of code
     while(currCharPtr[0] >= '0' && currCharPtr[0] <= '9')
     {
       currCharPtr--;

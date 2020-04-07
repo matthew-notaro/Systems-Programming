@@ -1,6 +1,6 @@
 #include "buildBook.h"
 
-char* escape = "$420$\0";
+char* escape = "$$$\0";
 
 // Returns updated BST after inserting file's contents
 BSTNode* addToBook(char* path, BSTNode* oldBST){
