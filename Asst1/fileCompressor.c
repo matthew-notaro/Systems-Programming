@@ -165,17 +165,14 @@ int decompress(char* file, char* codebook)
 	//Loops through each bit in compressed file
   for(i = 0; i < len; i++)
   {
-		printf("i %d len %d", i, len);
 		//Traverses Huffman Tree according to bit until leaf node is reachedß
 		if(file_string[i] == '0')
 		{
 			ptr = ptr->left;
-			printf("LEFT\n");
 		}
   	else if(file_string[i] == '1')
 		{
 			ptr = ptr->right;
-			printf("RIGHT\n");
 		}
 		if(ptr->left == NULL && ptr->right == NULL)
 		{
@@ -196,7 +193,6 @@ int decompress(char* file, char* codebook)
 			else
 			{
 				tokenSize = strlen(ptr->token) + 1;
-				printf("%s\n", ptr->token);
 				write(fd, ptr->token, tokenSize);
 				ptr = huffTree;
 			}
