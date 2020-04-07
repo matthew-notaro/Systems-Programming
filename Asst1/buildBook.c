@@ -220,15 +220,15 @@ memset(token, '\0', i - start + 1);
         if(strlen(token) == strlen(escapeString)){ // special char is a space
           free(token);
           token = (char*)malloc(sizeof(char));
-          *token = ' ';
+          token = " ";
         }
         else if(strlen(token) == (strlen(escapeString) + 1)){ // special char is not a space
           char specialChar = token[strlen(escapeString)];
           free(token);
           token = (char*)malloc(2*sizeof(char));
           switch (specialChar){
-             case 'n': token = " n";
-             case 't': token = " t";
+             case 'n': token = " n"; break;
+             case 't': token = " t"; break;
           }
         }
         else{
