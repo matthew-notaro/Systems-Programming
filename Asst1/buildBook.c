@@ -173,6 +173,7 @@ void writeBookToFile(int fd, BSTNode* huffTree){
 
 BSTNode* bookToBST(char* bookPath){
   char* bookString = readFromFile(bookPath);
+  if(bookString == NULL) return NULL;
   BSTNode* root = NULL;
   int len = strlen(bookString);
   int start = 0, i = 0, j = 0, k = 0, copyIndex;
@@ -224,10 +225,10 @@ BSTNode* bookToBST(char* bookPath){
         else if(strlen(token) == (strlen(escapeString) + 1)){ // special char is not a space
           char specialChar = token[strlen(escapeString)];
           free(token);
-          token = (char*)malloc(sizeof(char));
+          token = (char*)malloc(@*sizeof(char));
           switch (specialChar){
-             case 'n': *token = '\n';
-             case 't': *token = '\t';
+             case 'n': *token = " n";
+             case 't': *token = " t";
           }
         }
         else{

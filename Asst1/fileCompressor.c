@@ -135,10 +135,14 @@ int decompress(char* file, char* codebook)
 
   //Opens new file
   int fd = open(newFileName, O_RDWR|O_CREAT|O_APPEND, 00600); //create new file
-
+  if(fd < 0){
+    printf("File does not exist.\n"); 
+    return -1;
+  }
   //Reads given file into string
   char* file_string = readFromFile(file);
-
+  if(file_string == NULL) 
+    return -1;
   //Builds Huffman Tree using given codebook
   BSTNode* huffTree = bookToBST(codebook);
 	if(huffTree == NULL)
@@ -204,6 +208,10 @@ int compress(char* file, char* codebook)
 
   //Opens new file
   int fd = open(newFileName, O_RDWR|O_CREAT|O_APPEND, 00600); //create new file
+  if(fd < 0){
+    printf("File does not exist.\n"); 
+    return -1;
+  }
 
   //Reads given file and codebook into strings
   char* file_string = readFromFile(file);
