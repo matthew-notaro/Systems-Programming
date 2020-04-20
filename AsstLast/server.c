@@ -21,11 +21,11 @@ int main(int argc, char** argv){
 		printf("ERROR: Socket does not exist.\n");
 	}
  
-  bzero( &serverAddressInfo, sizeof(serverAddressInfo));
+  bzero(&serverAddressInfo, sizeof(serverAddressInfo));
  
   serverAddressInfo.sin_family = AF_INET;
   serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
-  serverAddressInfo.sin_port = htons(22000);
+  serverAddressInfo.sin_port = htons(7621);
     
   bind(sockfd, (struct sockaddr *) &serverAddressInfo, sizeof(serverAddressInfo));
  
@@ -33,7 +33,7 @@ int main(int argc, char** argv){
     
   cxn_fd = accept(sockfd, (struct sockaddr*) NULL, NULL);
     
-  
+
 }
 
 
