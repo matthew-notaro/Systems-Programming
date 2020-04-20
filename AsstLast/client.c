@@ -25,8 +25,3 @@ int main(int argc, char **argv) {
 		connect(sockfd, &serverAddress, sizeof(serverAddress));
 		
 }
-
-
-
-
-
