@@ -5,10 +5,18 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <arpa/inet.h>
+//#include <arpa/inet.h>
 
-int main(int argc, char** argv){
+int connectToClient();
 
+int main(int argc, char** argv)
+{
+
+
+}
+
+int connectToClient()
+{
 	char buffer[256];
   int sockfd, bindSocket, listen, newsockfd;
   struct sockaddr_in serverAddressInfo;
