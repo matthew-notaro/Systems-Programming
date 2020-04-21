@@ -7,12 +7,12 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-
 int main(int argc, char** argv){
 
 	char buffer[256];
-  int sockfd, cxnfd, bindSocket, listen;
+  int sockfd, bindSocket, listen, newsockfd;
   struct sockaddr_in serverAddressInfo;
+	struct sockaddr_in clientAddressInfo;
     
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
@@ -34,15 +34,17 @@ int main(int argc, char** argv){
 	
 	if(listen < 0)
 		printf("ERROR: Could not listen.\n");
-    
-  cxnfd = accept(sockfd, (struct sockaddr*) &serverAddressInfo, sizeof(serverAddressInfo));
-	
-	if(cxnfd < 0)
-		printf("ERROR: No socket.\n");
  
 	// keep running until listening stops
 	while(1)
 	{
-
+		newsockfd = accept(sockfd, (struct sockaddr*) &clientAddressInfo, sizeof(clientAddressInfo));
+		
+		if(cxnfd < 0)
+			printf("ERROR: Socket not accepted.\n");
+			
+		//pthread_create
+		//pthread_join
+		
 	}
 }
