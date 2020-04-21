@@ -16,13 +16,16 @@ int main(int argc, char **argv)
 		return 0;
 }
 
-int configure()
+int configure(int portnum, char* IPAddress)
 {
-	
+	//write to ./.configure
+	return 0;
 }
 
 int connectToServer()
 {
+	//all from my notes lmao 
+	
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
 	struct hostent* result = gethostbyname();
