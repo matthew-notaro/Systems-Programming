@@ -35,7 +35,7 @@ int configure(char* IPAddress, char* portNum)
 	portNumSize = strlen(portNum) + 1;
 	
 	write(fd, IPAddress, IPAddressSize);
-	write(fd, " ", 1);
+	write(fd, "	", sizeof(char)*1);
 	write(fd, portNum, portNumSize);
 
 	return 0;
