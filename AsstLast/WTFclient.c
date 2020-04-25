@@ -35,31 +35,41 @@ int configure(char* IPAddress, char* portNum)
 	portNumSize = strlen(portNum) + 1;
 	
 	write(fd, IPAddress, IPAddressSize);
-	write(fd, " ", 1);
+	write(fd, "	", sizeof(char)*1);
 	write(fd, portNum, portNumSize);
 
 	return 0;
 }
 
-/*int connectToServer()
+int connectToServer(int port)
 {
-	//all from my notes lmao 
-	
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	int cxn_status = 0;
 	
-	struct hostent* result = gethostbyname();
+	if(sockfd < 0)
+	{
+		printf("ERROR\n");
+		return -1;
+	}
+		
+	struct hostent* hostIP = gethostbyname();
+	struct sockaddr_in serverAddressInfo;
 	
-	struct sockaddr_in serverAddress;
-	
-	bzero(&serverAddress, sizeof(serverAddress));
+	bzero(&serverAddressInfo, sizeof(serverAddressInfo));
 	
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
-	serverAddressInfo.sin_port = htons(7621);
+	serverAddressInfo.sin_port = htons(port);
 	
-	bcopy((char*)result->h_addr, (char*)&serverAddress.sin_addr.s_addr, result->addr_length);
+	bcopy((char*)hostIP->h_addr, (char*)&serverAddressInfo.sin_addr.s_addr, hostIP->h_length);
 	
-	connect(sockfd, &serverAddress, sizeof(serverAddress));
+	cxn_status = connect(sockfd, &serverAddressInfo, sizeof(serverAddressInfo));
+	
+	if(cxn_status < 0)
+	{
+		printf("ERROR\n");
+		return -1;
+	}
 	
 	return 0;
-}*/
+}
