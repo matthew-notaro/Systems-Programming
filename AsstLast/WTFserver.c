@@ -5,6 +5,8 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <strings.h>
+
 //#include <arpa/inet.h>
 
 #define PORT 42069
@@ -12,6 +14,7 @@
 int connectToClient();
 
 int main(int argc, char **argv){
+	connectToClient();
 	return 0;
 }
 
