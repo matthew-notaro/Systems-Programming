@@ -1,4 +1,4 @@
-#include <stdio.h>
+host#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -15,7 +15,7 @@ int configure(char* IPAddress, char* portNum);
 int main(int argc, char **argv) 
 {
 	char* op = argv[0];
-	
+	connectToServer();
 	return 0;
 }
 
@@ -52,20 +52,20 @@ int connectToServer()
 		printf("ERROR\n");
 		return -1;
 	}
-		
-	struct hostent* hostIP = gethostbyname((char*)PORT);
+	struct hostent* host = gethostbyname("127.0.0.1");
 	struct sockaddr_in serverAddressInfo;
-	
+
 	bzero((char*)&serverAddressInfo, sizeof(serverAddressInfo));
 	
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
 	serverAddressInfo.sin_port = htons(PORT);
 	
-	bcopy((char*)hostIP->h_addr, (char*)&serverAddressInfo.sin_addr.s_addr, hostIP->h_length);
+	bcopy((char*)bost->h_addr, (char*)&serverAddressInfo.sin_addr.s_addr, host->h_length);
+	
 	
 	cxn_status = connect(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo));
-	
+	printf("%d\n", cxn_status);
 	if(cxn_status < 0)
 	{
 		printf("ERROR\n");
