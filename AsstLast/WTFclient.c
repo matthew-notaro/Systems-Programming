@@ -41,7 +41,7 @@ int configure(char* IPAddress, char* portNum)
 	return 0;
 }
 
-/*int connectToServer()
+int connectToServer()
 {
 	//all from my notes lmao 
 	
@@ -62,4 +62,4 @@ int configure(char* IPAddress, char* portNum)
 	connect(sockfd, &serverAddress, sizeof(serverAddress));
 	
 	return 0;
-}*/
+}
