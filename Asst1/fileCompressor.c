@@ -248,9 +248,24 @@ int compress(char* file, char* codebook)
   for(i = 0; i < len; i++)
   {
     char currChar = file_string[i];
+    if(isspace(currChar)){
+      //Convert delimiter char to a string
+      char* delim = malloc(sizeof(char)+1);
+      if(delim == NULL){
+        printf("Bad malloc\n");
+        return -1;
+      }
+      memset(delim, '\0', (sizeof(char)+1));
+      delim[0] = currChar;
+
+      //Gets delimiter's corresponding code and writes to file
+      char* code = getCodeFromBook(delim, cb_string);
+      int codeSize = strlen(code);
+      write(fd, code, codeSize);
+    }
 
     //Extracts token
-    if(isspace(currChar) != 0 || i == len-1) //Delimiter found or EOF
+    else if(i+1==len || isspace(fileString[i+1])) //Delimiter found or EOF
     {
       //Mallocs space to hold substr from start to location of delimiter, +1 for '\0'
       char* token = (char*)malloc(i-start+1);
@@ -261,25 +276,14 @@ int compress(char* file, char* codebook)
       memset(token, '\0', i-start+1);
       int token_cnt = 0;
 
-      //Mallocs memory for delimiter and escape string
-      char* delim = malloc(sizeof(char)*1);
-      if(delim == NULL){
-        printf("Bad malloc\n");
-        return -1;
-      }
-
       char* code = NULL;
       int codeSize = 0;
 
       //Loops through file segment to extract token
-      for(j = start; j < i; j++)
+      for(start <= i)
       {
-        token[token_cnt] = file_string[j];
-        token_cnt++;
+        token[token_cnt++] = file_string[start++];
       }
-			
-			if(i == len-1)
-				token[token_cnt] = file_string[len-1];	
 
       //If token is not empty, find its code in codebook and writes to file
       if(strlen(token) > 0)
@@ -292,19 +296,6 @@ int compress(char* file, char* codebook)
       //Increments starting point for next token
       start = i+1;
 
-      //Convert delimiter char to a string
-      delim = malloc(sizeof(char)+1);
-      if(delim == NULL){
-        printf("Bad malloc\n");
-        return -1;
-      }
-      memset(delim, '\0', (sizeof(char)+1));
-      delim[0] = currChar;
-
-      //Gets delimiter's corresponding code and writes to file
-      code = getCodeFromBook(delim, cb_string);
-      codeSize = strlen(code);
-      write(fd, code, codeSize);
 
       free(token);
       free(delim);
