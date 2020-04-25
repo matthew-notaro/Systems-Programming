@@ -12,19 +12,19 @@
 #include "minHeap.h"
 #include "huff.h"
 #include "buildBook.h"
-
+ 
 void doOp(char* path);
 void recursion(char* file);
 void printCodeTree(BSTNode* root);
 int compress(char* file, char* codebook);
 int decompress(char* file, char* codebook);
 char* getCodeFromBook(char* token, char* codebook);
-
+ 
 int r_flag = 0;
 char opFlag = '?';
 char* codebook;
 BSTNode* finalBST = NULL;
-
+ 
 int main(int argc, char** argv){
   // min args - ./file -b <path>, max args - ./file -R -d <path> <codebook>
   if(argc < 3 || argc > 5){
@@ -70,7 +70,7 @@ char* path;
     }
   }
   //printf("OpFlag: %c, RFlag: %d\n", opFlag, r_flag);
-
+ 
   // If recursive flag set, then open given directory and apply operation to each file
   if(r_flag){
     recursion(path);
@@ -82,13 +82,13 @@ char* path;
   if(opFlag == 'b'){
     buildCodebook(finalBST);
   }
-
+ 
   //finalBST = addToBook(path, finalBST);
   //buildCodebook(finalBST);
-
+ 
   return 0;
 }
-
+ 
 void recursion(char* name){
   DIR* currentDir = opendir(name);
     if(currentDir == NULL){
@@ -110,14 +110,14 @@ void recursion(char* name){
   }
   closedir(currentDir);
 }
-
+ 
 void printCodeTree(BSTNode* root){
   if(root == NULL) return;
   printCodeTree(root->left);
   printf("code: %s\ttoken: %s\n", root->huffCode, root->token);
   printCodeTree(root->right);
 }
-
+ 
 // Performs b/c/d based on given operation determined by flag from command line
 void doOp(char* path){
   switch(opFlag){
@@ -126,6 +126,7 @@ void doOp(char* path){
     case 'd': {decompress(path, codebook); break;}
   }
 }
+
 
 //Decompresses given file using given codebook
 //Writes new file <filename> without .hcz extention
