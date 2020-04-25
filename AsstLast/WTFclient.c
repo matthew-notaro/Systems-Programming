@@ -43,7 +43,7 @@ int configure(char* IPAddress, char* portNum)
 
 int connectToServer()
 {
-	int port = 0, sockfd = 0, cxn_status = 0; 
+	int portNum = 0, sockfd = 0, cxn_status = 0; 
 	
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
@@ -60,7 +60,7 @@ int connectToServer()
 	
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
-	serverAddressInfo.sin_port = htons(port);
+	serverAddressInfo.sin_port = htons(portNum);
 	
 	bcopy((char*)hostIP->h_addr, (char*)&serverAddressInfo.sin_addr.s_addr, hostIP->h_length);
 	
@@ -71,6 +71,13 @@ int connectToServer()
 		printf("ERROR\n");
 		return -1;
 	}
+	
+	char* msg = "this is a test"
+	char* buffer[256];
+	n = write(sockfd,msg,strlen(msg));
+	n = read(sockfd,buffer,255);
+
+	printf("%s\n",buffer);
 	
 	return 0;
 }
