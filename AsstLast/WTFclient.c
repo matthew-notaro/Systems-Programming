@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-//#include <arpa/inet.h>
+#define PORT 42069
 
 int connectToServer();
 int configure(char* IPAddress, char* portNum);
@@ -43,7 +43,7 @@ int configure(char* IPAddress, char* portNum)
 
 int connectToServer()
 {
-	int portNum = 0, sockfd = 0, cxn_status = 0; 
+	int sockfd = 0, cxn_status = 0; 
 	
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
@@ -53,18 +53,18 @@ int connectToServer()
 		return -1;
 	}
 		
-	struct hostent* hostIP = gethostbyname();
+	struct hostent* hostIP = gethostbyname((char*)PORT);
 	struct sockaddr_in serverAddressInfo;
 	
 	bzero((char*)&serverAddressInfo, sizeof(serverAddressInfo));
 	
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
-	serverAddressInfo.sin_port = htons(portNum);
+	serverAddressInfo.sin_port = htons(PORT);
 	
 	bcopy((char*)hostIP->h_addr, (char*)&serverAddressInfo.sin_addr.s_addr, hostIP->h_length);
 	
-	cxn_status = connect(sockfd, &serverAddressInfo, sizeof(serverAddressInfo));
+	cxn_status = connect(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo));
 	
 	if(cxn_status < 0)
 	{
