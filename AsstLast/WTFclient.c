@@ -41,10 +41,11 @@ int configure(char* IPAddress, char* portNum)
 	return 0;
 }
 
-int connectToServer(int port)
+int connectToServer()
 {
-	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	int cxn_status = 0;
+	int port = 0, sockfd = 0, cxn_status = 0; 
+	
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
 	if(sockfd < 0)
 	{
@@ -55,7 +56,7 @@ int connectToServer(int port)
 	struct hostent* hostIP = gethostbyname();
 	struct sockaddr_in serverAddressInfo;
 	
-	bzero(&serverAddressInfo, sizeof(serverAddressInfo));
+	bzero((char*)&serverAddressInfo, sizeof(serverAddressInfo));
 	
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
