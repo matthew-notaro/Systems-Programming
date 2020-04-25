@@ -6,6 +6,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <strings.h>
+#include <netinet/in.h
 
 //#include <arpa/inet.h>
 
@@ -40,7 +41,7 @@ int connectToClient(){
 	}
 	listen(sockfd, 5);
 	clientLen = sizeof(clientAddressInfo);
-	newsockfd = accept(sockfd, (struct sockaddr*) &clientAddressInfo, &clientLen);
+	newsockfd = accept(sockfd, (struct sockaddr*) &clientAddressInfo, (socklen_t*) &clientLen);
 	if(newsockfd < 0){
 		printf("ERROR: Could not accept\n");
 	}
