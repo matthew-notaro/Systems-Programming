@@ -29,7 +29,7 @@ int connectToClient(){
 		printf("ERROR: Socket does not exist.\n");
 	}
 
-	bzero(((char*)&serverAddressInfo, sizeof(serverAddressInfo));
+	bzero((char*)&serverAddressInfo, sizeof(serverAddressInfo));
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
 	serverAddressInfo.sin_port = htons(PORT);
