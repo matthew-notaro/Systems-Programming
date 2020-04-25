@@ -11,6 +11,7 @@
 
 int connectToServer();
 int configure(char* IPAddress, char* portNum);
+int sendMessage();
 
 int main(int argc, char **argv) 
 {
@@ -43,10 +44,9 @@ int configure(char* IPAddress, char* portNum)
 
 int connectToServer()
 {
-	int sockfd = 0, cxn_status = 0, n = 0; 
-	char buffer[256];
+	int sockfd = 0, cxn_status = 0; 
+	char* buffer;
 
-	
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
 	if(sockfd < 0)
@@ -58,7 +58,6 @@ int connectToServer()
 	struct sockaddr_in serverAddressInfo;
 
 	bzero((char*)&serverAddressInfo, sizeof(serverAddressInfo));
-	bzero(buffer,256);
 	
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
@@ -77,16 +76,31 @@ int connectToServer()
 	printf("%d\n", cxn_status);
 	printf("checkpoint\n");
 	
-	printf("Please enter the message: \n");
-	fgets(buffer,255,stdin);
+	//buffer = malloc(9);
+	buffer = "test.txt";
+	sendMessage(sockfd, buffer);
 	
-  n = write(sockfd,buffer,strlen(buffer));
-  if (n < 0) 
-     printf("ERROR writing to socket\n");
-  bzero(buffer,256);
-  n = read(sockfd,buffer,255);
-   if (n < 0) 
-      printf("ERROR reading from socket\n");
-  printf("%s\n",buffer);
 	return 0;
 }
+
+
+int sendMessage(int sockfd, char* buffer)
+{
+	int n = 0;
+	//bzero(buffer,strlen(buffer));
+
+	n = write(sockfd,buffer,strlen(buffer));
+	if (n < 0) 
+		 printf("ERROR writing to socket\n");
+	//bzero(buffer,strlen(buffer));
+	
+	/*
+	n = read(sockfd,buffer,strlen(buffer)-1);
+	 if (n < 0) 
+			printf("ERROR reading from socket\n");
+	printf("%s\n",buffer);*/
+	
+	return 0;
+}
+
+
