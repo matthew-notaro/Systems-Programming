@@ -72,12 +72,5 @@ int connectToServer()
 		return -1;
 	}
 	
-	char* msg = "this is a test"
-	char* buffer[256];
-	n = write(sockfd,msg,strlen(msg));
-	n = read(sockfd,buffer,255);
-
-	printf("%s\n",buffer);
-	
 	return 0;
 }
