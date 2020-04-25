@@ -38,12 +38,9 @@ int connectToClient(){
 	if (bindSocket < 0){
 		printf("ERROR: Could not bind.\n");
 	}
-	listen = listen(sockfd, 5);
-	if (listen < 0){
-		printf("ERROR: Could not listen.\n");
-	}
+	listen(sockfd, 5);
 	clientLen = sizeof(clientAddressInfo);
-	newsockfd = accpet(sockfd, (struct sockaddr*) &clientAddressInfo, &clientLen);
+	newsockfd = accept(sockfd, (struct sockaddr*) &clientAddressInfo, &clientLen);
 	if(newsockfd < 0){
 		printf("ERROR: Could not accept\n");
 	}
