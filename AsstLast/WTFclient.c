@@ -43,7 +43,9 @@ int configure(char* IPAddress, char* portNum)
 
 int connectToServer()
 {
-	int sockfd = 0, cxn_status = 0; 
+	int sockfd = 0, cxn_status = 0, n = 0; 
+	char buffer[256];
+
 	
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
@@ -57,20 +59,35 @@ int connectToServer()
 	struct sockaddr_in serverAddressInfo;
 	
 	bzero((char*)&serverAddressInfo, sizeof(serverAddressInfo));
+	bzero(buffer,256);
 	
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
 	serverAddressInfo.sin_port = htons(PORT);
 	
-	bcopy((char*)hostIP->h_addr, (char*)&serverAddressInfo.sin_addr.s_addr, hostIP->h_length);
+	bcopy((char*)host->h_addr, (char*)&serverAddressInfo.sin_addr.s_addr, host->h_length);
+	
 	
 	cxn_status = connect(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo));
-	
 	if(cxn_status < 0)
 	{
 		printf("ERROR\n");
 		return -1;
 	}
 	
+	printf("%d\n", cxn_status);
+	printf("checkpoint\n");
+	
+	printf("Please enter the message: \n");
+	fgets(buffer,255,stdin);
+	
+  n = write(sockfd,buffer,strlen(buffer));
+  if (n < 0) 
+     printf("ERROR writing to socket\n");
+  bzero(buffer,256);
+  n = read(sockfd,buffer,255);
+   if (n < 0) 
+      printf("ERROR reading from socket\n");
+  printf("%s\n",buffer);
 	return 0;
 }
