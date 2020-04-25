@@ -7,42 +7,56 @@
 #include <unistd.h>
 //#include <arpa/inet.h>
 
+#define PORT 42069
+
 int connectToClient();
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv){
 	return 0;
 }
 
-int connectToClient()
-{
+int connectToClient(){
 	char buffer[256];
-	int sockfd, bindSocket, listen, newsockfd;
+	int sockfd, bindSocket, listen, newsockfd, clientLen;
 	struct sockaddr_in serverAddressInfo;
 	struct sockaddr_in clientAddressInfo;
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-	if (sockfd < 0)
+	if (sockfd < 0){
 		printf("ERROR: Socket does not exist.\n");
+	}
 
-	bzero(&serverAddressInfo, sizeof(serverAddressInfo));
-
+	bzero(((char*)&serverAddressInfo, sizeof(serverAddressInfo));
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
 	serverAddressInfo.sin_port = htons(PORT);
 
 	bindSocket = bind(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo));
-
-	if (bindSocket < 0)
+	if (bindSocket < 0){
 		printf("ERROR: Could not bind.\n");
-
-	listen = listen(sockfd, 0);
-
-	if (listen < 0)
+	}
+	listen = listen(sockfd, 5);
+	if (listen < 0){
 		printf("ERROR: Could not listen.\n");
+	}
+	clientLen = sizeof(clientAddressInfo);
+	newsockfd = accpet(sockfd, (struct sockaddr*) &clientAddressInfo, &clientLen);
+	if(newsockfd < 0){
+		printf("ERROR: Could not accept\n");
+	}
+	bzero(buffer, 256);
+	int n = read(newsockfd, buffer, 255);
+	if(n < 0){
+		printf("ERROR: Could not read from socket\n");
+	}
+	printf("Message: %s\n", buffer);
+	n = write(newsockfd, "Message received", 16);
+	if(n < 0){
+		printf("ERROR: Could not write to socket\n");
+	}
 
-	// keep running until listening stops
+	// to accept multple connections - keep running until listening stops
+	/*
 	while (1)
 	{
 		newsockfd = accept(sockfd, (struct sockaddr *)&clientAddressInfo, sizeof(clientAddressInfo));
@@ -52,5 +66,6 @@ int connectToClient()
 
 		//pthread_create
 		//pthread_join
-	}
+	}*/
+	return 0;
 }
