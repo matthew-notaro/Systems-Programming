@@ -114,13 +114,13 @@ int create(char* project)
 	//if name does not exist,
 	//send to server
 	int status; 
-  
   status = mkdir(project); 
-  
-  
-    if (!check) 
-        printf("Directory created\n"); 
-
+	if(status < 0)
+	{
+		printf("Error: Could not create directory.");
+	}
+	
+	//get manifest from server
 }
 
 int destroy(char* project)
@@ -280,27 +280,27 @@ char* readFromFile(char* file)
         return NULL;
     }
     stat(file, buffer);
-    int buffer_size = buffer->st_size;
+    int bufferSize = buffer->st_size;
     // Warning: Empty file
-    if(buffer_size == 0){
+    if(bufferSize == 0){
         printf("Warning: Empty file.\n");
     }
 		
     // IO Read Loop
-    char* file_buffer = (char*)malloc(buffer_size);
-    if(file_buffer == NULL){
+    char* fileBuffer = (char*)malloc(bufferSize);
+    if(fileBuffer == NULL){
         printf("Bad malloc\n");
         return NULL;
     }
-    memset(file_buffer, '\0', buffer_size);
+    memset(fileBuffer, '\0', bufferSize);
     int status = 1;
     int readIn = 0;
     do{
-        status = read(fd, file_buffer+readIn, buffer_size - readIn);
+        status = read(fd, fileBuffer+readIn, bufferSize - readIn);
         readIn += status;
-    } while(status > 0 && readIn < buffer_size);
+    } while(status > 0 && readIn < bufferSize);
 
     free(buffer);
-    return file_buffer;
+    return fileBuffer;
 }
 

@@ -8,10 +8,21 @@
 #include <strings.h>
 #include <netinet/in.h>
 
-//#include <arpa/inet.h>
-
 int port = 0;
 
+int checkout(char* project);
+int update(char* project);
+int upgrade(char* project);
+int commit(char* project);
+int push(char* project);
+int create(char* project);
+int destroy(char* project);
+int add(char* project);
+int remove_(char* project);
+int update_(char* project);
+int currentversion(char* project);
+int history(char* project);
+int rollback(char* project, char* version);
 int connectToClient();
 
 int main(int argc, char **argv)
