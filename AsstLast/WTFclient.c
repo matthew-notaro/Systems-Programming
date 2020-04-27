@@ -200,9 +200,10 @@ int connectToServer()
 		printf("ERROR\n");
 		return -1;
 	}
-	struct hostent* host = gethostbyname("127.0.0.1");
+		
+	struct hostent* hostIP = gethostbyname((char*)PORT);
 	struct sockaddr_in serverAddressInfo;
-
+	
 	bzero((char*)&serverAddressInfo, sizeof(serverAddressInfo));
 	
 	serverAddressInfo.sin_family = AF_INET;

@@ -10,47 +10,69 @@
 
 //#include <arpa/inet.h>
 
-#define PORT 42069
+int port = 0;
 
 int connectToClient();
 
-int main(int argc, char **argv){
-	connectToClient();
+int main(int argc, char **argv)
+{
+	if(argc != 2){
+		printf("ERROR: Please enter a valid port number\n");
+		return -1;
+	}
+	port = atoi(argv[1]);
+	if(port < 0 || port > 65535){
+		printf("ERROR: Please enter a valid port number\n");
+		return -1;
+	}
+	int sockfd = connectToClient();
+
+
+
 	return 0;
 }
 
+// Returns newsockfd
 int connectToClient(){
 	int sockfd, newsockfd, portno, clientLen;
-  char buffer[256];
-  struct sockaddr_in serverAddressInfo, clientAddressInfo;
-  int n;
+	char buffer[256];
+	struct sockaddr_in serverAddressInfo, clientAddressInfo;
+	int n;
 
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd < 0) 
-    printf("ERROR opening socket");
-  bzero((char *) &serverAddressInfo, sizeof(serverAddressInfo));
-  portno = PORT;
-  serverAddressInfo.sin_family = AF_INET;
-  serverAddressInfo.sin_addr.s_addr = INADDR_ANY;
-  serverAddressInfo.sin_port = htons(portno);
-  
-	if (bind(sockfd, (struct sockaddr *) &serverAddressInfo, sizeof(serverAddressInfo)) < 0)
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0)
+		printf("ERROR opening socket");
+	bzero((char *)&serverAddressInfo, sizeof(serverAddressInfo));
+	portno = port;
+	serverAddressInfo.sin_family = AF_INET;
+	serverAddressInfo.sin_addr.s_addr = INADDR_ANY;
+	serverAddressInfo.sin_port = htons(portno);
+
+	if (bind(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo)) < 0)
 		printf("error");
-  listen(sockfd,5);
-		 
+	listen(sockfd, 5);
+
 	clientLen = sizeof(clientAddressInfo);
-	newsockfd = accept(sockfd, (struct sockaddr*) &clientAddressInfo, (socklen_t*) &clientLen);
-	if(newsockfd < 0){
+	newsockfd = accept(sockfd, (struct sockaddr *)&clientAddressInfo, (socklen_t *)&clientLen);
+	if (newsockfd < 0)
+	{
 		printf("ERROR: Could not accept\n");
 	}
+	return newsockfd;
+}
+
+void readFromClient(int sockfd){
+	
 	bzero(buffer, 256);
 	n = read(newsockfd, buffer, 255);
-	if(n < 0){
+	if (n < 0)
+	{
 		printf("ERROR: Could not read from socket\n");
 	}
 	printf("Message: %s\n", buffer);
 	n = write(newsockfd, "Message received", 16);
-	if(n < 0){
+	if (n < 0)
+	{
 		printf("ERROR: Could not write to socket\n");
 	}
 
@@ -66,5 +88,4 @@ int connectToClient(){
 		//pthread_create
 		//pthread_join
 	}*/
-	return 0;
 }
