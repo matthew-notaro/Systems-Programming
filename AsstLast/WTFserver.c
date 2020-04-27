@@ -10,15 +10,29 @@
 
 //#include <arpa/inet.h>
 
-#define PORT 42069
+int port = 0;
 
 int connectToClient();
 
 int main(int argc, char **argv)
 {
-	return connectToClient();
+	if(argc != 2){
+		printf("ERROR: Please enter a valid port number\n");
+		return -1;
+	}
+	port = atoi(argv[1]);
+	if(port < 0 || port > 65535){
+		printf("ERROR: Please enter a valid port number\n");
+		return -1;
+	}
+	int sockfd = connectToClient();
+
+
+
+	return 0;
 }
 
+// Returns newsockfd
 int connectToClient(){
 	int sockfd, newsockfd, portno, clientLen;
 	char buffer[256];
@@ -29,7 +43,7 @@ int connectToClient(){
 	if (sockfd < 0)
 		printf("ERROR opening socket");
 	bzero((char *)&serverAddressInfo, sizeof(serverAddressInfo));
-	portno = PORT;
+	portno = port;
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = INADDR_ANY;
 	serverAddressInfo.sin_port = htons(portno);
@@ -44,7 +58,11 @@ int connectToClient(){
 	{
 		printf("ERROR: Could not accept\n");
 	}
+	return newsockfd;
+}
 
+void readFromClient(int sockfd){
+	
 	bzero(buffer, 256);
 	n = read(newsockfd, buffer, 255);
 	if (n < 0)
@@ -70,5 +88,4 @@ int connectToClient(){
 		//pthread_create
 		//pthread_join
 	}*/
-	return 0;
 }
