@@ -35,22 +35,23 @@ int connectToServer();
 int sendMessage();
 char* readFromFile(char* file);
 
-
 int main(int argc, char **argv) 
 {
 	char* op = argv[0];
-	//configure("sampleIP", "samplePort");
-	setServerDetails();
-	printf("host: %s\n", HOST);
-	printf("port: %s\n", PORT);
+	// configure("sampleIP", "samplePort");
+	// setServerDetails();
+	// printf("host: %s\n", HOST);
+	// printf("port: %s\n", PORT);
 	return 0;
 }
 
 int configure(char* IPAddress, char* portNum)
 {
+	int IPAddressSize = 0, portNumSize = 0, bufferSize = 0;
 	char* configName = ".configure";
-	int IPAddressSize = 0, portNumSize = 0;
-	
+	char* space = malloc(sizeof(char)*1);
+	space = " ";
+
 	int fd = open(configName, O_RDWR|O_CREAT|O_APPEND, 00600);
 	
   if(fd < 0)
@@ -58,12 +59,20 @@ int configure(char* IPAddress, char* portNum)
     printf("File does not exist.\n"); 
     return -1;
   }
+	
 	IPAddressSize = strlen(IPAddress) + 1;
 	portNumSize = strlen(portNum) + 1;
+	bufferSize = IPAddressSize+portNumSize+sizeof(char)*1;
 	
-	write(fd, IPAddress, IPAddressSize);
-	write(fd, "	", sizeof(char)*1);
-	write(fd, portNum, portNumSize);
+	char* buffer = malloc(bufferSize);
+	
+	strcpy(buffer, IPAddress);
+	strcat(buffer, space);
+	strcat(buffer, portNum);
+	
+	//printf("buffer: %s\n", buffer);
+	
+	write(fd, buffer, strlen(buffer));
 
 	return 0;
 }
@@ -135,6 +144,8 @@ int rollback(char* project, char* version)
 
 int setServerDetails()
 {
+	//CHECK THIS
+	//doesn't work for me unless i myself go into .configure and edit it...
 	char* configure_string = readFromFile("./.configure");
 	int len = strlen(configure_string), spaceFound = 0, i = 0, j = 0;
 	
