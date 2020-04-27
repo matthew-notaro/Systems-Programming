@@ -110,14 +110,13 @@ should place the .Manifest the server sent in it.
 */
 int create(char* project)
 {
-	//check server
-	//if name does not exist,
-	//send to server
+	connectToServer();
+	sendMessage();
 	int status; 
   status = mkdir(project); 
 	if(status < 0)
 	{
-		printf("Error: Could not create directory.");
+		
 	}
 	
 	//get manifest from server
@@ -133,8 +132,18 @@ int add(char* project)
 	return 0;
 }
 
+/*The remove command will fail if the
+project does not exist on the client.
+The client will remove the entry for the
+given file from its own .Manifest*/
 int remove_(char* project)
 {
+	int status; 
+  status = mkdir(project); 
+	if(status < 0)
+	{
+		printf("Error: File does not directory.");
+	}
 	return 0;
 }
 

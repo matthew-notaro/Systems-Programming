@@ -17,13 +17,13 @@ int commit(char* project);
 int push(char* project);
 int create(char* project);
 int destroy(char* project);
-int add(char* project);
-int remove_(char* project);
 int update_(char* project);
 int currentversion(char* project);
 int history(char* project);
 int rollback(char* project, char* version);
+
 int connectToClient();
+int readFromClient(int sockfd);
 
 int main(int argc, char **argv)
 {
@@ -40,6 +40,78 @@ int main(int argc, char **argv)
 
 
 
+	return 0;
+}
+
+int checkout(char* project)
+{
+	return 0;
+}
+
+int update(char* project)
+{
+	return 0;
+}
+
+int upgrade(char* project)
+{
+	return 0;
+}
+
+int commit(char* project)
+{
+	return 0;
+}
+
+int push(char* project)
+{
+	return 0;
+}
+
+/*
+The create command will fail if the project name already exists on the server or the client can not communicate
+with the server. Otherwise, the server will create a project folder with the given name, initialize a .Manifest for it
+and send it to the client. The client will set up a local version of the project folder in its current directory and
+should place the .Manifest the server sent in it.
+*/
+int create(char* project)
+{
+	int status;
+  status = mkdir(project); //CHECK WITHIN PROJECTS FOLDER
+	if(status < 0)
+	{
+		char* manifestName = ".Manifest";
+		int fd = open(manifestName, O_RDWR|O_CREAT|O_APPEND, 00600);
+		//SEND MANIFEST TO CLIENT
+	}
+	else
+	{
+		printf("Error: Project already exists.")
+	}
+}
+
+int destroy(char* project)
+{
+	return 0;
+}
+
+int update_(char* project)
+{
+	return 0;
+}
+
+int currentversion(char* project)
+{
+	return 0;
+}
+
+int history(char* project)
+{
+	return 0;
+}
+
+int rollback(char* project, char* version)
+{
 	return 0;
 }
 
