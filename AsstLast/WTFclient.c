@@ -38,7 +38,7 @@ char* readFromFile(char* file);
 int main(int argc, char **argv) 
 {
 	char* op = argv[0];
-	// configure("sampleIP", "samplePort");
+	configure("sampleIP", "samplePort");
 	// setServerDetails();
 	// printf("host: %s\n", HOST);
 	// printf("port: %s\n", PORT);
@@ -70,7 +70,7 @@ int configure(char* IPAddress, char* portNum)
 	strcat(buffer, space);
 	strcat(buffer, portNum);
 	
-	//printf("buffer: %s\n", buffer);
+	printf("buffer: %s\n", buffer);
 	
 	write(fd, buffer, strlen(buffer));
 
@@ -200,8 +200,7 @@ int connectToServer()
 		printf("ERROR\n");
 		return -1;
 	}
-		
-	struct hostent* hostIP = gethostbyname((char*)PORT);
+	struct hostent* host = gethostbyname("127.0.0.1");
 	struct sockaddr_in serverAddressInfo;
 	
 	bzero((char*)&serverAddressInfo, sizeof(serverAddressInfo));
