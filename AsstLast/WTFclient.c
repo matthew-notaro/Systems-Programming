@@ -22,8 +22,8 @@ int commit(char* project);
 int push(char* project);
 int create(char* project);
 int destroy(char* project);
-int add(char* project);
-int remove_(char* project);
+int add(char* project, char* file);
+int remove_(char* project, char* file);
 int update_(char* project);
 int currentversion(char* project);
 int history(char* project);
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	else if(strcmp(op, "update") == 0 && argc == 3){
-		if(update(argv[2]) == 0){
+		if(update_(argv[2]) == 0){
 			printf("Updated\n");
 			return 0;
 		}
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	else if(strcmp(op, "remove") == 0 && argc == 4){
-		if(remove(argv[2], argv[3]) == 0){
+		if(remove_(argv[2], argv[3]) == 0){
 			printf("Removed\n");
 			return 0;
 		}
