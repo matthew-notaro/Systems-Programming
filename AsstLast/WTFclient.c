@@ -102,9 +102,25 @@ int push(char* project)
 	return 0;
 }
 
+/*
+The create command will fail if the project name already exists on the server or the client can not communicate
+with the server. Otherwise, the server will create a project folder with the given name, initialize a .Manifest for it
+and send it to the client. The client will set up a local version of the project folder in its current directory and
+should place the .Manifest the server sent in it.
+*/
 int create(char* project)
 {
-	return 0;
+	//check server
+	//if name does not exist,
+	//send to server
+	int status; 
+  
+  status = mkdir(project); 
+  
+  
+    if (!check) 
+        printf("Directory created\n"); 
+
 }
 
 int destroy(char* project)
