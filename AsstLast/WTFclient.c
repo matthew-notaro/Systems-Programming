@@ -37,11 +37,110 @@ char* readFromFile(char* file);
 
 int main(int argc, char **argv) 
 {
-	char* op = argv[0];
-	// configure("sampleIP", "samplePort");
-	// setServerDetails();
+	if(argc < 3){
+		printf("ERROR: Not enough parameters\n");
+		return -1;
+	}
+	char* op = argv[1];
+	if(strcmp(op, "configure") == 0 && argc == 4){
+		if(configure(argv[2], argv[3]) == 0){
+			printf("Configured\n");
+			return 0;
+		}
+		return -1;
+	}
+	setServerDetails();
 	// printf("host: %s\n", HOST);
 	// printf("port: %s\n", PORT);
+	connectToServer();
+	if(strcmp(op, "checkout") == 0 && argc == 3){
+		if(checkout(argv[2]) == 0){
+			printf("Checkout'ed\n");
+			return 0;
+		}
+		return -1;
+	}
+	else if(strcmp(op, "update") == 0 && argc == 3){
+		if(update(argv[2]) == 0){
+			printf("Updated\n");
+			return 0;
+		}
+		return -1;
+	}
+	else if(strcmp(op, "upgrade") == 0 && argc == 3){
+		if(upgrade(argv[2]) == 0){
+			printf("Upgraded\n");
+			return 0;
+		}
+		return -1;
+	}
+	else if(strcmp(op, "commit") == 0 && argc == 3){
+		if(upgrade(argv[2]) == 0){
+			printf("Committed\n");
+			return 0;
+		}
+		return -1;
+	}
+	else if(strcmp(op, "push") == 0 && argc == 3){
+		if(upgrade(argv[2]) == 0){
+			printf("Pushed\n");
+			return 0;
+		}
+		return -1;
+	}
+	else if(strcmp(op, "create") == 0 && argc == 3){
+		if(create(argv[2]) == 0){
+			printf("Created\n");
+			return 0;
+		}
+		return -1;
+	}
+	else if(strcmp(op, "destroy") == 0 && argc == 3){
+		if(destroy(argv[2]) == 0){
+			printf("Destroyed\n");
+			return 0;
+		}
+		return -1;
+	}
+	else if(strcmp(op, "add") == 0 && argc == 4){
+		if(add(argv[2], argv[3]) == 0){
+			printf("Added\n");
+			return 0;
+		}
+		return -1;
+	}
+	else if(strcmp(op, "remove") == 0 && argc == 4){
+		if(remove(argv[2], argv[3]) == 0){
+			printf("Removed\n");
+			return 0;
+		}
+		return -1;
+	}
+	else if(strcmp(op, "currentversion") == 0 && argc == 3){
+		if(currentversion(argv[2]) == 0){
+			printf("Current versioned\n");
+			return 0;
+		}
+		return -1;
+	}
+	else if(strcmp(op, "history") == 0 && argc == 3){
+		if(history(argv[2]) == 0){
+			printf("History'ed\n");
+			return 0;
+		}
+		return -1;
+	}
+	else if(strcmp(op, "rollback") == 0 && argc == 4){
+		if(rollback(argv[2], argv[3]) == 0){
+			printf("Rolled back\n");
+			return 0;
+		}
+		return -1;
+	}
+	else{
+		printf("ERROR: Invalid command\n");
+		return -1;
+	}
 	return 0;
 }
 
