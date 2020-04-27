@@ -169,7 +169,7 @@ int configure(char* IPAddress, char* portNum)
 	strcat(buffer, space);
 	strcat(buffer, portNum);
 	
-	//printf("buffer: %s\n", buffer);
+	printf("buffer: %s\n", buffer);
 	
 	write(fd, buffer, strlen(buffer));
 
@@ -201,9 +201,25 @@ int push(char* project)
 	return 0;
 }
 
+/*
+The create command will fail if the project name already exists on the server or the client can not communicate
+with the server. Otherwise, the server will create a project folder with the given name, initialize a .Manifest for it
+and send it to the client. The client will set up a local version of the project folder in its current directory and
+should place the .Manifest the server sent in it.
+*/
 int create(char* project)
 {
-	return 0;
+	//check server
+	//if name does not exist,
+	//send to server
+	int status; 
+  status = mkdir(project); 
+	if(status < 0)
+	{
+		printf("Error: Could not create directory.");
+	}
+	
+	//get manifest from server
 }
 
 int destroy(char* project)
@@ -299,8 +315,7 @@ int connectToServer()
 		printf("ERROR\n");
 		return -1;
 	}
-		
-	struct hostent* hostIP = gethostbyname((char*)PORT);
+	struct hostent* host = gethostbyname("127.0.0.1");
 	struct sockaddr_in serverAddressInfo;
 	
 	bzero((char*)&serverAddressInfo, sizeof(serverAddressInfo));
@@ -364,27 +379,27 @@ char* readFromFile(char* file)
         return NULL;
     }
     stat(file, buffer);
-    int buffer_size = buffer->st_size;
+    int bufferSize = buffer->st_size;
     // Warning: Empty file
-    if(buffer_size == 0){
+    if(bufferSize == 0){
         printf("Warning: Empty file.\n");
     }
 		
     // IO Read Loop
-    char* file_buffer = (char*)malloc(buffer_size);
-    if(file_buffer == NULL){
+    char* fileBuffer = (char*)malloc(bufferSize);
+    if(fileBuffer == NULL){
         printf("Bad malloc\n");
         return NULL;
     }
-    memset(file_buffer, '\0', buffer_size);
+    memset(fileBuffer, '\0', bufferSize);
     int status = 1;
     int readIn = 0;
     do{
-        status = read(fd, file_buffer+readIn, buffer_size - readIn);
+        status = read(fd, fileBuffer+readIn, bufferSize - readIn);
         readIn += status;
-    } while(status > 0 && readIn < buffer_size);
+    } while(status > 0 && readIn < bufferSize);
 
     free(buffer);
-    return file_buffer;
+    return fileBuffer;
 }
 
