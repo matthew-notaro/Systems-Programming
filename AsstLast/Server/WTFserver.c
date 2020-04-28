@@ -37,8 +37,9 @@ int main(int argc, char **argv)
 	if(port < 0 || port > 65535){
 		printf("ERROR: Please enter a valid port number\n");
 		return -1;
-	}
+	} 
 	int sockfd = connectToClient();
+	readFromClient(sockfd);
 
 
 
@@ -130,7 +131,7 @@ int connectToClient(){
 	portno = port;
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = INADDR_ANY;
-	serverAddressInfo.sin_port = htons(portno);
+	serverAddressInfo.sin_port = htons(42069); //CHANGE BACK TO PORTNO
 
 	if (bind(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo)) < 0)
 		printf("error");
