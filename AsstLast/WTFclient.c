@@ -340,7 +340,7 @@ int connectToServer()
 	
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
-	serverAddressInfo.sin_port = htons(42069); //CHANGE BACK TO PORTNO
+	serverAddressInfo.sin_port = htons(portno); //CHANGE BACK TO PORTNO
 	
 	bcopy((char*)host->h_addr, (char*)&serverAddressInfo.sin_addr.s_addr, host->h_length);
 	

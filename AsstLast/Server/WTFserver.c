@@ -131,7 +131,7 @@ int connectToClient(){
 	portno = port;
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = INADDR_ANY;
-	serverAddressInfo.sin_port = htons(42069); //CHANGE BACK TO PORTNO
+	serverAddressInfo.sin_port = htons(portno); //CHANGE BACK TO PORTNO
 
 	if (bind(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo)) < 0)
 		printf("error");
