@@ -3,10 +3,12 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <strings.h>
 #include <netinet/in.h>
+#include <fcntl.h>
 
 int port = 0;
 
@@ -77,7 +79,7 @@ should place the .Manifest the server sent in it.
 int create(char* project)
 {
 	int status;
-  status = mkdir(project); //CHECK WITHIN PROJECTS FOLDER
+  status = mkdir(project, 00600); //CHECK WITHIN PROJECTS FOLDER
 	if(status < 0)
 	{
 		char* manifestName = ".Manifest";
@@ -86,8 +88,9 @@ int create(char* project)
 	}
 	else
 	{
-		printf("Error: Project already exists.")
+		printf("Error: Project already exists.");
 	}
+	return 0;
 }
 
 int destroy(char* project)
@@ -118,9 +121,7 @@ int rollback(char* project, char* version)
 // Returns newsockfd
 int connectToClient(){
 	int sockfd, newsockfd, portno, clientLen;
-	char buffer[256];
 	struct sockaddr_in serverAddressInfo, clientAddressInfo;
-	int n;
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0)
@@ -144,16 +145,18 @@ int connectToClient(){
 	return newsockfd;
 }
 
-void readFromClient(int sockfd){
+int readFromClient(int sockfd){
 	
+	char buffer[256];
+	int n;
 	bzero(buffer, 256);
-	n = read(newsockfd, buffer, 255);
+	n = read(sockfd, buffer, 255);
 	if (n < 0)
 	{
 		printf("ERROR: Could not read from socket\n");
 	}
 	printf("Message: %s\n", buffer);
-	n = write(newsockfd, "Message received", 16);
+	n = write(sockfd, "Message received", 16);
 	if (n < 0)
 	{
 		printf("ERROR: Could not write to socket\n");
@@ -171,4 +174,6 @@ void readFromClient(int sockfd){
 		//pthread_create
 		//pthread_join
 	}*/
+	
+	return 0;
 }

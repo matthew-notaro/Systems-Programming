@@ -212,13 +212,14 @@ int create(char* project)
 	connectToServer();
 	sendMessage();
 	int status; 
-  status = mkdir(project); 
+  status = mkdir(project, 00600); 
 	if(status < 0)
 	{
 		
 	}
 	
 	//get manifest from server
+	return 0;
 }
 
 int destroy(char* project)
@@ -226,7 +227,7 @@ int destroy(char* project)
 	return 0;
 }
 
-int add(char* project)
+int add(char* project, char* file)
 {
 	return 0;
 }
@@ -235,10 +236,10 @@ int add(char* project)
 project does not exist on the client.
 The client will remove the entry for the
 given file from its own .Manifest*/
-int remove_(char* project)
+int remove_(char* project,char* file)
 {
 	int status; 
-  status = mkdir(project); 
+  status = mkdir(project, 00600); 
 	if(status < 0)
 	{
 		printf("Error: File does not directory.");
