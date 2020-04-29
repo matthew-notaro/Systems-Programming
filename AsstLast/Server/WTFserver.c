@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <strings.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 int port = 0;
 
@@ -22,11 +23,12 @@ int currentversion(char* project);
 int history(char* project);
 int rollback(char* project, char* version);
 
-int connectToClient();
-int readFromClient(int sockfd);
+void* socketThread(void* sockfd);
 
-int main(int argc, char **argv)
-{
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+char client_message[2000];
+
+int main(int argc, char **argv){
 	if(argc != 2){
 		printf("ERROR: Please enter a valid port number\n");
 		return -1;
@@ -36,12 +38,87 @@ int main(int argc, char **argv)
 		printf("ERROR: Please enter a valid port number\n");
 		return -1;
 	}
-	int sockfd = connectToClient();
+	
+	int sockfd, newsockfd, portno, clientLen;
+	char buffer[256];
+	struct sockaddr_in serverAddressInfo, clientAddressInfo;
+	int n;
+
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0)
+		printf("ERROR opening socket\n");
+	bzero((char *)&serverAddressInfo, sizeof(serverAddressInfo));
+	portno = port;
+	serverAddressInfo.sin_family = AF_INET;
+	serverAddressInfo.sin_addr.s_addr = INADDR_ANY;
+	serverAddressInfo.sin_port = htons(portno);
+
+	if (bind(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo)) < 0)
+		printf("ERROR binding\n");
+	listen(sockfd, 50);
 
 
+	// THREADING STARTS NOW
+	pthread_t tid[60];
+	int i = 0;
+	while(1){
+		clientLen = sizeof(clientAddressInfo);
+		newsockfd = accept(sockfd, (struct sockaddr *)&clientAddressInfo, (socklen_t *)&clientLen);
+		if (newsockfd < 0)
+		{
+			printf("ERROR: Could not accept\n");
+		}
+		if(pthread_create(&tid[i++], NULL, socketThread, &newsockfd) != 0){
+			printf("ERROR: Could not create thread\n");
+		}
 
+		// Deals with only having 60 possible threads at a time - can change later using linked lists
+		if(i >= 50){
+			i = 0;
+			while(i < 50){
+				pthread_join(tid[i++], NULL);
+			}
+			i = 0;
+		}
+	}
 	return 0;
 }
+
+// Function to be made into a thread for each connection to server
+void* socketThread(void* sockvoidstar){
+	printf("Entering thread\n");
+	int sock = *((int*)sockvoidstar);
+	int n;
+	char buffer[1024];
+	bzero(client_message, 256);
+	n = read(sock, client_message, 255);
+	if (n < 0)
+	{
+		printf("ERROR: Could not read from socket\n");
+	}
+
+	// LOCK
+	pthread_mutex_lock(&lock);
+	char* message = (char*)malloc(sizeof(client_message));
+	strcpy(message, "Message received: \n");
+	strcat(message, client_message);
+	strcat(message, "\n");
+	strcpy(buffer, message);
+	free(message);
+	printf("Message: %s\n", buffer);
+	pthread_mutex_unlock(&lock);
+	// UNLOCK
+
+	n = write(sock, buffer, 255);
+	if (n < 0)
+	{
+		printf("ERROR: Could not write to socket\n");
+	}
+	printf("Exiting thread\n");
+	close(sock);
+	pthread_exit(NULL);
+}
+
 
 int checkout(char* project)
 {
@@ -113,62 +190,4 @@ int history(char* project)
 int rollback(char* project, char* version)
 {
 	return 0;
-}
-
-// Returns newsockfd
-int connectToClient(){
-	int sockfd, newsockfd, portno, clientLen;
-	char buffer[256];
-	struct sockaddr_in serverAddressInfo, clientAddressInfo;
-	int n;
-
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0)
-		printf("ERROR opening socket");
-	bzero((char *)&serverAddressInfo, sizeof(serverAddressInfo));
-	portno = port;
-	serverAddressInfo.sin_family = AF_INET;
-	serverAddressInfo.sin_addr.s_addr = INADDR_ANY;
-	serverAddressInfo.sin_port = htons(portno);
-
-	if (bind(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo)) < 0)
-		printf("error");
-	listen(sockfd, 5);
-
-	clientLen = sizeof(clientAddressInfo);
-	newsockfd = accept(sockfd, (struct sockaddr *)&clientAddressInfo, (socklen_t *)&clientLen);
-	if (newsockfd < 0)
-	{
-		printf("ERROR: Could not accept\n");
-	}
-	return newsockfd;
-}
-
-void readFromClient(int sockfd){
-	
-	bzero(buffer, 256);
-	n = read(newsockfd, buffer, 255);
-	if (n < 0)
-	{
-		printf("ERROR: Could not read from socket\n");
-	}
-	printf("Message: %s\n", buffer);
-	n = write(newsockfd, "Message received", 16);
-	if (n < 0)
-	{
-		printf("ERROR: Could not write to socket\n");
-	}
-
-	// to accept multple connections - keep running until listening stops
-	/*
-	while (1)
-	{
-		newsockfd = accept(sockfd, (struct sockaddr *)&clientAddressInfo, sizeof(clientAddressInfo));
-
-		if (cxnfd < 0)
-			printf("ERROR: Socket not accepted.\n");
-
-		//pthread_create
-		//pthread_join
-	}*/
 }
