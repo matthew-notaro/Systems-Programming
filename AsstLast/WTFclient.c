@@ -16,8 +16,8 @@ char* PORT = NULL;
 
 typedef struct file{
 		char* fileName;
-		int nameLen;
-		int numBytes;
+		char* nameLen;
+		char* numBytes;
 		char* fileData;
 } file;
 
@@ -39,7 +39,7 @@ int rollback(char* project, char* version);
 int setServerDetails();
 
 int connectToServer();
-char* composeMessage(char* command, file* arr);
+char* composeMessage(char* command, file* arr, char* numFiles);
 int sendToServer();
 
 char* readFromFile(char* file);
@@ -155,21 +155,22 @@ int main(int argc, char **argv)
 	//int sockfd = connectToServer();
 	char* command = malloc(5);
 	command = "check";
-	int numFiles = 2;
+	char* numFiles = malloc(1);
+	numFiles = "2";
 	struct file arr[2];
 	arr[0].fileName = "file1"; 
-	arr[0].nameLen = 5; 
-	arr[0].numBytes = 9; 
+	arr[0].nameLen = "5"; 
+	arr[0].numBytes = "9"; 
 	arr[0].fileData = "file1data"; 
 	arr[1].fileName = "file2"; 
-	arr[1].nameLen = 5; 
-	arr[1].numBytes = 9; 
+	arr[1].nameLen = "5"; 
+	arr[1].numBytes = "9"; 
 	arr[1].fileData = "file2data"; 
 	
 	
-	//sendToServer(sockfd, message);
+	//sendToServer(sockfd, command);
 	
-	composeMessage(command, arr);
+	composeMessage(command, arr, numFiles);
 	
 	return 0;
 }
@@ -379,47 +380,52 @@ int connectToServer()
 	return sockfd;
 }
 
-char* composeMessage(char* command, file* arr)
+char* composeMessage(char* command, file* arr, char* numFiles)
 {
 	printf("checkpoint 1\n");
 	int commandLen = strlen(command);
-	int arrLen = 2;
-	int numFilesLen = 1;//strlen(itoa(arrLen));
+	int numFilesLen = 1;
 	int sizeOfBuffer = commandLen + numFilesLen + 2; // +2 to account for delimiters
 	char* delim = malloc(sizeof(char)*1);
 	delim = ":";
 	
 	int i = 0;
 	
-	for(i = 0; i < 2; i++)
+	for(i = 0; i < atoi(numFiles); i++)
 	{
-		file* curr = &arr[i];
-		sizeOfBuffer += 1;//strlen(itoa(strlen(curr->fileName))); //len of fileName len, converted to char*
-		sizeOfBuffer += strlen(curr->fileName); //len of fileName 
-		sizeOfBuffer += 1;//strlen(itoa(curr->numBytes)); //len of numBytes, converted to char*
-		sizeOfBuffer += curr->numBytes; //numBytes
-		sizeOfBuffer += 2; //to account for delimiters
+	  file* curr = &arr[i];
+	 	sizeOfBuffer += strlen(curr->nameLen); //len of nameLen
+	 	sizeOfBuffer += strlen(curr->fileName); //len of fileName 
+	 	sizeOfBuffer += strlen(curr->numBytes); //len of numBytes
+	 	sizeOfBuffer += atoi(curr->numBytes); //numBytes
+	 	sizeOfBuffer += 2; //to account for delimiters
 	}
 	
 	printf("checkpoint 2\n");
-	char buffer[sizeOfBuffer];
+	char buffer[30];
 	strcpy(buffer, command);
 	strcat(buffer, delim);
-	strcat(buffer, delim);//itoa(arrLen));
+	strcat(buffer, numFiles);
 	strcat(buffer, delim);
-
-	for(i = 0; i < 2; i++)
+	
+	for(i = 0; i < atoi(numFiles); i++)
 	{
-		file* curr = &arr[i];
-	  strcat(buffer, delim);//itoa(strlen(curr->fileName)));
+	  file* curr = &arr[i];
+	  strcat(buffer, curr->nameLen);
   	strcat(buffer, delim);
 	 	strcat(buffer, curr->fileName);
-	 	strcat(buffer, delim);//itoa(curr->numBytes));
+	 	strcat(buffer, curr->numBytes);
 	 	strcat(buffer, delim);
   }
 	
+	for(i = 0; i < atoi(numFiles); i++)
+	{ 
+		file* curr = &arr[i];
+	  strcat(buffer, curr->fileData); //FIX HERE
+  }
+	
 	printf("buffer: %s\n", buffer);
-	return NULL;
+  return NULL;
 	
 }
 
