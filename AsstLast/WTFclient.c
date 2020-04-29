@@ -14,6 +14,13 @@
 char* HOST = NULL;
 char* PORT = NULL;
 
+typedef struct file{
+		char* fileName;
+		int nameLen;
+		int numBytes;
+		char* fileData;
+} file;
+
 int configure(char* IPAddress, char* portNum);
 int checkout(char* project);
 int update(char* project);
@@ -32,7 +39,9 @@ int rollback(char* project, char* version);
 int setServerDetails();
 
 int connectToServer();
+char* composeMessage(char* command, file* arr);
 int sendToServer();
+
 char* readFromFile(char* file);
 
 int main(int argc, char **argv) 
@@ -143,10 +152,24 @@ int main(int argc, char **argv)
 	}
 	*/
 	
-	int sockfd = connectToServer();
-	char* message = malloc(5);
-	message = "check";
-	sendToServer(sockfd, message);
+	//int sockfd = connectToServer();
+	char* command = malloc(5);
+	command = "check";
+	int numFiles = 2;
+	struct file arr[2];
+	arr[0].fileName = "file1"; 
+	arr[0].nameLen = 5; 
+	arr[0].numBytes = 9; 
+	arr[0].fileData = "file1data"; 
+	arr[1].fileName = "file2"; 
+	arr[1].nameLen = 5; 
+	arr[1].numBytes = 9; 
+	arr[1].fileData = "file2data"; 
+	
+	
+	//sendToServer(sockfd, message);
+	
+	composeMessage(command, arr);
 	
 	return 0;
 }
@@ -226,6 +249,8 @@ int create(char* project)
 	{
 		
 	}
+	//struct file** arr = malloc(numFiles*sizeof(struct file*))
+
 	
 	//get manifest from server
 	return 0;
@@ -340,7 +365,7 @@ int connectToServer()
 	
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
-	serverAddressInfo.sin_port = htons(portno); //CHANGE BACK TO PORTNO
+	serverAddressInfo.sin_port = htons(42069); //CHANGE BACK TO PORTNO
 	
 	bcopy((char*)host->h_addr, (char*)&serverAddressInfo.sin_addr.s_addr, host->h_length);
 	
@@ -352,6 +377,50 @@ int connectToServer()
 	}
 	
 	return sockfd;
+}
+
+char* composeMessage(char* command, file* arr)
+{
+	printf("checkpoint 1\n");
+	int commandLen = strlen(command);
+	int arrLen = 2;
+	int numFilesLen = 1;//strlen(itoa(arrLen));
+	int sizeOfBuffer = commandLen + numFilesLen + 2; // +2 to account for delimiters
+	char* delim = malloc(sizeof(char)*1);
+	delim = ":";
+	
+	int i = 0;
+	
+	for(i = 0; i < 2; i++)
+	{
+		file* curr = &arr[i];
+		sizeOfBuffer += 1;//strlen(itoa(strlen(curr->fileName))); //len of fileName len, converted to char*
+		sizeOfBuffer += strlen(curr->fileName); //len of fileName 
+		sizeOfBuffer += 1;//strlen(itoa(curr->numBytes)); //len of numBytes, converted to char*
+		sizeOfBuffer += curr->numBytes; //numBytes
+		sizeOfBuffer += 2; //to account for delimiters
+	}
+	
+	printf("checkpoint 2\n");
+	char buffer[sizeOfBuffer];
+	strcpy(buffer, command);
+	strcat(buffer, delim);
+	strcat(buffer, delim);//itoa(arrLen));
+	strcat(buffer, delim);
+
+	for(i = 0; i < 2; i++)
+	{
+		file* curr = &arr[i];
+	  strcat(buffer, delim);//itoa(strlen(curr->fileName)));
+  	strcat(buffer, delim);
+	 	strcat(buffer, curr->fileName);
+	 	strcat(buffer, delim);//itoa(curr->numBytes));
+	 	strcat(buffer, delim);
+  }
+	
+	printf("buffer: %s\n", buffer);
+	return NULL;
+	
 }
 
 int sendToServer(int sockfd, char* message)
