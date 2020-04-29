@@ -32,11 +32,11 @@ int rollback(char* project, char* version);
 int setServerDetails();
 
 int connectToServer();
-int sendMessage();
+int sendToServer();
 char* readFromFile(char* file);
 
 int main(int argc, char **argv) 
-{
+{/*
 	if(argc < 3){
 		printf("ERROR: Not enough parameters\n");
 		return -1;
@@ -141,6 +141,13 @@ int main(int argc, char **argv)
 		printf("ERROR: Invalid command\n");
 		return -1;
 	}
+	*/
+	
+	int sockfd = connectToServer();
+	char* message = malloc(5);
+	message = "check";
+	sendToServer(sockfd, message);
+	
 	return 0;
 }
 
@@ -209,16 +216,19 @@ should place the .Manifest the server sent in it.
 */
 int create(char* project)
 {
-	connectToServer();
-	sendMessage();
-	int status; 
-  status = mkdir(project); 
+	char* message;
+	int sockfd = connectToServer();
+	int status;
+	
+	sendToServer(sockfd, message);
+  status = mkdir(project, 00600); 
 	if(status < 0)
 	{
 		
 	}
 	
 	//get manifest from server
+	return 0;
 }
 
 int destroy(char* project)
@@ -226,7 +236,7 @@ int destroy(char* project)
 	return 0;
 }
 
-int add(char* project)
+int add(char* project, char* file)
 {
 	return 0;
 }
@@ -235,10 +245,10 @@ int add(char* project)
 project does not exist on the client.
 The client will remove the entry for the
 given file from its own .Manifest*/
-int remove_(char* project)
+int remove_(char* project,char* file)
 {
 	int status; 
-  status = mkdir(project); 
+  status = mkdir(project, 00600); 
 	if(status < 0)
 	{
 		printf("Error: File does not directory.");
@@ -315,7 +325,6 @@ int setServerDetails()
 int connectToServer()
 {
 	int sockfd = 0, cxn_status = 0; 
-	char* buffer;
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
@@ -331,10 +340,9 @@ int connectToServer()
 	
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
-	serverAddressInfo.sin_port = htons(12342);
+	serverAddressInfo.sin_port = htons(portno); //CHANGE BACK TO PORTNO
 	
 	bcopy((char*)host->h_addr, (char*)&serverAddressInfo.sin_addr.s_addr, host->h_length);
-	
 	
 	cxn_status = connect(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo));
 	if(cxn_status < 0)
@@ -343,31 +351,24 @@ int connectToServer()
 		return -1;
 	}
 	
-	printf("%d\n", cxn_status);
-	printf("checkpoint\n");
-	
-	//buffer = malloc(9);
-	buffer = "test.txt";
-	sendMessage(sockfd, buffer);
-	
-	return 0;
+	return sockfd;
 }
 
-int sendMessage(int sockfd, char* buffer)
+int sendToServer(int sockfd, char* message)
 {
+	char* buffer[256];
 	int n = 0;
-	//bzero(buffer,strlen(buffer));
-
-	n = write(sockfd,buffer,strlen(buffer));
+	bzero(buffer,256);
+	
+	n = write(sockfd,message,strlen(message));
 	if (n < 0) 
 		 printf("ERROR writing to socket\n");
-	//bzero(buffer,strlen(buffer));
-	
-	/*
-	n = read(sockfd,buffer,strlen(buffer)-1);
+		 
+	n = read(sockfd,buffer,255);
 	 if (n < 0) 
 			printf("ERROR reading from socket\n");
-	printf("%s\n",buffer);*/
+	
+	printf("Message: %s\n", buffer);
 	
 	return 0;
 }

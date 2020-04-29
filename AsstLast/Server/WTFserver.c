@@ -3,11 +3,13 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <strings.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <fcntl.h>
 
 int port = 0;
 
@@ -154,7 +156,7 @@ should place the .Manifest the server sent in it.
 int create(char* project)
 {
 	int status;
-  status = mkdir(project); //CHECK WITHIN PROJECTS FOLDER
+  status = mkdir(project, 00600); //CHECK WITHIN PROJECTS FOLDER
 	if(status < 0)
 	{
 		char* manifestName = ".Manifest";
@@ -163,8 +165,9 @@ int create(char* project)
 	}
 	else
 	{
-		printf("Error: Project already exists.")
+		printf("Error: Project already exists.");
 	}
+	return 0;
 }
 
 int destroy(char* project)
