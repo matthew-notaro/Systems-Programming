@@ -32,7 +32,7 @@ int create(char* project);
 int destroy(char* project);
 int add(char* project, char* file);
 int remove_(char* project, char* file);
-int update_(char* project);
+int update(char* project);
 int currentversion(char* project);
 int history(char* project);
 int rollback(char* project, char* version);
@@ -48,11 +48,14 @@ char* readFromFile(char* file);
 char* hash(char* data);
 
 char* getHashFromLine(char* line);
-char* getPathFromLine(char* line)
+char* getPathFromLine(char* line);
+char* getVersionFromLine(char* line);
+
+char* readUntilDelim(int fd, char delim);
 
 int main(int argc, char **argv) 
 {
-	if(argc < 3){
+	/*if(argc < 3){
 		printf("ERROR: Not enough parameters\n");
 		return -1;
 	}
@@ -155,9 +158,9 @@ int main(int argc, char **argv)
 	else{
 		printf("ERROR: Invalid command\n");
 		return -1;
-	}
+	}*/
 	
-	/*
+	
 	//int sockfd = connectToServer();
 	char* command = malloc(5);
 	command = "check";
@@ -173,12 +176,11 @@ int main(int argc, char **argv)
 	arr[1].numBytes = "9"; 
 	arr[1].fileData = "file2data"; 
 	
+	update(command);
 	
 	//sendToServer(sockfd, command);
-	
 	//composeMessage(command, arr, numFiles);
-	
-	//getHash(command);*/
+	//getHash(command);
 	
 	return 0;
 }
@@ -223,45 +225,180 @@ int checkout(char* project)
 int update(char* project)
 {
 	//failure cases
-	//get server .manifest
+	//char* command = malloc();
+	//char* message = composeMessage(); //get manifest
 	
-	int clientManifestFd = open(clientManifest, O_RDONLY); //WRITE APPEND
-	int serverManifestFd = open(serverManifest, O_RDONLY);
+	// TESTING 
 	
-	//CHECK MANIFEST VERSIONS
+	char* clientManifest = malloc(2);
+	char* serverManifest = malloc(2);
+	clientManifest = ".cl";
+	serverManifest = ".s";
 	
+	//Opens both client and server .Manifest files
+	int cliManifestFd = open(clientManifest, O_RDONLY);
+	int servManifestFd = open(serverManifest, O_RDONLY); //Only used to compare versions
+	
+	//Extracts version numbers
+	char* cManifestVer = readUntilDelim(cliManifestFd, '\n');
+	char* sManifestVer = readUntilDelim(servManifestFd, '\n');
+	
+	printf("versions: %s %s\n", cManifestVer, sManifestVer);
+	
+	close(servManifestFd);
+	//Compares version numbers
+	
+	int updateFd = open(".Update", O_RDWR|O_CREAT|O_APPEND, 00600);
+	
+	if(strcmp(cManifestVer, sManifestVer) == 0) //Case 1: same Manifest versions
+	{
+		//delete conflict if it exists
+		//"up to date" to stdout
+		return 0;
+	}
+
+	//Case 2: different Manifest versions
+	//Loops through each line of client Manifest
 	while(1)
 	{
-		char* currentClientLine = readUntilDelim(clientManifestFd, '\n');
-		char* clientProjPath = getPathFromLine(currentClientLine);
+		//Extracts line from client .Manifest and gets the project path
+		char* currentClientLine = readUntilDelim(cliManifestFd, '\n');
+		printf("ccl: %s\n", currentClientLine);
 		
-		while(1)
+		//Closes fd and exits loop if no more lines
+		if(currentClientLine == NULL || strlen(currentClientLine) == 0)
 		{
-			int serverManifestFd = open(serverManifest, O_RDONLY);
-			char* currentServerLine = readUntilDelim(serverManifest, '\n');
-			char* serverProjPath = getPathFromLine(currentServerLine);
-			if(strcmp(clientProjPath,serverProjPath) == 0)
-			{
-				//file match
-				//compare version numbers
-			}
-		}
-		
-		if(currentLine == NULL || strlen(currentLine) == 0)
-		{
+			close(cliManifestFd);
 			break;
 		}
 		
-		char* storedHash = getHashFromLine(currentLine);
-		char* currProjPath = getPathFromLine(currentLine);
-		char* currProjString = readFromFile(currProjPath);
-		char* liveHash = getHashCode(currProjString);
+		//Extracts project path from line
+		char* clientProjPath = getPathFromLine(currentClientLine);
 				
-		if(strcmp(storedHash, liveHash) != 0)
+		//Opens server Manifest and skips over version number
+		servManifestFd = open(serverManifest, O_RDONLY);
+		readUntilDelim(servManifestFd, '\n'); 
+		
+		//Loops through each line of server Manifest to check if project exists
+		while(1)
 		{
-			int clientManifestFd = open("project/.commit", O_RDONLY); 
+			//Extracts line from server .Manifest and gets the project path
+			char* currentServerLine = readUntilDelim(servManifestFd, '\n');
+			
+			//Case 2.1: project not found on server side
+			if(currentServerLine == NULL || strlen(currentServerLine) == 0)
+			{
+				//must delete code
+				close(servManifestFd);
+				break;
+			}
+			
+			//Extracts project from line
+			char* serverProjPath = getPathFromLine(currentServerLine);
+			
+			//Case 2.2: project found on server side
+			if(strcmp(clientProjPath,serverProjPath) == 0)
+			{
+				char* cliVersion = getVersionFromLine(currentClientLine);
+				char* servVersion = getVersionFromLine(currentServerLine);
+				
+				char* storedCliHash = getHashFromLine(currentClientLine);
+				char* servHash = getHashFromLine(currentServerLine);
+				
+				//Checks if versions don't match
+				if(strcmp(cliVersion,servVersion) != 0)
+				{
+					//Checks if stored and server hashes don't match
+					if(strcmp(storedCliHash,servHash) != 0)
+					{
+						char* currentProjString = readFromFile(clientProjPath);
+						char* liveHash = hash(currentProjString);
+						
+						if(strcmp(storedCliHash,servHash) == 0)
+						{
+							//Case 2.1.1: server has modified files
+							//append to update
+							//output
+							free(currentProjString);
+							free(liveHash);
+							close(servManifestFd);
+							break;
+						}
+						else
+						{
+							//Case 2.1.2: server has removed files
+							//append to conflict
+							//stdout
+							free(currentProjString);
+							free(liveHash);
+							close(servManifestFd);
+							break;
+						}
+					}
+				}
+				free(cliVersion);
+				free(servVersion);
+				free(storedCliHash);
+				free(servHash);
+			}
+			free(currentServerLine);
+			free(serverProjPath);
 		}
+		free(currentClientLine);
+		free(clientProjPath);
 	}
+	close(cliManifestFd);
+	
+	//Open server manifest again
+	servManifestFd = open(serverManifest, O_RDONLY);
+	
+	//Loop through server .Manifest
+	while(1)
+	{
+		char* currentServerLine = readUntilDelim(servManifestFd, '\n');
+		
+		//Closes fd and exits loop if no more lines
+		if(currentServerLine == NULL || strlen(currentServerLine) == 0)
+		{
+			close(servManifestFd);
+			break;
+		}
+		
+		char* serverProjPath = getPathFromLine(currentServerLine);
+		
+		//Opens client Manifest and skips over version number
+		cliManifestFd = open(clientManifest, O_RDONLY);
+		readUntilDelim(cliManifestFd, '\n');
+		
+		while(1)
+		{
+			char* currentClientLine = readUntilDelim(cliManifestFd, '\n');
+			
+			//Case 2.3: server has files not on client side
+			if(currentClientLine == NULL || strlen(currentClientLine) == 0)
+			{
+				//must delete code
+				close(cliManifestFd);
+				break;
+			}
+			
+			char* clientProjPath = getPathFromLine(currentServerLine);
+			
+			//if project found on client side
+			if(strcmp(clientProjPath,serverProjPath) == 0)
+			{
+				close(cliManifestFd);
+				break;
+			}
+			
+			free(currentClientLine);
+			free(clientProjPath);
+		} 
+		free(currentServerLine);
+		free(serverProjPath);
+	}
+	close(servManifestFd);
+	
 	return 0;
 }
 
@@ -279,7 +416,7 @@ int upgrade(char* project)
 
 int commit(char* project)
 {
-	char* message = composeMessage(); //client send server commit <proj>
+	//char* message = composeMessage(); //client send server commit <proj>
 	//receive .manifest
 	//client fails if project DNE on server
 	// client fails if server cannot be contacted
@@ -304,11 +441,11 @@ int commit(char* project)
 	char* clientManifest;
 	char* serverManifest;
 	
-	int clientManifestFd = open(clientManifest, O_RDONLY); //WRITE APPEND
-	int serverManifestFd = open(serverManifest, O_RDONLY);
+	int cliManifestFd = open(clientManifest, O_RDONLY); //WRITE APPEND
+	int servManifestFd = open(serverManifest, O_RDONLY);
 	
-	char* cManifestVer = readUntilDelim(clientManifestFd, '\n');
-	char* sManifestVer = readUntilDelim(serverManifestFd, '\n');
+	char* cManifestVer = readUntilDelim(cliManifestFd, '\n');
+	char* sManifestVer = readUntilDelim(servManifestFd, '\n');
 	
 	if(strcmp(cManifestVer, sManifestVer) != 0) //Manifest versions differ
 	{
@@ -317,7 +454,7 @@ int commit(char* project)
 	
 	while(1)
 	{
-		char* currentLine = readUntilDelim(clientManifestFd);
+		char* currentLine = readUntilDelim(cliManifestFd, '\n');
 		if(currentLine == NULL || strlen(currentLine) == 0)
 		{
 			break;
@@ -326,11 +463,11 @@ int commit(char* project)
 		char* storedHash = getHashFromLine(currentLine);
 		char* currProjPath = getPathFromLine(currentLine);
  		char* currProjString = readFromFile(currProjPath);
-		char* liveHash = getHashCode(currProjString);
+		char* liveHash = getHashFromLine(currProjString);
 				
 		if(strcmp(storedHash, liveHash) != 0)
 		{
-			int clientManifestFd = open("project/.commit", O_RDONLY); 
+			int cliManifestFd = open("project/.commit", O_RDONLY); 
 		}
 	}
 
@@ -342,12 +479,6 @@ int push(char* project)
 	return 0;
 }
 
-/*
-The create command will fail if the project name already exists on the server or the client can not communicate
-with the server. Otherwise, the server will create a project folder with the given name, initialize a .Manifest for it
-and send it to the client. The client will set up a local version of the project folder in its current directory and
-should place the .Manifest the server sent in it.
-*/
 int create(char* project)
 {
 	char* message;
@@ -372,9 +503,6 @@ int destroy(char* project)
 	return 0;
 }
 
-/*The add command will fail if the project does not 
-exist on the client. The client will add an entry for the the file
-to its own .Manifest with a new version number and hashcode.*/
 int add(char* project, char* file)
 {
 	int status; 
@@ -390,10 +518,6 @@ int add(char* project, char* file)
 	return 0;
 }
 
-/*The remove command will fail if the
-project does not exist on the client.
-The client will remove the entry for the
-given file from its own .Manifest*/
 int remove_(char* project, char* file)
 {
 	int status; 
@@ -405,19 +529,14 @@ int remove_(char* project, char* file)
 	}
 	else
 	{
-		open manifest
-		find line
-		load data into buffer
-		delete manifest contents
-		write
-		write
+		// open manifest
+		// find line
+		// load data into buffer
+		// delete manifest contents
+		// write
+		// write
 	}
 	
-	return 0;
-}
-
-int update_(char* project)
-{
 	return 0;
 }
 
@@ -559,7 +678,7 @@ char* composeMessage(char* command, file* arr, char* numFiles)
 
 int sendToServer(int sockfd, char* message)
 {
-	char* buffer[256];
+	char* buffer[256]; //check type
 	int n = 0;
 	bzero(buffer,256);
 	
@@ -571,7 +690,7 @@ int sendToServer(int sockfd, char* message)
 	 if (n < 0) 
 			printf("ERROR reading from socket\n");
 	
-	printf("Message: %s\n", buffer);
+	//printf("Message: %s\n", buffer);
 	
 	return 0;
 }
@@ -584,7 +703,7 @@ char* readFromFile(char* file)
     // Fatal Error if file does not exist
     if(fd < 0){
         printf("Fatal Error: File does not exist.\n");
-        return NULL;
+        return "FILE_DNE";
     }
     struct stat *buffer = malloc(sizeof(struct stat));
     if(buffer == NULL){
@@ -596,6 +715,7 @@ char* readFromFile(char* file)
     // Warning: Empty file
     if(bufferSize == 0){
         printf("Warning: Empty file.\n");
+				return "EMPTY_FILE";
     }
 		
     // IO Read Loop
@@ -623,7 +743,7 @@ char* hash(char* data)
 	size_t length = strlen(data);
 	char* buffer = malloc(SHA_DIGEST_LENGTH);
 	unsigned char hash[SHA_DIGEST_LENGTH];
-	SHA1(data, length, hash);
+	//SHA1(data, length, hash);
 	
 	for(x = 0; x < SHA256_DIGEST_LENGTH; x++)
 	{
@@ -631,6 +751,111 @@ char* hash(char* data)
 	}
 	
 	printf("hash code: %s\n", buffer);
+	return buffer;
+}
+
+// Extracts stored hash code from .Manifest line
+// Returns hash string
+char* getHashFromLine(char* line)
+{
+	int i = 0, start = 0, end = 0, len = strlen(line);
+	
+	end = strlen(line)-1;
+	for(i = end-1; i > 0; i--)
+	{
+		if(isspace(line[i]) != 0)
+		{
+			start = i+1;
+			break;
+		}
+	}
+	
+	int bufSize = end-start+1;
+	char* buffer = malloc(end-start+1);
+	
+	for(i = 0; i < bufSize; i++)
+	{
+		buffer[i] = line[i+start];
+	}
+
+	return buffer;
+}
+
+// Extracts project path from .Manifest line
+// Returns path string
+char* getPathFromLine(char* line)
+{
+	int i = 0, start = 0, end = 0, len = strlen(line);
+	
+	for(i = 0; i < len; i++)
+	{
+		if(line[i] == ' ' || line[i] == '\t') //space found
+		{
+			if(start == 0)
+				start = i+1;
+			else
+				end = i-1;
+		}
+	}
+
+	int bufSize = end-start+1;
+	char* buffer = malloc(end-start+1);
+	
+	for(i = 0; i < bufSize; i++)
+	{
+		buffer[i] = line[i+start];
+	}
+
+	return buffer;
+}
+
+// Extracts version number from .Manifest line
+// Returns version string
+char* getVersionFromLine(char* line)
+{
+	int i = 0, end = 0, len = strlen(line);
+	
+	for(i = 0; i < len; i++)
+	{
+		if(line[i] == ' ' || line[i] == '\t') //space found
+		{
+			end = i-1;
+		}
+	}
+
+	char* buffer = malloc(end);
+	
+	for(i = 0; i < end; i++)
+	{
+		buffer[i] = line[i];
+	}
+
+	return buffer;
+}
+
+// Reads byte by byte from fd until the delim is found
+// Returns string of at most bufLen bytes stored on the heap
+char* readUntilDelim(int fd, char delim){
+	// Allocate 100 bytes - should be enough to store any file name or line of .Manifest
+	int bufLen = 100;
+	char* buffer = (char*)malloc(bufLen*sizeof(char));
+	if(buffer == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+    }
+	memset(buffer, '\0', bufLen);
+    // IO Read Loop
+    int status = 1;
+    int readIn = 0;
+    do{
+        status = read(fd, buffer+readIn, 1);
+		// breaks and resets most recently read byte if  byte = delim
+		if(buffer[readIn] == delim){
+			buffer[readIn] = '\0';
+			break;
+		}
+        readIn += status;
+    } while(status > 0);
 	return buffer;
 }
 
