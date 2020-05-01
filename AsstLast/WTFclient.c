@@ -402,7 +402,7 @@ char* composeMessage(char* command, file* arr, char* numFiles)
 	}
 	
 	printf("checkpoint 2\n");
-	char buffer[30];
+	char buffer[sizeOfBuffer];
 	strcpy(buffer, command);
 	strcat(buffer, delim);
 	strcat(buffer, numFiles);
@@ -425,7 +425,7 @@ char* composeMessage(char* command, file* arr, char* numFiles)
   }
 	
 	printf("buffer: %s\n", buffer);
-  return NULL;
+  return buffer;
 	
 }
 
