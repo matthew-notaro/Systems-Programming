@@ -28,9 +28,28 @@ int history(char* project);
 int rollback(char* project, char* version);
 
 void* socketThread(void* sockfd);
+void recursion(char* name);
+
+typedef struct file{
+	char* fileName;
+	int nameLen;
+	int fileLen;
+	char* fileData;
+	struct file* next;
+} file;
+
+char* readNBytes(int fd, int numBytes);
+char* readUntilDelim(int fd, char delim);
+char* readFromFile(char* file);
+char* intToString(int num);
+void writeLoop(int fd, char* str, int numBytes);
+void transferOver(int sockfd, file* fileLL, char* command);
+file* addFileToLL(file* fileLL, char* name);
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 char client_message[2000];
+
+
 
 int main(int argc, char **argv){
 	if(argc != 2){
@@ -124,6 +143,31 @@ void* socketThread(void* sockvoidstar){
 }
 
 
+void recursion(char* name){
+  DIR* currentDir = opendir(name);
+    if(currentDir == NULL){
+    printf("Error: invalid path\n");
+    return;
+  }
+  struct dirent* currentThing = NULL;
+  readdir(currentDir);
+  readdir(currentDir);
+  while((currentThing = readdir(currentDir)) != NULL){
+    char buff[1024];
+    snprintf(buff, sizeof(buff), "%s/%s", name, currentThing->d_name);
+    if(currentThing->d_type == DT_REG){
+      doOp(buff);
+    }
+    else if(currentThing->d_type == DT_DIR){
+      recursion(buff);
+    }
+  }
+  closedir(currentDir);
+}
+
+
+
+
 int checkout(char* project)
 {
 	return 0;
@@ -195,4 +239,201 @@ int history(char* project)
 int rollback(char* project, char* version)
 {
 	return 0;
+}
+
+
+void yeetProject(char* project){
+
+}
+
+
+// Reads given n bytes from given fd
+// Returns string of n bytes stored on the heap
+// Returns NULL if 0 bytes requested
+char* readNBytes(int fd, int numBytes){
+    if(numBytes == 0){
+		return NULL;
+	}
+	//Mallocs and memsets file buffer for actual file contents
+    char* nBytes = (char*)malloc(numBytes*sizeof(char));
+    if(nBytes == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+    }
+    memset(nBytes, '\0', numBytes);
+
+    // IO Read Loop
+    int status = 1;
+    int readIn = 0;
+    do{
+        status = read(fd, nBytes+readIn, numBytes - readIn);
+        readIn += status;
+    } while(status > 0 && readIn < numBytes);
+    return nBytes;
+}
+
+
+// Reads byte by byte from fd until the delim is found
+// Returns string of at most bufLen bytes stored on the heap
+char* readUntilDelim(int fd, char delim){
+	// Allocate 100 bytes - should be enough to store any file name or line of .Manifest
+	int bufLen = 100;
+	char* buffer = (char*)malloc(bufLen*sizeof(char));
+	if(buffer == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+    }
+	memset(nBytes, '\0', bufLen);
+    // IO Read Loop
+    int status = 1;
+    int readIn = 0;
+    do{
+        status = read(fd, buffer+readIn, 1);
+		// breaks and resets most recently read byte if  byte = delim
+		if(buffer[readIn] == delim){
+			buffer[readIn] = '\0';
+			break;
+		}
+        readIn += status;
+    } while(status > 0);
+	return buffer;
+}
+
+
+// Reads entire file into string buffer
+// Returns NULL if file does not exist, string otherwise
+char* readFromFile(char* file){
+    int fd = open(file, O_RDONLY);    // Returns -1 on failure, >0 on success
+
+    // Fatal Error if file does not exist
+    if(fd < 0){
+        printf("Fatal Error: File does not exist.\n");
+        return "FILE_DNE";
+    }
+
+    //Allocates memory for file buffer
+    struct stat *buffer = (struct stat*)malloc(sizeof(struct stat));
+    if(buffer == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+    }
+
+    //Determines size of file
+    stat(file, buffer);
+    int buffer_size = buffer->st_size;
+
+    // Warning: Empty file
+    if(buffer_size == 0){
+        printf("Warning: Empty file.\n");
+		// Addresses returns stuff
+		return "EMPTY_FILE";
+    }
+
+    //Mallocs and memsets file buffer for actual file contents
+    char* file_buffer = (char*)malloc(buffer_size);
+    if(file_buffer == NULL){
+        printf("Bad malloc\n");
+        return NULL;
+    }
+    memset(file_buffer, '\0', buffer_size);
+
+    // IO Read Loop
+    int status = 1;
+    int readIn = 0;
+    do{
+        status = read(fd, file_buffer+readIn, buffer_size - readIn);
+        readIn += status;
+    } while(status > 0 && readIn < buffer_size);
+
+    free(buffer);
+    close(fd);
+    return file_buffer;
+}
+
+
+// Given fileLL and file name, prepends new, populated file node to LL
+file* addFileToLL(file* fileLL, char* name){
+	char* fileString = readFromFile(name);
+	// FILE DNE - not exactly sure what to do or if this should be possible
+	if(strcmp(fileString, "FILE_DNE") == 0){
+		return fileLL;
+	}
+	file* temp = (file*)malloc(sizeof(file));
+	temp->next = fileLL;
+	temp->fileName = name;
+	temp->nameLen = strlen(name);	
+	
+	// EMPTY FILE - set fileLen to 0, fileData = NULL
+	if(strcmp(fileString, "EMPTY_FILE") == 0){
+		temp->fileData = NULL;
+		temp->fileLen = 0;
+	}
+	// NON-EMPTY FILE - set data and len as normal
+	else{
+		temp->fileLen = strlen(temp->fileData);
+		temp->fileData = fileString;
+	}
+	return temp;
+}
+
+
+// Given server/client socket and fileLL to send over, composes string message and writes message to fd
+void transferOver(int sockfd, file* fileLL, char* command){
+	if(fileLL == NULL){
+		printf("Trying to transfer empty LL\n");
+		return;
+	}
+	file* ptr = fileLL;
+	int bufLen = 20;
+	int numFiles = 0;
+	// Calculates # files to be transferred
+	while(ptr != NULL){
+		numFiles++;
+		ptr = ptr->next;
+	}
+	// <command>:<numFiles>:
+	writeLoop(sockfd, command, strlen(command));
+	write(sockfd, ":", 1);
+	char* numFilesString = intToString(numFiles);
+	writeLoop(sockfd, numFilesString, strlen(numFilesString));
+	write(sockfd, ":", 1);
+
+	// Reset loop to write each files' info to socket
+	// <nameLen>:<fileName><fileLen>:<fileData>
+	ptr = fileLL;
+	while(ptr != NULL){
+		
+		char* nameLenString = intToString(ptr->nameLen);
+		writeLoop(sockfd, nameLenString, strlen(nameLenString));
+		write(sockfd, ":", 1);
+
+		writeLoop(sockfd, ptr->fileName, ptr->nameLen);
+
+		char* fileLenString = intToString(ptr->fileLen);
+		writeLoop(sockfd, fileLenString, strlen(fileLenString));
+		write(sockfd, ":", 1);
+
+		writeLoop(sockfd, ptr->fileData, ptr->fileLen);
+	}
+}
+
+
+
+// Loops write
+void writeLoop(int fd, char* str, int numBytes){
+	int strLen = strlen(str);
+    // IO Read Loop
+    int status = 1;
+    int readIn = 0;
+    do{
+        status = write(fd, str + readIn, numBytes - readIn);
+        readIn += status;
+    } while(status > 0 && readIn < numBytes);
+}
+
+// Converts given int to string of appropriate length stored on heap
+char* intToString(int num){
+	char* itoabuf = (char*)malloc( (int)((ceil(log10(num))+1)) * sizeof(char));
+    sprintf(itoabuf,"%d", num);
+    return itoabuf;
 }
