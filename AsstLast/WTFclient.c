@@ -229,6 +229,50 @@ int upgrade(char* project)
 
 int commit(char* project)
 {
+	char* message = composeMessage(); //client send server commit <proj>
+	//receive .manifest
+	//client fails if project DNE on server
+	// client fails if server cannot be contacted
+	// client fails if it cannot fetch the server's .manifest file for the project,
+	
+	int status; 
+  status = open(".Update", O_RDONLY);
+	if(status >= 0)
+	{
+		//CHECK IF EMPTY
+		printf("Error: .Update exists.");
+		return -1;
+	}
+	status = open(".Conflict", O_RDONLY);
+	if(status >= 0)
+	{
+		//CHECK IF EMPTY
+		printf("Error: .Conflict exists.");
+		return -1;
+	}
+	
+	char* clientManifest;
+	char* serverManifest;
+	
+	char* cManifestVer = readUntilDelim(); //cMan, '/n'
+	char* sManifestVer = readUntilDelim(); //sMan, '/n'
+	
+	if(strcmp(cManifestVer, sManifestVer) != 0) //Manifest versions differ
+	{
+		//error, stop, ask for update
+	}
+	
+	while(1)
+	{
+		char* currentLine = readUntilDelim();
+	}
+
+	if they match, client runs through its own .Manifest
+	for each file, 
+	compare live hash to stored hash
+	if different, add entry to .commit (w/ incremented v#)
+	send commit to server
+
 	return 0;
 }
 
@@ -267,8 +311,21 @@ int destroy(char* project)
 	return 0;
 }
 
+/*The add command will fail if the project does not 
+exist on the client. The client will add an entry for the the file
+to its own .Manifest with a new version number and hashcode.*/
 int add(char* project, char* file)
 {
+	int status; 
+  status = open(file, O_RDONLY);
+	if(status < 0)
+	{
+		printf("Error: file does not exist.");
+		return -1;
+	}
+	// open manifest
+	// append write
+	
 	return 0;
 }
 
@@ -279,11 +336,20 @@ given file from its own .Manifest*/
 int remove_(char* project, char* file)
 {
 	int status; 
-  status = open(file, O_RDONLY);; 
+  status = open(file, O_RDONLY);
 	if(status < 0)
 	{
 		printf("Error: file does not exist.");
 		return -1;
+	}
+	else
+	{
+		open manifest
+		find line
+		load data into buffer
+		delete manifest contents
+		write
+		write
 	}
 	
 	return 0;
@@ -387,7 +453,7 @@ int connectToServer()
 	return sockfd;
 }
 
-//Compose a message based on delimiter-based protocol
+//Composes a message based on delimiter-based protocol
 char* composeMessage(char* command, file* arr, char* numFiles)
 {
 	int commandLen = strlen(command);
@@ -454,8 +520,8 @@ int sendToServer(int sockfd, char* message)
 	return 0;
 }
 
-// Read entire file into string buffer
-// Return NULL if file does not exist, string otherwise
+// Reads entire file into string buffer
+// Returns NULL if file does not exist, string otherwise
 char* readFromFile(char* file)
 {
     int fd = open(file, O_RDONLY);    // Returns -1 on failure, >0 on success
@@ -494,13 +560,12 @@ char* readFromFile(char* file)
     return fileBuffer;
 }
 
-
+// Hashes a given string and returns the code 
 char* getHash(char* data)
 {
 	int x = 0;
 	size_t length = strlen(data);
 	char* buffer = malloc(SHA_DIGEST_LENGTH);
-	memset(buffer, '\0', SHA_DIGEST_LENGTH);
 	unsigned char hash[SHA_DIGEST_LENGTH];
 	SHA1(data, length, hash);
 	
