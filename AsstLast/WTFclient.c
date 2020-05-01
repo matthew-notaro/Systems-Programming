@@ -45,7 +45,10 @@ int sendToServer();
 
 char* readFromFile(char* file);
 
-char* getHash();
+char* hash(char* data);
+
+char* getHashFromLine(char* line);
+char* getPathFromLine(char* line)
 
 int main(int argc, char **argv) 
 {
@@ -219,11 +222,58 @@ int checkout(char* project)
 
 int update(char* project)
 {
+	//failure cases
+	//get server .manifest
+	
+	int clientManifestFd = open(clientManifest, O_RDONLY); //WRITE APPEND
+	int serverManifestFd = open(serverManifest, O_RDONLY);
+	
+	//CHECK MANIFEST VERSIONS
+	
+	while(1)
+	{
+		char* currentClientLine = readUntilDelim(clientManifestFd, '\n');
+		char* clientProjPath = getPathFromLine(currentClientLine);
+		
+		while(1)
+		{
+			int serverManifestFd = open(serverManifest, O_RDONLY);
+			char* currentServerLine = readUntilDelim(serverManifest, '\n');
+			char* serverProjPath = getPathFromLine(currentServerLine);
+			if(strcmp(clientProjPath,serverProjPath) == 0)
+			{
+				//file match
+				//compare version numbers
+			}
+		}
+		
+		if(currentLine == NULL || strlen(currentLine) == 0)
+		{
+			break;
+		}
+		
+		char* storedHash = getHashFromLine(currentLine);
+		char* currProjPath = getPathFromLine(currentLine);
+		char* currProjString = readFromFile(currProjPath);
+		char* liveHash = getHashCode(currProjString);
+				
+		if(strcmp(storedHash, liveHash) != 0)
+		{
+			int clientManifestFd = open("project/.commit", O_RDONLY); 
+		}
+	}
 	return 0;
 }
 
 int upgrade(char* project)
 {
+	//fail if proj dne on server
+	//fail if no cxn
+	//fail if no .update_
+	//fail if .conflict
+	
+	
+	
 	return 0;
 }
 
@@ -254,8 +304,11 @@ int commit(char* project)
 	char* clientManifest;
 	char* serverManifest;
 	
-	char* cManifestVer = readUntilDelim(); //cMan, '/n'
-	char* sManifestVer = readUntilDelim(); //sMan, '/n'
+	int clientManifestFd = open(clientManifest, O_RDONLY); //WRITE APPEND
+	int serverManifestFd = open(serverManifest, O_RDONLY);
+	
+	char* cManifestVer = readUntilDelim(clientManifestFd, '\n');
+	char* sManifestVer = readUntilDelim(serverManifestFd, '\n');
 	
 	if(strcmp(cManifestVer, sManifestVer) != 0) //Manifest versions differ
 	{
@@ -264,14 +317,22 @@ int commit(char* project)
 	
 	while(1)
 	{
-		char* currentLine = readUntilDelim();
+		char* currentLine = readUntilDelim(clientManifestFd);
+		if(currentLine == NULL || strlen(currentLine) == 0)
+		{
+			break;
+		}
+		
+		char* storedHash = getHashFromLine(currentLine);
+		char* currProjPath = getPathFromLine(currentLine);
+ 		char* currProjString = readFromFile(currProjPath);
+		char* liveHash = getHashCode(currProjString);
+				
+		if(strcmp(storedHash, liveHash) != 0)
+		{
+			int clientManifestFd = open("project/.commit", O_RDONLY); 
+		}
 	}
-
-	if they match, client runs through its own .Manifest
-	for each file, 
-	compare live hash to stored hash
-	if different, add entry to .commit (w/ incremented v#)
-	send commit to server
 
 	return 0;
 }
@@ -488,12 +549,7 @@ char* composeMessage(char* command, file* arr, char* numFiles)
 	 	strcat(buffer, curr->fileName);
 	 	strcat(buffer, curr->numBytes);
 	 	strcat(buffer, delim);
-  }
-	
-	for(i = 0; i < atoi(numFiles); i++)
-	{ 
-		file* curr = &arr[i];
-	  strcat(buffer, curr->fileData); //FIX HERE
+		strcat(buffer, curr->fileData);
   }
 	
 	printf("buffer: %s\n", buffer);
@@ -561,7 +617,7 @@ char* readFromFile(char* file)
 }
 
 // Hashes a given string and returns the code 
-char* getHash(char* data)
+char* hash(char* data)
 {
 	int x = 0;
 	size_t length = strlen(data);
