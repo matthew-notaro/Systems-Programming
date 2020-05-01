@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <openssl/sha.h>
 
 //#define PORT 42069
 
@@ -43,6 +44,8 @@ char* composeMessage(char* command, file* arr, char* numFiles);
 int sendToServer();
 
 char* readFromFile(char* file);
+
+char* getHash();
 
 int main(int argc, char **argv) 
 {/*
@@ -170,7 +173,9 @@ int main(int argc, char **argv)
 	
 	//sendToServer(sockfd, command);
 	
-	composeMessage(command, arr, numFiles);
+	//composeMessage(command, arr, numFiles);
+	
+	getHash(command);
 	
 	return 0;
 }
@@ -271,14 +276,18 @@ int add(char* project, char* file)
 project does not exist on the client.
 The client will remove the entry for the
 given file from its own .Manifest*/
-int remove_(char* project,char* file)
+int remove_(char* project, char* file)
 {
 	int status; 
-  status = mkdir(project, 00600); 
+  status = open(file, O_RDONLY);; 
 	if(status < 0)
 	{
-		printf("Error: File does not directory.");
+		printf("Error: file does not exist.");
+		return -1;
 	}
+	
+	
+	
 	return 0;
 }
 
@@ -380,6 +389,7 @@ int connectToServer()
 	return sockfd;
 }
 
+//Compose a message based on delimiter-based protocol
 char* composeMessage(char* command, file* arr, char* numFiles)
 {
 	printf("checkpoint 1\n");
@@ -402,7 +412,7 @@ char* composeMessage(char* command, file* arr, char* numFiles)
 	}
 	
 	printf("checkpoint 2\n");
-	char buffer[sizeOfBuffer];
+	char* buffer = malloc(sizeOfBuffer);
 	strcpy(buffer, command);
 	strcat(buffer, delim);
 	strcat(buffer, numFiles);
@@ -449,7 +459,7 @@ int sendToServer(int sockfd, char* message)
 }
 
 // Read entire file into string buffer
-// Returns NULL if file does not exist, string otherwise
+// Return NULL if file does not exist, string otherwise
 char* readFromFile(char* file)
 {
     int fd = open(file, O_RDONLY);    // Returns -1 on failure, >0 on success
@@ -486,5 +496,24 @@ char* readFromFile(char* file)
 
     free(buffer);
     return fileBuffer;
+}
+
+
+char* getHash(char* data)
+{
+	int x = 0;
+	size_t length = strlen(data);
+	char* buffer = malloc(SHA_DIGEST_LENGTH);
+	memset(buffer, '\0', SHA_DIGEST_LENGTH);
+	unsigned char hash[SHA_DIGEST_LENGTH];
+	SHA1(data, length, hash);
+	
+	for(x = 0; x < SHA256_DIGEST_LENGTH; x++)
+	{
+		sprintf(buffer+(x * 2), "%02x", hash[x]);
+	}
+	
+	printf("hash code: %s\n", buffer);
+	return buffer;
 }
 
