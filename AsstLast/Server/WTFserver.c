@@ -10,6 +10,8 @@
 #include <netinet/in.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <openssl/sha.h>
+
 
 int port = 0;
 
@@ -201,7 +203,7 @@ int create(char* project)
 {
 	int status;
   status = mkdir(project, 00600); //CHECK WITHIN PROJECTS FOLDER
-	if(status < 0)
+	if(status < 0) //File does not exist
 	{
 		char* manifestName = ".Manifest";
 		int fd = open(manifestName, O_RDWR|O_CREAT|O_APPEND, 00600);
