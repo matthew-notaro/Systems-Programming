@@ -48,7 +48,7 @@ char* readFromFile(char* file);
 char* getHash();
 
 int main(int argc, char **argv) 
-{/*
+{
 	if(argc < 3){
 		printf("ERROR: Not enough parameters\n");
 		return -1;
@@ -153,8 +153,8 @@ int main(int argc, char **argv)
 		printf("ERROR: Invalid command\n");
 		return -1;
 	}
-	*/
 	
+	/*
 	//int sockfd = connectToServer();
 	char* command = malloc(5);
 	command = "check";
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
 	
 	//composeMessage(command, arr, numFiles);
 	
-	getHash(command);
+	//getHash(command);*/
 	
 	return 0;
 }
@@ -286,8 +286,6 @@ int remove_(char* project, char* file)
 		return -1;
 	}
 	
-	
-	
 	return 0;
 }
 
@@ -392,7 +390,6 @@ int connectToServer()
 //Compose a message based on delimiter-based protocol
 char* composeMessage(char* command, file* arr, char* numFiles)
 {
-	printf("checkpoint 1\n");
 	int commandLen = strlen(command);
 	int numFilesLen = 1;
 	int sizeOfBuffer = commandLen + numFilesLen + 2; // +2 to account for delimiters
@@ -411,7 +408,6 @@ char* composeMessage(char* command, file* arr, char* numFiles)
 	 	sizeOfBuffer += 2; //to account for delimiters
 	}
 	
-	printf("checkpoint 2\n");
 	char* buffer = malloc(sizeOfBuffer);
 	strcpy(buffer, command);
 	strcat(buffer, delim);
