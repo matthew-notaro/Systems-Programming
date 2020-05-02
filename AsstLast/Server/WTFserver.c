@@ -47,8 +47,6 @@ void transferOver(int sockfd, file* fileLL, char* command);
 file* addFileToLL(file* fileLL, char* name);
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-char client_message[2000];
-
 
 
 int main(int argc, char **argv){
@@ -108,6 +106,7 @@ int main(int argc, char **argv){
 }
 
 // Function to be made into a thread for each connection to server
+// Plain function used to test connecting
 void* socketThread(void* sockvoidstar){
 	printf("Entering thread\n");
 	int sock = *((int*)sockvoidstar);
@@ -142,28 +141,117 @@ void* socketThread(void* sockvoidstar){
 	pthread_exit(NULL);
 }
 
+// Function to be made into a thread for each connection to server
+// Function to be used
+void* socketThread2(void* sockvoidstar){
+	printf("Entering thread\n");
+	int sock = *((int*)sockvoidstar);
+	int n;
+	// Reads desired command and project from socket
+	char* command = readUntilDelim(sock, ':');
+	char* project, *error;
+	// Makes sure server is given at least command and project
 
-void recursion(char* name){
-  DIR* currentDir = opendir(name);
-    if(currentDir == NULL){
-    printf("Error: invalid path\n");
-    return;
-  }
-  struct dirent* currentThing = NULL;
-  readdir(currentDir);
-  readdir(currentDir);
-  while((currentThing = readdir(currentDir)) != NULL){
-    char buff[1024];
-    snprintf(buff, sizeof(buff), "%s/%s", name, currentThing->d_name);
-    if(currentThing->d_type == DT_REG){
-      doOp(buff);
-    }
-    else if(currentThing->d_type == DT_DIR){
-      recursion(buff);
-    }
-  }
-  closedir(currentDir);
+
+
+	file* fileLL = NULL;
+	// Sends back entire project
+	if(strcmp("checkout", command) == 0){
+		char* project = readUntilDelim(sock, ':');
+		fileLL = addDirToLL(fileLL, project);
+		if(fileLL != NULL){
+			transferOver(sock, fileLL, command);
+		}
+	}
+	// Sends back .Manifest of given project
+	// Assumes request formatted as: <command>:<project>
+	else if(strcmp("update", command) == 0 || strcmp("commit", command) == 0){
+		// Format project name
+		char* project = readUntilDelim(sock, ':');
+		char* manWithProj = (char*)malloc( (strlen(project)+10) * sizeof(char));
+    	strcpy(manWithProj, project);
+    	strcat(manWithProj, "./Manifest");
+
+		fileLL = addFileToLL(fileLL, manWithProj);
+		if(fileLL != NULL){
+			transferOver(sock, fileLL, command);
+		}
+		else{
+			error = "error:project does not exist"
+			writeLoop(sock, error, strlen(error));
+		}
+	}
+	// Reads in names of n files to be sent back to client
+	// Protocol: <cmd>:<num>:<nameLen>:<fileName>...
+	else if(strcmp("upgrade", command)){
+		int numFiles = atoi(readUntilDelim(sock, ':'));
+		int i, nameLen;
+		char* fileName;
+		for(i = 0; i < numFiles; i++){
+			nameLen = atoi(readUntilDelim(sock, ':'));
+			fileName = readNBytes(sock, nameLen);
+			fileLL = addFileToLL(fileLL, fileName);
+		}
+		transferOver(sock, fileLL, command);
+	}
+	else if(strcmp("commit", command)){
+		
+	}
+	else if(strcmp("push", command)){
+		
+	}
+	else if(strcmp("create", command)){
+		
+	}
+	else if(strcmp("destroy", command)){
+		// Initial test to see if can open project dir
+		DIR* currentDir = opendir(name);
+		if(currentDir == NULL){
+			error = "error:project does not exist"
+			writeLoop(sock, error, strlen(error));
+		}
+		else{
+			destroy(project);
+			error = "success"
+			writeLoop(sock, error, strlen(error));
+		}
+	}
+	else if(strcmp("currentversion", command)){
+		
+	}
+	else if(strcmp("history", command)){
+		
+	}
+	else if(strcmp("rollback", command)){
+		
+	}
+	else{
+		// Bad stuff
+	}
+	
+
+	// LOCK
+	pthread_mutex_lock(&lock);
+	char* message = (char*)malloc(sizeof(client_message));
+	strcpy(message, "Message received: \n");
+	strcat(message, client_message);
+	strcat(message, "\n");
+	strcpy(buffer, message);
+	free(message);
+	printf("Message: %s\n", buffer);
+	pthread_mutex_unlock(&lock);
+	// UNLOCK
+
+	n = write(sock, buffer, 255);
+	if (n < 0)
+	{
+		printf("ERROR: Could not write to socket\n");
+	}
+	printf("Exiting thread\n");
+	close(sock);
+	pthread_exit(NULL);
 }
+
 
 
 
@@ -202,7 +290,7 @@ should place the .Manifest the server sent in it.
 int create(char* project)
 {
 	int status;
-  status = mkdir(project, 00600); //CHECK WITHIN PROJECTS FOLDER
+  	status = mkdir(project, 00600); //CHECK WITHIN PROJECTS FOLDER
 	if(status < 0) //File does not exist
 	{
 		char* manifestName = ".Manifest";
@@ -242,9 +330,37 @@ int rollback(char* project, char* version)
 }
 
 
-void yeetProject(char* project){
 
+// Recursively deletes all files, and subdirs in proj
+// Must remove the dir that destroyProj is called on
+void destroyProj(char* name){
+  	DIR* currentDir = opendir(name);
+    if(currentDir == NULL){
+		printf("Error: invalid path\n");
+		return;
+  	}
+	struct dirent* currentThing = NULL;
+	readdir(currentDir);
+	readdir(currentDir);
+	while((currentThing = readdir(currentDir)) != NULL){
+		char buff[1024];
+		snprintf(buff, sizeof(buff), "%s/%s", name, currentThing->d_name);
+		if(currentThing->d_type == DT_REG){
+			if(remove(buff) == 0){
+				printf("removed file: %s.\n", buffer);
+			}
+		}
+		else if(currentThing->d_type == DT_DIR){
+			recursion(buff);
+			if(remove(buff) == 0){
+				printf("removed dir: %s.\n", buffer);
+			}
+		}
+	}
+	closedir(currentDir);
 }
+
+
 
 
 // Reads given n bytes from given fd
@@ -274,6 +390,7 @@ char* readNBytes(int fd, int numBytes){
 
 
 // Reads byte by byte from fd until the delim is found
+// Delim is read then overwritten so next read will start after delim
 // Returns string of at most bufLen bytes stored on the heap
 char* readUntilDelim(int fd, char delim){
 	// Allocate 100 bytes - should be enough to store any file name or line of .Manifest
@@ -374,6 +491,32 @@ file* addFileToLL(file* fileLL, char* name){
 		temp->fileData = fileString;
 	}
 	return temp;
+}
+
+
+// Given project and fileLL, recursively adds each file to the fileLL
+file *addDirToLL(file* fileLL, char *proj){
+	DIR *currentDir = opendir(proj);
+	if (currentDir == NULL)	{
+		printf("ERROR: Project does not exist\n");
+		return NULL;
+	}
+	struct dirent *currentThing = NULL;
+	readdir(currentDir);
+	readdir(currentDir);
+	while ((currentThing = readdir(currentDir)) != NULL){
+		char buff[1024];
+		snprintf(buff, sizeof(buff), "%s/%s", proj, currentThing->d_name);
+		if (currentThing->d_type == DT_REG){
+			// Might cause memory issues since can recurse into subdirs before adding that dir's files
+			fileLL = addFileToLL(fileLL, buff);
+		}
+		else if (currentThing->d_type == DT_DIR){
+			recursion(buff);
+		}
+	}
+	closedir(currentDir);
+	return fileLL;
 }
 
 
