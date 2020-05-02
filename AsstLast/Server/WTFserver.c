@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <openssl/sha.h>
+#include <dirent.h>
 
 
 int port = 0;
@@ -28,7 +29,6 @@ int history(char* project);
 int rollback(char* project, char* version);
 
 void* socketThread(void* sockfd);
-void recursion(char* name);
 
 typedef struct file{
 	char* fileName;
@@ -44,7 +44,9 @@ char* readFromFile(char* file);
 char* intToString(int num);
 void writeLoop(int fd, char* str, int numBytes);
 void transferOver(int sockfd, file* fileLL, char* command);
+file *addDirToLL(file* fileLL, char *proj);
 file* addFileToLL(file* fileLL, char* name);
+void destroyProj(char* name);
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -147,76 +149,127 @@ void* socketThread2(void* sockvoidstar){
 	printf("Entering thread\n");
 	int sock = *((int*)sockvoidstar);
 	int n;
-	// Reads desired command and project from socket
+	// Reads desired command from socket
 	char* command = readUntilDelim(sock, ':');
-	char* project, *error;
-	// Makes sure server is given at least command and project
-
-
-
+	char* error;
 	file* fileLL = NULL;
-	// Sends back entire project
+
+	// CHECKOUT - Sends back entire project
 	if(strcmp("checkout", command) == 0){
 		char* project = readUntilDelim(sock, ':');
 		fileLL = addDirToLL(fileLL, project);
+		// Transfer over or error if DNE
 		if(fileLL != NULL){
 			transferOver(sock, fileLL, command);
 		}
+		else{
+			error = "error:project does not exist"
+			writeLoop(sock, error, strlen(error));
+		}
 	}
+
 	// Sends back .Manifest of given project
 	// Assumes request formatted as: <command>:<project>
 	else if(strcmp("update", command) == 0 || strcmp("commit", command) == 0){
-		// Format project name
+		// Format desired file name to <project>/.Manifest
 		char* project = readUntilDelim(sock, ':');
 		char* manWithProj = (char*)malloc( (strlen(project)+10) * sizeof(char));
     	strcpy(manWithProj, project);
     	strcat(manWithProj, "./Manifest");
 
+		// Transfers file if exists
 		fileLL = addFileToLL(fileLL, manWithProj);
 		if(fileLL != NULL){
 			transferOver(sock, fileLL, command);
 		}
+		// Writes error to socket
 		else{
 			error = "error:project does not exist"
 			writeLoop(sock, error, strlen(error));
 		}
+		// Frees heap strings used
+		free(project);
+		free(manWithProj);
 	}
+	
 	// Reads in names of n files to be sent back to client
 	// Protocol: <cmd>:<num>:<nameLen>:<fileName>...
-	else if(strcmp("upgrade", command)){
+	else if(strcmp("upgrade", command) == 0){
 		int numFiles = atoi(readUntilDelim(sock, ':'));
 		int i, nameLen;
-		char* fileName;
+		char* fileName, *nameLenString;
+		// Reads nameLen to get fileName
 		for(i = 0; i < numFiles; i++){
-			nameLen = atoi(readUntilDelim(sock, ':'));
+			nameLenString = readUntilDelim(sock, ':');
+			nameLen = atoi(nameLenString);
 			fileName = readNBytes(sock, nameLen);
+			free(nameLenString);
 			fileLL = addFileToLL(fileLL, fileName);
+
 		}
 		transferOver(sock, fileLL, command);
 	}
-	else if(strcmp("commit", command)){
+
+	else if(strcmp("commit", command) == 0){
 		
 	}
-	else if(strcmp("push", command)){
+	else if(strcmp("push", command) == 0){
 		
 	}
-	else if(strcmp("create", command)){
-		
+	
+	// CREATE - creates new project's dir and .Manifest
+	// Sends "success" or "error"
+	else if(strcmp("create", command) == 0){
+		char* project = readUntilDelim(sock, ':');
+		// Attempts to make new project's dir
+		if(mkdir(project, 00600) == -1){
+			error = "error:project already exists";
+			writeLoop(sock, error, strlen(error));
+		}
+		else{
+			// Creates empty .Manifest
+			char* manWithProj = (char*)malloc( (strlen(project)+10) * sizeof(char));
+			strcpy(manWithProj, project);
+			strcat(manWithProj, "./Manifest");
+			int manfd = open(manWithProj, O_RDWR|O_CREAT|O_APPEND, 00600);
+			// Send success to client if creates project's .Manifest
+			if(manfd > 0){
+				error = "success";
+				writeLoop(sock, error, strlen(error));
+			}
+			free(manWithProj);
+		}
+		free(project);
 	}
-	else if(strcmp("destroy", command)){
+
+	// Reads project name then recursively deletes files then the dir
+	else if(strcmp("destroy", command) == 0){
+		char* project = readUntilDelim(sock, ':');
 		// Initial test to see if can open project dir
-		DIR* currentDir = opendir(name);
+		DIR* currentDir = opendir(project);
 		if(currentDir == NULL){
 			error = "error:project does not exist"
 			writeLoop(sock, error, strlen(error));
 		}
 		else{
-			destroy(project);
-			error = "success"
+			// If project exists, delete contents of project and project dir
+			// Send success message to client
+			destroyProj(project);
+			remove(project);
+			error = "success";
 			writeLoop(sock, error, strlen(error));
+			closedir(currentDir);
 		}
+		free(project);
 	}
-	else if(strcmp("currentversion", command)){
+
+	// CURRENTVERSION - sends over all files w/ version numbers for a given project
+	else if(strcmp("currentversion", command) == 0){
+		char* project = readUntilDelim(sock, ':');
+		char* manWithProj = (char*)malloc( (strlen(project)+10) * sizeof(char));
+    	strcpy(manWithProj, project);
+    	strcat(manWithProj, "./Manifest");
+		char* manString = readFromFile(manWithProj);
 		
 	}
 	else if(strcmp("history", command)){
@@ -229,6 +282,7 @@ void* socketThread2(void* sockvoidstar){
 		// Bad stuff
 	}
 	
+	free(command);
 
 	// LOCK
 	pthread_mutex_lock(&lock);
@@ -351,7 +405,8 @@ void destroyProj(char* name){
 			}
 		}
 		else if(currentThing->d_type == DT_DIR){
-			recursion(buff);
+			destroyProj(buff);
+			// Removes empty dir
 			if(remove(buff) == 0){
 				printf("removed dir: %s.\n", buffer);
 			}
@@ -392,6 +447,7 @@ char* readNBytes(int fd, int numBytes){
 // Reads byte by byte from fd until the delim is found
 // Delim is read then overwritten so next read will start after delim
 // Returns string of at most bufLen bytes stored on the heap
+// Max string len set to 100 - only reads numbers, names, lines of .Manifest
 char* readUntilDelim(int fd, char delim){
 	// Allocate 100 bytes - should be enough to store any file name or line of .Manifest
 	int bufLen = 100;
@@ -400,7 +456,7 @@ char* readUntilDelim(int fd, char delim){
         printf("Bad malloc\n");
         return NULL;
     }
-	memset(nBytes, '\0', bufLen);
+	memset(buffer, '\0', bufLen);
     // IO Read Loop
     int status = 1;
     int readIn = 0;
