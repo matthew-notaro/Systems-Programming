@@ -48,7 +48,7 @@ char* readFromFile(char* file);
 char* hash(char* data);
 
 char* getHashFromLine(char* line);
-char* getPathFromLine(char* line);
+char* getFileFromLine(char* line);
 char* getVersionFromLine(char* line);
 
 char* readUntilDelim(int fd, char delim);
@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 	
 	//int sockfd = connectToServer();
 	char* command = malloc(5);
-	command = "check";
+	command = "proj1";
 	char* numFiles = malloc(1);
 	numFiles = "2";
 	struct file arr[2];
@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 	arr[1].numBytes = "9"; 
 	arr[1].fileData = "file2data"; 
 	
-	update(command);
+	commit(command);
 	
 	//sendToServer(sockfd, command);
 	//composeMessage(command, arr, numFiles);
@@ -224,16 +224,17 @@ int checkout(char* project)
 
 int update(char* project)
 {
+
 	//failure cases
 	//char* command = malloc();
 	//char* message = composeMessage(); //get manifest
 	
 	// TESTING 
 	
-	char* clientManifest = malloc(2);
-	char* serverManifest = malloc(2);
-	clientManifest = ".cl";
-	serverManifest = ".s";
+	char* clientManifest = malloc(30);
+	char* serverManifest = malloc(30);
+	clientManifest = "proj1/.Manifest";
+	serverManifest = "Server/proj1/.Manifest";
 	
 	//Opens both client and server .Manifest files
 	int cliManifestFd = open(clientManifest, O_RDONLY);
@@ -243,118 +244,275 @@ int update(char* project)
 	char* cManifestVer = readUntilDelim(cliManifestFd, '\n');
 	char* sManifestVer = readUntilDelim(servManifestFd, '\n');
 	
-	printf("versions: %s %s\n", cManifestVer, sManifestVer);
-	
-	close(servManifestFd);
-	//Compares version numbers
-	
-	int updateFd = open(".Update", O_RDWR|O_CREAT|O_APPEND, 00600);
-	
-	if(strcmp(cManifestVer, sManifestVer) == 0) //Case 1: same Manifest versions
+	//Case 1: same Manifest versions
+	if(strcmp(cManifestVer, sManifestVer) == 0) 
 	{
-		//delete conflict if it exists
-		//"up to date" to stdout
+		int toBeRemoved = open(".Conflict", O_RDONLY);
+		if(toBeRemoved >= 0)
+		{
+			remove(".Conflict");
+			close(toBeRemoved);
+		}
+		printf("Up To Date\n");
+		close(cliManifestFd);
+		close(servManifestFd);
+		//free(cManifestVer);
+		//free(sManifestVer);
 		return 0;
 	}
+
+	close(servManifestFd);
+	//free(cManifestVer);
+	//free(sManifestVer);
+	
+	int updateFd = open(".Update", O_RDWR|O_CREAT|O_APPEND, 00600);
+	char* currentClientLine = NULL, *clientFile = NULL, *cliVersion = NULL, *storedCliHash = NULL;
 
 	//Case 2: different Manifest versions
 	//Loops through each line of client Manifest
 	while(1)
 	{
-		//Extracts line from client .Manifest and gets the project path
-		char* currentClientLine = readUntilDelim(cliManifestFd, '\n');
-		printf("ccl: %s\n", currentClientLine);
+		printf("checkpoint -1\n");
+		//Extracts line from client .Manifest
+		currentClientLine = readUntilDelim(cliManifestFd, '\n');
+		//printf("curr cli line: %s\n", currentClientLine);
 		
 		//Closes fd and exits loop if no more lines
 		if(currentClientLine == NULL || strlen(currentClientLine) == 0)
 		{
+			memset(currentClientLine, '\0', strlen(currentClientLine));
+			//free(currentClientLine);
 			close(cliManifestFd);
 			break;
 		}
 		
-		//Extracts project path from line
-		char* clientProjPath = getPathFromLine(currentClientLine);
-				
+		
+		//Extracts client details
+		clientFile = getFileFromLine(currentClientLine);
+		cliVersion = getVersionFromLine(currentClientLine);
+		//storedCliHash = malloc(strlen(currentClientLine));
+		storedCliHash = getHashFromLine(currentClientLine);
+	
 		//Opens server Manifest and skips over version number
 		servManifestFd = open(serverManifest, O_RDONLY);
 		readUntilDelim(servManifestFd, '\n'); 
 		
-		//Loops through each line of server Manifest to check if project exists
+		// char* currentServerLine = NULL, *serverFile = NULL, *servVersion = NULL, *servHash = NULL;
+		// 
+		// currentServerLine = readUntilDelim(servManifestFd, '\n');
+		// //Extracts details
+		// serverFile = getFileFromLine(currentServerLine);
+		// servVersion = getVersionFromLine(currentServerLine);
+		// //servHash = malloc(strlen(currentServerLine));
+		// servHash = getHashFromLine(currentServerLine);
+	
+		// printf("serv hash: %s\n", servHash);
+		// printf("stored hash: %s\n", storedCliHash);
+		// printf("strcmp result %d\n", strcmp(storedCliHash,servHash));
+		
+		
+		//Loops through each line of server Manifest to check if file exists
 		while(1)
 		{
-			//Extracts line from server .Manifest and gets the project path
-			char* currentServerLine = readUntilDelim(servManifestFd, '\n');
+			//Extracts line from server .Manifest
+			char* currentServerLine = NULL, *serverFile = NULL, *servVersion = NULL, *servHash = NULL;
 			
-			//Case 2.1: project not found on server side
+			currentServerLine = readUntilDelim(servManifestFd, '\n');
+			
+			//Case 2.1: server has removed files from the project
 			if(currentServerLine == NULL || strlen(currentServerLine) == 0)
 			{
-				//must delete code
+				//char* storedCliHash = getHashFromLine(currentClientLine);
+				char action[256]; //+4 to account spaces and actionCode
+				char* actionCode = malloc(sizeof(char)*2);
+				char* space = malloc(sizeof(char)*1);
+				char* newLine = malloc(sizeof(char)*1);
+				actionCode = "D ";
+				space = " ";
+				newLine = "\n";
+				
+				strcpy(action, actionCode);
+				strcat(action, clientFile);
+				
+				printf("%s\n", action);
+				
+				strcat(action, space);
+				strcat(action, storedCliHash);
+				strcat(action, newLine);
+				
+				write(updateFd, action, strlen(action));
+				printf("written action: %s\n", action);
+				
+				memset(action, '\0', strlen(action));
+				memset(storedCliHash, '\0', strlen(storedCliHash));
+				//free(storedCliHash);
+				//free(action);
 				close(servManifestFd);
 				break;
 			}
-			
-			//Extracts project from line
-			char* serverProjPath = getPathFromLine(currentServerLine);
-			
-			//Case 2.2: project found on server side
-			if(strcmp(clientProjPath,serverProjPath) == 0)
+			printf("checkpoint 0\n");
+			//Extracts details
+			serverFile = getFileFromLine(currentServerLine);
+			servVersion = getVersionFromLine(currentServerLine);
+			//servHash = malloc(strlen(currentServerLine));
+			servHash = getHashFromLine(currentServerLine);
+			//printf("serv hash: %s\n", servHash);
+		
+			//Case 2.2: file found on server side
+			if(strcmp(clientFile,serverFile) == 0)
 			{
-				char* cliVersion = getVersionFromLine(currentClientLine);
-				char* servVersion = getVersionFromLine(currentServerLine);
-				
-				char* storedCliHash = getHashFromLine(currentClientLine);
-				char* servHash = getHashFromLine(currentServerLine);
-				
+				printf("checkpoint 1: file found on server\n");
+
 				//Checks if versions don't match
 				if(strcmp(cliVersion,servVersion) != 0)
 				{
+					printf("checkpoint 2: versions dont match\n");
+					
+					//memset(servHash, '\0', strlen(servHash));
+					printf("serv hash: %s\n", servHash);
+					//printf("stored hash: %s\n", storedCliHash);
+					
+					printf("strcmp result %d\n", strcmp(storedCliHash,servHash));
+
 					//Checks if stored and server hashes don't match
 					if(strcmp(storedCliHash,servHash) != 0)
 					{
-						char* currentProjString = readFromFile(clientProjPath);
-						char* liveHash = hash(currentProjString);
+						printf("checkpoint 3: stored and server dont match\n");
+
+						char* filePath = malloc(strlen(project)+strlen(clientFile)+1);// proj1/example1.txt
+						char* slash = malloc(1);
+						slash = "/";
+						strcpy(filePath, project);
+						strcat(filePath, slash);
+						strcat(filePath, clientFile);
 						
-						if(strcmp(storedCliHash,servHash) == 0)
+						printf("filePath: %s\n", filePath);
+						
+						char* currentFileString = readFromFile(filePath);
+						char* liveHash = hash(currentFileString);
+		
+						printf("live hash: %s\n", liveHash);
+						//printf("strlen(liveHash) = %d\n", strlen(liveHash));
+						printf("stored hash: %s\n", storedCliHash);
+						
+						if(strcmp(storedCliHash,liveHash) == 0)
 						{
-							//Case 2.1.1: server has modified files
-							//append to update
-							//output
-							free(currentProjString);
-							free(liveHash);
+							
+							printf("checkpoint 4: stored and live match\n");
+							//Case 2.2.1: server has modified files
+							char action[256]; //malloc(strlen(clientFile)+liveHashSize+sizeof(char)*4); //+3 to account spaces and actionCode
+							char* actionCode = malloc(sizeof(char)*2);
+							char* space = malloc(sizeof(char)*1);
+							char* newLine = malloc(sizeof(char)*1);
+							actionCode = "M ";
+							space = " ";
+							newLine = "\n";
+							
+							printf("serv hash: %s\n", servHash);
+							
+							strcpy(action, actionCode);
+							strcat(action, clientFile);
+							printf("%s\n", action);
+							strcat(action, space);
+							strcat(action, servHash);
+							strcat(action, newLine);
+							write(updateFd, action, strlen(action));
+							printf("written action: %s\n", action);
+
+							/*
+							memset(currentServerLine, '\0', strlen(currentServerLine));
+							memset(serverFile, '\0', strlen(serverFile));
+							memset(cliVersion, '\0', strlen(cliVersion));
+							memset(servVersion, '\0', strlen(servVersion));
+							memset(storedCliHash, '\0', strlen(storedCliHash));
+							memset(servHash, '\0', strlen(servHash));
+							memset(currentFileString, '\0', strlen(currentFileString));
+							memset(liveHash, '\0', strlen(liveHash));
+							memset(action, '\0', strlen(action));
+							
+							//free(currentServerLine);
+							//free(serverFile);
+							//free(cliVersion);
+							//free(servVersion);
+							//free(storedCliHash);
+							//free(servHash);
+							//free(currentFileString);
+							//free(liveHash);
+							//free(action);
+							*/
+							
 							close(servManifestFd);
 							break;
+							
 						}
 						else
 						{
-							//Case 2.1.2: server has removed files
-							//append to conflict
-							//stdout
-							free(currentProjString);
-							free(liveHash);
+							//Case 2.1.2: files conflict
+							char action[256]; //malloc(strlen(clientFile)+liveHashSize+sizeof(char)*4); //+3 to account spaces and actionCode
+							char* actionCode = malloc(sizeof(char)*2);
+							char* space = malloc(sizeof(char)*1);
+							char* newLine = malloc(sizeof(char)*1);
+							char* liveHashCopy = malloc(strlen(liveHash));
+							liveHashCopy = liveHash;
+							actionCode = "C ";
+							space = " ";
+							newLine = "\n";
+							
+							strcpy(action, actionCode);
+							strcat(action, clientFile);
+						  printf("%s\n", action);
+							strcat(action, space);
+							strcat(action, liveHashCopy);
+							strcat(action, newLine);							
+							
+							int conflictFd = open(".Conflict", O_RDONLY);
+							if(conflictFd < 0)
+							{
+								conflictFd = open(".Conflict", O_RDWR|O_CREAT|O_APPEND, 00600);
+						  }
+
+							write(conflictFd, action, 256);
+							
+							// memset(currentServerLine, '\0', strlen(currentServerLine));
+							// memset(serverFile, '\0', strlen(serverFile));
+							// memset(cliVersion, '\0', strlen(cliVersion));
+							// memset(servVersion, '\0', strlen(servVersion));
+							// memset(storedCliHash, '\0', strlen(storedCliHash));
+							// memset(servHash, '\0', strlen(servHash));
+							// memset(currentFileString, '\0', strlen(currentFileString));
+							// memset(liveHash, '\0', strlen(liveHash));
+							// memset(action, '\0', strlen(action));
+							
+							// free(currentServerLine);
+						  // free(serverFile);
+							// free(cliVersion);
+							//free(servVersion);
+							// free(storedCliHash);
+							// free(servHash);
+							// free(currentFileString);
+							// free(liveHash);
+							
 							close(servManifestFd);
+							close(conflictFd);
 							break;
-						}
+						}	
 					}
+				
 				}
-				free(cliVersion);
-				free(servVersion);
-				free(storedCliHash);
-				free(servHash);
+				break;
 			}
-			free(currentServerLine);
-			free(serverProjPath);
 		}
-		free(currentClientLine);
-		free(clientProjPath);
 	}
 	close(cliManifestFd);
 	
-	//Open server manifest again
+	//Open server manifest again, skip over version
 	servManifestFd = open(serverManifest, O_RDONLY);
+	readUntilDelim(servManifestFd, '\n');
 	
 	//Loop through server .Manifest
 	while(1)
 	{
+		printf("second loop checkpoint\n");
 		char* currentServerLine = readUntilDelim(servManifestFd, '\n');
 		
 		//Closes fd and exits loop if no more lines
@@ -364,7 +522,8 @@ int update(char* project)
 			break;
 		}
 		
-		char* serverProjPath = getPathFromLine(currentServerLine);
+		char* serverFile = getFileFromLine(currentServerLine);
+		char* servHash = getHashFromLine(currentServerLine);
 		
 		//Opens client Manifest and skips over version number
 		cliManifestFd = open(clientManifest, O_RDONLY);
@@ -372,32 +531,67 @@ int update(char* project)
 		
 		while(1)
 		{
+			printf("second loop inner loop checkpoint\n");
 			char* currentClientLine = readUntilDelim(cliManifestFd, '\n');
+			
+			printf("currentClientLine: %s\n", currentClientLine);
 			
 			//Case 2.3: server has files not on client side
 			if(currentClientLine == NULL || strlen(currentClientLine) == 0)
 			{
-				//must delete code
-				close(cliManifestFd);
+				printf("server has files not on client side\n");
+
+				char action[256]; //malloc(strlen(clientFile)+liveHashSize+sizeof(char)*4); //+3 to account spaces and actionCode
+				char* actionCode = malloc(sizeof(char)*2);
+				char* space = malloc(sizeof(char)*1);
+				char* newLine = malloc(sizeof(char)*1);
+				actionCode = "A ";
+				space = " ";
+				newLine = "\n";
+								
+				strcpy(action, actionCode);
+				strcat(action, serverFile);
+				printf("%s\n", action);
+				strcat(action, space);
+				strcat(action, servHash);
+				strcat(action, newLine);
+				write(updateFd, action, strlen(action));
+				printf("written action: %s\n", action);
+				
+			//	memset(action, '\0', strlen(action));
+				//memset(currentClientLine, '\0', strlen(currentClientLine));
+				//memset(serverFile, '\0', strlen(serverFile));
+				//memset(servHash, '\0', strlen(servHash));
+				
+				//free(action);
+				//free(currentClientLine);
+				////free(serverFile);
+				////free(servHash);
+				
+				close(servManifestFd);
 				break;
 			}
 			
-			char* clientProjPath = getPathFromLine(currentServerLine);
+			char* clientFile = getFileFromLine(currentClientLine);
 			
+			printf("clientFile: %s\n", clientFile);
+			printf("serverFile: %s\n", serverFile);
+
+
 			//if project found on client side
-			if(strcmp(clientProjPath,serverProjPath) == 0)
+			if(strcmp(clientFile,serverFile) == 0)
 			{
+				printf("proj found\n");
+
+				//free(currentClientLine);
+				//free(clientFile);
 				close(cliManifestFd);
 				break;
 			}
-			
-			free(currentClientLine);
-			free(clientProjPath);
 		} 
-		free(currentServerLine);
-		free(serverProjPath);
 	}
 	close(servManifestFd);
+	close(updateFd);
 	
 	return 0;
 }
@@ -433,46 +627,284 @@ int commit(char* project)
 	status = open(".Conflict", O_RDONLY);
 	if(status >= 0)
 	{
-		//CHECK IF EMPTY
 		printf("Error: .Conflict exists.");
 		return -1;
 	}
 	
-	char* clientManifest;
-	char* serverManifest;
+	// TESTING 
+	char* clientManifest = malloc(30);
+		char* serverManifest = malloc(30);
+		clientManifest = "proj1/.Manifest";
+		serverManifest = "Server/proj1/.Manifest";
 	
-	int cliManifestFd = open(clientManifest, O_RDONLY); //WRITE APPEND
-	int servManifestFd = open(serverManifest, O_RDONLY);
+	//Opens both client and server .Manifest files
+	int cliManifestFd = open(clientManifest, O_RDONLY);
+	int servManifestFd = open(serverManifest, O_RDONLY); 
 	
+	//Extracts version numbers
 	char* cManifestVer = readUntilDelim(cliManifestFd, '\n');
 	char* sManifestVer = readUntilDelim(servManifestFd, '\n');
 	
-	if(strcmp(cManifestVer, sManifestVer) != 0) //Manifest versions differ
+	//Compares version numbers
+	if(strcmp(cManifestVer, sManifestVer) != 0)
 	{
-		//error, stop, ask for update
+		//Case 1: client and server manifests do not match
+		printf("Error: Please update local project.");
+		return -1;
 	}
 	
+	free(cManifestVer);
+	free(sManifestVer);
+	close(servManifestFd);
+	
+	int commitFd = open(".Commit", O_RDWR|O_CREAT|O_APPEND, 00600);
+	
+	//Case 2: client and server manifests match
 	while(1)
 	{
-		char* currentLine = readUntilDelim(cliManifestFd, '\n');
-		if(currentLine == NULL || strlen(currentLine) == 0)
+		printf("checkpoint: manifest vers match\n");
+		//Extracts line from client .Manifest and gets the project path
+		char* currentClientLine = readUntilDelim(cliManifestFd, '\n');
+		printf("checkpoint1\n");
+
+		//Closes fd and exits loop if no more lines
+		if(currentClientLine == NULL || strlen(currentClientLine) == 0)
 		{
+			//free(currentClientLine);
+			close(cliManifestFd);
 			break;
 		}
 		
-		char* storedHash = getHashFromLine(currentLine);
-		char* currProjPath = getPathFromLine(currentLine);
- 		char* currProjString = readFromFile(currProjPath);
-		char* liveHash = getHashFromLine(currProjString);
-				
-		if(strcmp(storedHash, liveHash) != 0)
+		//Extracts details from line
+		char* clientFile = getFileFromLine(currentClientLine);
+		char* storedCliHash = getHashFromLine(currentClientLine);
+		//printf("clientFile: %s\n", clientFile);
+		char* filePath = malloc(strlen(project)+strlen(clientFile)+1);// proj1/example1.txt
+		char* slash = malloc(1);
+		slash = "/";
+		strcpy(filePath, project);
+		strcat(filePath, slash);
+		strcat(filePath, clientFile);
+						
+		printf("filePath: %s\n", filePath);
+						
+		char* currentFileString = readFromFile(filePath);
+	 	char* liveHash = hash(currentFileString);
+
+		
+		//Opens server Manifest and skips over version number
+		servManifestFd = open(serverManifest, O_RDONLY);
+		readUntilDelim(servManifestFd, '\n');
+		
+		//Loops through each line of server Manifest to check if project exists
+		while(1)
 		{
-			int cliManifestFd = open("project/.commit", O_RDONLY); 
+			printf("checkpoint: inner loop\n");
+
+			//Extracts line from server .Manifest
+			char* currentServerLine = readUntilDelim(servManifestFd, '\n');
+			char* servHash = getHashFromLine(currentServerLine); //append with server hash???
+			
+			//Case 2.1: client project does not exist on server side -- must add code
+			if(currentServerLine == NULL || strlen(currentServerLine) == 0)
+			{
+				printf("checkpoint: client project does not exist on server side -- must add code\n");
+
+				char action[256]; //malloc(strlen(clientFile)+liveHashSize+sizeof(char)*4); //+3 to account spaces and actionCode
+				char* actionCode = malloc(sizeof(char)*2);
+				char* space = malloc(sizeof(char)*1);
+				char* newLine = malloc(sizeof(char)*1);
+				actionCode = "A ";
+				space = " ";
+				newLine = "\n";
+								
+				strcpy(action, actionCode);
+				strcat(action, clientFile);
+				printf("%s\n", action);
+				strcat(action, space);
+				strcat(action, storedCliHash);
+				strcat(action, newLine);
+				write(commitFd, action, strlen(action));
+				printf("written action: %s\n", action);
+				
+			//	memset(action, '\0', strlen(action));
+				//memset(currentClientLine, '\0', strlen(currentClientLine));
+				//memset(serverFile, '\0', strlen(serverFile));
+				//memset(servHash, '\0', strlen(servHash));
+				
+				//free(action);
+				//free(currentClientLine);
+				////free(serverFile);
+				////free(servHash);
+				
+				close(servManifestFd);
+				break;
+			}
+			
+			//Extracts details from line
+			char* serverFile = getFileFromLine(currentServerLine);
+			
+			//Case 2.2: project exists on client and server
+			if(strcmp(clientFile,serverFile) == 0)
+			{
+				printf("checkpoint:proj exists on both sides\n");
+
+				//Case 2.2.1: server hash matches stored hash
+				if(strcmp(servHash, storedCliHash) == 0)
+				{
+					printf("live hash: %s\n", liveHash);
+					//Case 2.2.1 extended: live hash does not match stored hash -- must modify code
+					if(strcmp(liveHash, storedCliHash) != 0)
+					{
+						char action[256]; //malloc(strlen(clientFile)+liveHashSize+sizeof(char)*4); //+3 to account spaces and actionCode
+						char* actionCode = malloc(sizeof(char)*2);
+						char* space = malloc(sizeof(char)*1);
+						char* newLine = malloc(sizeof(char)*1);
+						actionCode = "M ";
+						space = " ";
+						newLine = "\n";
+						
+						printf("serv hash: %s\n", servHash);
+						
+						strcpy(action, actionCode);
+						strcat(action, clientFile);
+						printf("%s\n", action);
+	  				strcat(action, space);
+						strcat(action, servHash);
+						strcat(action, newLine);
+						write(commitFd, action, strlen(action));
+						printf("written action: %s\n", action);
+						////free(actioncode);
+						//free(currentServerLine);
+						//free(servHash);
+						//free(serverFile);
+						//free(currentClientLine);
+						//free(clientFile);
+						//free(storedCliHash);
+						//free(liveHash);
+						close(servManifestFd);
+						break;
+					}
+				}
+				
+				//Case 2.2.2: server hash does not match stored hash
+				else
+				{
+					int clientFileVer = atoi(getVersionFromLine(currentClientLine));
+					int serverFileVer = atoi(getVersionFromLine(currentServerLine));
+					
+					//Case 2.2.2 extended: server file version is greater than client file version
+					if(serverFileVer > clientFileVer)
+					{
+						printf("Error: Failed to commit. Please synch client with repository before committing changes.");
+						remove(".Commit");
+						//free(currentClientLine);
+						//free(currentServerLine);
+						//free(servHash);
+						//free(serverFile);
+						//free(clientFile);
+						//free(storedCliHash);
+						//free(liveHash);
+						close(servManifestFd);
+						close(commitFd);
+						return -1;
+					}
+				}
+			}
+			// free(currentServerLine);
+			// free(servHash);
+			// free(serverFile);
 		}
 	}
+	close(cliManifestFd);
+	
+	//Open server manifest again
+	servManifestFd = open(serverManifest, O_RDONLY);
+	readUntilDelim(servManifestFd, '\n');
+	
+	//Loop through server .Manifest
+	while(1)
+	{
+		printf("checkpoint: looping thru serv\n");
+
+		char* currentServerLine = readUntilDelim(servManifestFd, '\n');
+		
+		//Closes fd and exits loop if no more lines
+		if(currentServerLine == NULL || strlen(currentServerLine) == 0)
+		{
+			printf("done loopin\n");
+			//free(currentServerLine);
+			close(servManifestFd);
+			break;
+		}
+		
+		char* serverFile = getFileFromLine(currentServerLine);
+		char* servHash = getHashFromLine(currentServerLine);
+		
+		//Opens client Manifest and skips over version number
+		cliManifestFd = open(clientManifest, O_RDONLY);
+		readUntilDelim(cliManifestFd, '\n');
+		
+		while(1)
+		{
+			printf("checkpoint: looping thru cli\n");
+			char* currentClientLine = readUntilDelim(cliManifestFd, '\n');
+			char* clientFile = getFileFromLine(currentClientLine);
+			
+			//Case 2.3: server has files not on client side -- must delete code
+			if(currentClientLine == NULL || strlen(currentClientLine) == 0)
+			{
+				printf("checkpoint: must delete code\n");
+				//char* storedCliHash = getHashFromLine(currentClientLine);
+				char action[256]; //+4 to account spaces and actionCode
+				char* actionCode = malloc(sizeof(char)*2);
+				char* space = malloc(sizeof(char)*1);
+				char* newLine = malloc(sizeof(char)*1);
+				actionCode = "D ";
+				space = " ";
+				newLine = "\n";
+				
+				strcpy(action, actionCode);
+				strcat(action, serverFile);
+				
+				printf("%s\n", action);
+				
+				strcat(action, space);
+				strcat(action, servHash);
+				strcat(action, newLine);
+				
+				write(commitFd, action, strlen(action));
+				printf("written action: %s\n", action);
+				
+				close(cliManifestFd);
+				break;
+			}
+		
+			//if project found on client side
+			if(strcmp(clientFile,serverFile) == 0)
+			{
+				printf("checkpoint: proj found\n");
+				// free(currentServerLine);
+				// free(serverFile);
+				// free(servHash);
+				// free(currentClientLine);
+				// free(clientFile);
+				close(cliManifestFd);
+				break;
+			}
+		} 
+	}
+	
+	close(servManifestFd);
+	close(commitFd);
 
 	return 0;
 }
+
+/*if(strcmp(storedHash, liveHash) != 0)
+{
+	int cliManifestFd = open("project/.commit", O_RDONLY); 
+}*/
 
 int push(char* project)
 {
@@ -732,7 +1164,7 @@ char* readFromFile(char* file)
         readIn += status;
     } while(status > 0 && readIn < bufferSize);
 
-    free(buffer);
+    //free(buffer);
     return fileBuffer;
 }
 
@@ -741,18 +1173,86 @@ char* hash(char* data)
 {
 	int x = 0;
 	size_t length = strlen(data);
-	char* buffer = malloc(SHA_DIGEST_LENGTH);
+	char* buffer = malloc(40);
+	memset(buffer, '\0', 40);
 	unsigned char hash[SHA_DIGEST_LENGTH];
-	//SHA1(data, length, hash);
+	SHA1(data, length, hash);
 	
-	for(x = 0; x < SHA256_DIGEST_LENGTH; x++)
+	for(x = 0; x < 30; x++)
 	{
 		sprintf(buffer+(x * 2), "%02x", hash[x]);
 	}
 	
+	//not sure why this is needed but it is:
+	char* finalbuffer = malloc(40);
+	memset(finalbuffer, '\0', 40);
+	
+	for(x = 0; x < 40; x++)
+	{
+		finalbuffer[x] = buffer[x];
+	}
+	buffer[40] = '\0';
+	
 	printf("hash code: %s\n", buffer);
+	//free(buffer);
+	
 	return buffer;
 }
+
+/*char* getHashFromLine(char* line)
+{
+	int i = 0, start = 0, end = 0, len = strlen(line);
+	
+	end = strlen(line)-1;
+	for(i = end-1; i > 0; i--)
+	{
+		if(isspace(line[i]) != 0)
+		{
+			start = i+1;
+			break;
+		}
+	}
+	
+	int bufSize = end-start+1;
+	char* serverbuffer = malloc(end-start+1);
+	//char serverbuffer[end-start+1];
+	memset(serverbuffer, '\0', strlen(serverbuffer));
+	
+	for(i = 0; i < bufSize; i++)
+	{
+		serverbuffer[i] = line[i+start];
+	}
+
+	printf("getHashFromLine buffer: %s\n", serverbuffer);
+	return serverbuffer;
+}
+char* getHashFromLine(char* line)
+{
+	int i = 0, start = 0, end = 0, len = strlen(line);
+	
+	end = strlen(line)-1;
+	for(i = end-1; i > 0; i--)
+	{
+		if(isspace(line[i]) != 0)
+		{
+			start = i+1;
+			break;
+		}
+	}
+	
+	int bufSize = end-start+1;
+	char* clientbuffer = malloc(end-start+1);
+	//char clientbuffer[end-start+1];
+	memset(clientbuffer, '\0', strlen(clientbuffer));
+	
+	for(i = 0; i < bufSize; i++)
+	{
+		clientbuffer[i] = line[i+start];
+	}
+
+	printf("getHashFromLine buffer: %s\n", clientbuffer);
+	return clientbuffer;
+}*/
 
 // Extracts stored hash code from .Manifest line
 // Returns hash string
@@ -770,20 +1270,22 @@ char* getHashFromLine(char* line)
 		}
 	}
 	
-	int bufSize = end-start+1;
-	char* buffer = malloc(end-start+1);
+	char* buffer = malloc(41);
+	//char clientbuffer[end-start+1];
+	memset(buffer, '\0', strlen(buffer));
 	
-	for(i = 0; i < bufSize; i++)
+	for(i = 0; i < 40; i++)
 	{
 		buffer[i] = line[i+start];
 	}
 
+	printf("getHashFromLine buffer: %s\n", buffer);
 	return buffer;
 }
 
 // Extracts project path from .Manifest line
 // Returns path string
-char* getPathFromLine(char* line)
+char* getFileFromLine(char* line)
 {
 	int i = 0, start = 0, end = 0, len = strlen(line);
 	
