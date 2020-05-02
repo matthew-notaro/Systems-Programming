@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 	arr[1].numBytes = "9"; 
 	arr[1].fileData = "file2data"; 
 	
-	update(command);
+	commit(command);
 	
 	//sendToServer(sockfd, command);
 	//composeMessage(command, arr, numFiles);
@@ -323,8 +323,7 @@ int update(char* project)
 			if(currentServerLine == NULL || strlen(currentServerLine) == 0)
 			{
 				//char* storedCliHash = getHashFromLine(currentClientLine);
-				char* action = malloc(strlen(clientFile)+strlen(storedCliHash)+sizeof(char)*4); //+4 to account spaces and actionCode
-				memset(action, '\0', strlen(action));
+				char action[256]; //+4 to account spaces and actionCode
 				char* actionCode = malloc(sizeof(char)*2);
 				char* space = malloc(sizeof(char)*1);
 				char* newLine = malloc(sizeof(char)*1);
@@ -546,7 +545,7 @@ int update(char* project)
 				char* actionCode = malloc(sizeof(char)*2);
 				char* space = malloc(sizeof(char)*1);
 				char* newLine = malloc(sizeof(char)*1);
-				actionCode = "M ";
+				actionCode = "A ";
 				space = " ";
 				newLine = "\n";
 								
@@ -633,10 +632,10 @@ int commit(char* project)
 	}
 	
 	// TESTING 
-	char* clientManifest = malloc(2);
-	char* serverManifest = malloc(2);
-	clientManifest = ".cl";
-	serverManifest = ".s";
+	char* clientManifest = malloc(30);
+		char* serverManifest = malloc(30);
+		clientManifest = "proj1/.Manifest";
+		serverManifest = "Server/proj1/.Manifest";
 	
 	//Opens both client and server .Manifest files
 	int cliManifestFd = open(clientManifest, O_RDONLY);
@@ -663,13 +662,15 @@ int commit(char* project)
 	//Case 2: client and server manifests match
 	while(1)
 	{
+		printf("checkpoint: manifest vers match\n");
 		//Extracts line from client .Manifest and gets the project path
 		char* currentClientLine = readUntilDelim(cliManifestFd, '\n');
-		
+		printf("checkpoint1\n");
+
 		//Closes fd and exits loop if no more lines
 		if(currentClientLine == NULL || strlen(currentClientLine) == 0)
 		{
-			free(currentClientLine);
+			//free(currentClientLine);
 			close(cliManifestFd);
 			break;
 		}
@@ -677,10 +678,19 @@ int commit(char* project)
 		//Extracts details from line
 		char* clientFile = getFileFromLine(currentClientLine);
 		char* storedCliHash = getHashFromLine(currentClientLine);
- 		char* currProjString = readFromFile(clientFile);
-		char* liveHash = hash(currProjString);
-		
-		free(currProjString);
+		//printf("clientFile: %s\n", clientFile);
+		char* filePath = malloc(strlen(project)+strlen(clientFile)+1);// proj1/example1.txt
+		char* slash = malloc(1);
+		slash = "/";
+		strcpy(filePath, project);
+		strcat(filePath, slash);
+		strcat(filePath, clientFile);
+						
+		printf("filePath: %s\n", filePath);
+						
+		char* currentFileString = readFromFile(filePath);
+	 	char* liveHash = hash(currentFileString);
+
 		
 		//Opens server Manifest and skips over version number
 		servManifestFd = open(serverManifest, O_RDONLY);
@@ -689,6 +699,8 @@ int commit(char* project)
 		//Loops through each line of server Manifest to check if project exists
 		while(1)
 		{
+			printf("checkpoint: inner loop\n");
+
 			//Extracts line from server .Manifest
 			char* currentServerLine = readUntilDelim(servManifestFd, '\n');
 			char* servHash = getHashFromLine(currentServerLine); //append with server hash???
@@ -696,28 +708,35 @@ int commit(char* project)
 			//Case 2.1: client project does not exist on server side -- must add code
 			if(currentServerLine == NULL || strlen(currentServerLine) == 0)
 			{
-				char* action = malloc(strlen(clientFile)+strlen(servHash)+sizeof(char)*4); //+4 for spaces and actionCode
-				memset(action, '\0', strlen(action));
+				printf("checkpoint: client project does not exist on server side -- must add code\n");
+
+				char action[256]; //malloc(strlen(clientFile)+liveHashSize+sizeof(char)*4); //+3 to account spaces and actionCode
 				char* actionCode = malloc(sizeof(char)*2);
 				char* space = malloc(sizeof(char)*1);
 				char* newLine = malloc(sizeof(char)*1);
 				actionCode = "A ";
 				space = " ";
 				newLine = "\n";
-				
+								
 				strcpy(action, actionCode);
 				strcat(action, clientFile);
 				printf("%s\n", action);
 				strcat(action, space);
-				strcat(action, servHash);
+				strcat(action, storedCliHash);
 				strcat(action, newLine);
-				
 				write(commitFd, action, strlen(action));
+				printf("written action: %s\n", action);
 				
-				memset(action, '\0', strlen(action));
-				free(action);
-				//free(currentServerLine);
-				//free(servHash);
+			//	memset(action, '\0', strlen(action));
+				//memset(currentClientLine, '\0', strlen(currentClientLine));
+				//memset(serverFile, '\0', strlen(serverFile));
+				//memset(servHash, '\0', strlen(servHash));
+				
+				//free(action);
+				//free(currentClientLine);
+				////free(serverFile);
+				////free(servHash);
+				
 				close(servManifestFd);
 				break;
 			}
@@ -728,6 +747,8 @@ int commit(char* project)
 			//Case 2.2: project exists on client and server
 			if(strcmp(clientFile,serverFile) == 0)
 			{
+				printf("checkpoint:proj exists on both sides\n");
+
 				//Case 2.2.1: server hash matches stored hash
 				if(strcmp(servHash, storedCliHash) == 0)
 				{
@@ -735,26 +756,24 @@ int commit(char* project)
 					//Case 2.2.1 extended: live hash does not match stored hash -- must modify code
 					if(strcmp(liveHash, storedCliHash) != 0)
 					{
-						char* action = malloc(strlen(clientFile)+strlen(servHash)+sizeof(char)*4); //+4 for spaces and actionCode
-						memset(action, '\0', strlen(action));
+						char action[256]; //malloc(strlen(clientFile)+liveHashSize+sizeof(char)*4); //+3 to account spaces and actionCode
 						char* actionCode = malloc(sizeof(char)*2);
 						char* space = malloc(sizeof(char)*1);
 						char* newLine = malloc(sizeof(char)*1);
 						actionCode = "M ";
 						space = " ";
 						newLine = "\n";
-							
+						
+						printf("serv hash: %s\n", servHash);
+						
 						strcpy(action, actionCode);
 						strcat(action, clientFile);
 						printf("%s\n", action);
-						strcat(action, space);
+	  				strcat(action, space);
 						strcat(action, servHash);
 						strcat(action, newLine);
-							
 						write(commitFd, action, strlen(action));
-							
-						memset(action, '\0', strlen(action));
-						free(action);
+						printf("written action: %s\n", action);
 						////free(actioncode);
 						//free(currentServerLine);
 						//free(servHash);
@@ -792,24 +811,29 @@ int commit(char* project)
 					}
 				}
 			}
-			free(currentServerLine);
-			free(serverFile);
-		}	
+			// free(currentServerLine);
+			// free(servHash);
+			// free(serverFile);
+		}
 	}
 	close(cliManifestFd);
 	
 	//Open server manifest again
 	servManifestFd = open(serverManifest, O_RDONLY);
+	readUntilDelim(servManifestFd, '\n');
 	
 	//Loop through server .Manifest
 	while(1)
 	{
+		printf("checkpoint: looping thru serv\n");
+
 		char* currentServerLine = readUntilDelim(servManifestFd, '\n');
 		
 		//Closes fd and exits loop if no more lines
 		if(currentServerLine == NULL || strlen(currentServerLine) == 0)
 		{
-			free(currentServerLine);
+			printf("done loopin\n");
+			//free(currentServerLine);
 			close(servManifestFd);
 			break;
 		}
@@ -823,14 +847,16 @@ int commit(char* project)
 		
 		while(1)
 		{
+			printf("checkpoint: looping thru cli\n");
 			char* currentClientLine = readUntilDelim(cliManifestFd, '\n');
 			char* clientFile = getFileFromLine(currentClientLine);
 			
 			//Case 2.3: server has files not on client side -- must delete code
 			if(currentClientLine == NULL || strlen(currentClientLine) == 0)
 			{
-				char* action = malloc(strlen(clientFile)+strlen(servHash)+sizeof(char)*4); //+4 to account spaces and actionCode
-				memset(action, '\0', strlen(action));
+				printf("checkpoint: must delete code\n");
+				//char* storedCliHash = getHashFromLine(currentClientLine);
+				char action[256]; //+4 to account spaces and actionCode
 				char* actionCode = malloc(sizeof(char)*2);
 				char* space = malloc(sizeof(char)*1);
 				char* newLine = malloc(sizeof(char)*1);
@@ -840,6 +866,7 @@ int commit(char* project)
 				
 				strcpy(action, actionCode);
 				strcat(action, serverFile);
+				
 				printf("%s\n", action);
 				
 				strcat(action, space);
@@ -847,14 +874,8 @@ int commit(char* project)
 				strcat(action, newLine);
 				
 				write(commitFd, action, strlen(action));
+				printf("written action: %s\n", action);
 				
-				memset(action, '\0', strlen(action));
-				free(action);
-				free(currentClientLine);
-				free(clientFile);
-				free(currentServerLine);
-				free(serverFile);
-				free(servHash);
 				close(cliManifestFd);
 				break;
 			}
@@ -862,11 +883,12 @@ int commit(char* project)
 			//if project found on client side
 			if(strcmp(clientFile,serverFile) == 0)
 			{
-				free(currentServerLine);
-				free(serverFile);
-				free(servHash);
-				free(currentClientLine);
-				free(clientFile);
+				printf("checkpoint: proj found\n");
+				// free(currentServerLine);
+				// free(serverFile);
+				// free(servHash);
+				// free(currentClientLine);
+				// free(clientFile);
 				close(cliManifestFd);
 				break;
 			}
