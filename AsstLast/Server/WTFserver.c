@@ -519,7 +519,6 @@ file *addDirToLL(file* fileLL, char *proj){
 	return fileLL;
 }
 
-
 // Given server/client socket and fileLL to send over, composes string message and writes message to fd
 void transferOver(int sockfd, file* fileLL, char* command){
 	if(fileLL == NULL){
