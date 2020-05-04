@@ -10,8 +10,6 @@
 #include <ctype.h>
 #include <openssl/sha.h>
 
-//#define PORT 42069
-
 char* HOST = NULL;
 char* PORT = NULL;
 
@@ -55,102 +53,100 @@ char* readUntilDelim(int fd, char delim);
 
 int main(int argc, char **argv) 
 {
-	/*if(argc < 3){
+	if(argc < 3){
 		printf("ERROR: Not enough parameters\n");
 		return -1;
 	}
 	char* op = argv[1];
 	if(strcmp(op, "configure") == 0 && argc == 4){
 		if(configure(argv[2], argv[3]) == 0){
-			printf("Configured\n");
+			printf("Configure successful.\n");
 			return 0;
 		}
 		return -1;
 	}
 	setServerDetails();
-	// printf("host: %s\n", HOST);
-	// printf("port: %s\n", PORT);
-	connectToServer();
+	//connectToServer();
 	if(strcmp(op, "checkout") == 0 && argc == 3){
 		if(checkout(argv[2]) == 0){
-			printf("Checkout'ed\n");
+			printf("Checkout successful\n");
 			return 0;
 		}
 		return -1;
 	}
 	else if(strcmp(op, "update") == 0 && argc == 3){
-		if(update_(argv[2]) == 0){
-			printf("Updated\n");
+		if(update(argv[2]) == 0){
+			printf("Update successful.\n");
 			return 0;
 		}
 		return -1;
 	}
 	else if(strcmp(op, "upgrade") == 0 && argc == 3){
 		if(upgrade(argv[2]) == 0){
-			printf("Upgraded\n");
+			printf("Upgrade successful.\n");
 			return 0;
 		}
 		return -1;
 	}
 	else if(strcmp(op, "commit") == 0 && argc == 3){
 		if(upgrade(argv[2]) == 0){
-			printf("Committed\n");
+			printf("Commit successful.\n");
 			return 0;
 		}
 		return -1;
 	}
 	else if(strcmp(op, "push") == 0 && argc == 3){
 		if(upgrade(argv[2]) == 0){
-			printf("Pushed\n");
+			printf("Push successful.\n");
 			return 0;
 		}
 		return -1;
 	}
 	else if(strcmp(op, "create") == 0 && argc == 3){
 		if(create(argv[2]) == 0){
-			printf("Created\n");
+			printf("Project created.\n");
 			return 0;
 		}
 		return -1;
 	}
 	else if(strcmp(op, "destroy") == 0 && argc == 3){
 		if(destroy(argv[2]) == 0){
-			printf("Destroyed\n");
+			printf("Project destroyed\n");
 			return 0;
 		}
 		return -1;
 	}
 	else if(strcmp(op, "add") == 0 && argc == 4){
 		if(add(argv[2], argv[3]) == 0){
-			printf("Added\n");
+			printf("File added\n");
 			return 0;
 		}
 		return -1;
 	}
 	else if(strcmp(op, "remove") == 0 && argc == 4){
 		if(remove_(argv[2], argv[3]) == 0){
-			printf("Removed\n");
+			printf("File removed\n");
 			return 0;
 		}
 		return -1;
 	}
 	else if(strcmp(op, "currentversion") == 0 && argc == 3){
 		if(currentversion(argv[2]) == 0){
-			printf("Current versioned\n");
+			printf("CurrentVersion successful\n");
 			return 0;
 		}
 		return -1;
 	}
 	else if(strcmp(op, "history") == 0 && argc == 3){
 		if(history(argv[2]) == 0){
-			printf("History'ed\n");
+			printf("History successful\n");
 			return 0;
 		}
 		return -1;
 	}
 	else if(strcmp(op, "rollback") == 0 && argc == 4){
 		if(rollback(argv[2], argv[3]) == 0){
-			printf("Rolled back\n");
+			printf("Rollback successful\n");
 			return 0;
 		}
 		return -1;
@@ -158,25 +154,23 @@ int main(int argc, char **argv)
 	else{
 		printf("ERROR: Invalid command\n");
 		return -1;
-	}*/
+	}
 	
 	
 	//int sockfd = connectToServer();
-	char* command = malloc(5);
-	command = "proj1";
-	char* numFiles = malloc(1);
-	numFiles = "2";
-	struct file arr[2];
-	arr[0].fileName = "file1"; 
-	arr[0].nameLen = "5"; 
-	arr[0].numBytes = "9"; 
-	arr[0].fileData = "file1data"; 
-	arr[1].fileName = "file2"; 
-	arr[1].nameLen = "5"; 
-	arr[1].numBytes = "9"; 
-	arr[1].fileData = "file2data"; 
-	
-	commit(command);
+	// char* command = malloc(5);
+	// command = "proj1";
+	// char* numFiles = malloc(1);
+	// numFiles = "2";
+	// struct file arr[2];
+	// arr[0].fileName = "file1"; 
+	// arr[0].nameLen = "5"; 
+	// arr[0].numBytes = "9"; 
+	// arr[0].fileData = "file1data"; 
+	// arr[1].fileName = "file2"; 
+	// arr[1].nameLen = "5"; 
+	// arr[1].numBytes = "9"; 
+	// arr[1].fileData = "file2data"; 
 	
 	//sendToServer(sockfd, command);
 	//composeMessage(command, arr, numFiles);
@@ -185,14 +179,14 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-int configure(char* IPAddress, char* portNum)
+int configure(char* IPAddress, char* portNum) //Tested
 {
 	int IPAddressSize = 0, portNumSize = 0, bufferSize = 0;
 	char* configName = ".configure";
 	char* space = malloc(sizeof(char)*1);
 	space = " ";
 
-	int fd = open(configName, O_RDWR|O_CREAT|O_APPEND, 00600);
+	int fd = open(configName, O_RDWR|O_CREAT|O_APPEND, 0777);
 	
   if(fd < 0)
 	{
@@ -217,25 +211,156 @@ int configure(char* IPAddress, char* portNum)
 	return 0;
 }
 
-int checkout(char* project)
+int checkout(char* project) //***
 {
+	//Checks that client has already configured
+	int configureFd = open(".Configure", O_RDONLY);
+	if(configureFd < 0)
+	{
+		printf("Error: Please configure.");
+		return -1;
+	}
+	
+	//Checks that project does not exist on client
+	int projectFd = open(project, O_RDONLY);
+	if(projectFd >= 0)
+	{
+		close(projectFd);
+		printf("Error: Project already exists on client.");
+		return -1;
+	}
+	
+	//Composes message to send to server
+	char* clientcommand = malloc(8);
+	char* delim = malloc(1);
+	clientcommand = "checkout";
+	delim = ":";
+	char* message = malloc(strlen(project)+8+1);
+	strcpy(message, clientcommand);
+	strcat(message, delim);
+	strcat(message, project);
+	
+	//Connects to server and sends message
+	int sockfd = connectToServer();
+	if(sockfd < 0)
+	{
+		printf("Error: could not connect to server.\n");
+		return -1;
+	}
+	int newsockfd = sendToServer(sockfd, message);
+	
+	//Reads server response 
+	//On success:
+	
+	//Extracts information about upcoming data in from socket
+	char* command = readUntilDelim(newsockfd, ':');
+	char* numFilesString = readUntilDelim(newsockfd, ':');
+	int numFiles = atoi(numFilesString);
+	
+	//Loops through file data coming from socket
+	int i = 0, status = 1, readIn = 0;
+	for(i = 0; i < numFiles; i++)
+	{
+		//Reads in file name
+		char* nameLenString = readUntilDelim(newsockfd, ':');
+		int nameLen = atoi(nameLenString);
+		char* fileName = malloc(nameLen);
+	  do
+		{
+	    status = read(newsockfd, fileName+readIn, nameLen - readIn);
+	    readIn += status;
+	  } while(status > 0 && readIn < nameLen);
+		
+		//Resets status and readIn
+		status = 1;
+	  readIn = 0;
+		
+		//Reads in file data
+	  char* fileLenString = readUntilDelim(newsockfd, ':');
+		int fileLen = atoi(fileLenString);
+	  char* fileData = malloc(fileLen);
+		do
+		{
+	    status = read(newsockfd, fileData+readIn, fileLen - readIn);
+	    readIn += status;
+	  } while(status > 0 && readIn < fileLen);
+		
+		//Resets status and readIn
+		status = 1;
+	  readIn = 0;
+		
+		//Creates file and writes data
+		int fd = open(fileName, O_RDWR|O_CREAT|O_APPEND, 0777);
+		writeLoop(fd, fileData, fileLen);
+	}
+	
 	return 0;
 }
 
-int update(char* project)
+int update(char* project) //***
 {
+	//Composes message for server
+	char* clientcommand = malloc(6);
+	char* delim = malloc(1);
+	clientcommand = "update";
+	delim = ":";
+	char* message = malloc(strlen(project)+6+1);
+	strcpy(message, clientcommand);
+	strcat(message, delim);
+	strcat(message, project);
+	
+	//Connects to server, sends message
+	int sockfd = connectToServer();
+	if(sockfd < 0)
+	{
+		printf("Error: could not connect to server.\n");
+		return -1;
+	}
+	
+	//Reads server response 
+	//Extracts information about upcoming data in from socket
+	char* numBytesString = readUntilDelim(sockfd, ':');
+	if(strcmp(numBytesString, "error") == 0)
+	{
+		printf("Error: project does not exist.");
+		return -1;
+	}
+	
+	//On success, get number of bytes to read
+	int numBytes = atoi(numBytesString);
+	
+	//Reads in file data
+	char* manifestData = (char*)malloc(numBytes);
 
-	//failure cases
-	//char* command = malloc();
-	//char* message = composeMessage(); //get manifest
+	int status = 1;
+	int readIn = 0;
+		
+	do
+	{
+		  status = read(sockfd, manifestData+readIn, numBytes - readIn);
+		  readIn += status;
+	} while(status > 0 && readIn < numBytes);
 	
-	// TESTING 
+	char* clientManifest = (char*)malloc(strlen(project)+12);
+	char* slash = (char*)malloc(1);
+	char* dot = (char*)malloc(1);
+	char* manifest = (char*)malloc(9);
+	manifest = ".Manifest";
+	slash = "/";
+	dot = ".";
+	strcpy(clientManifest, dot);
+	strcat(clientManifest, slash);
+	strcat(clientManifest, project);
+	strcat(clientManifest, slash);
+	strcat(clientManifest, manifest);
 	
-	char* clientManifest = malloc(30);
-	char* serverManifest = malloc(30);
-	clientManifest = "proj1/.Manifest";
-	serverManifest = "Server/proj1/.Manifest";
+	char* serverManifest = malloc(13);
+	serverManifest = ".servManifest";
 	
+	int fd = open(serverManifest, O_RDWR|O_CREAT|O_APPEND, 0777);
+	write(fd, manifestData, strlen(manifestData));
+	close(fd);
+
 	//Opens both client and server .Manifest files
 	int cliManifestFd = open(clientManifest, O_RDONLY);
 	int servManifestFd = open(serverManifest, O_RDONLY); //Only used to compare versions
@@ -247,10 +372,18 @@ int update(char* project)
 	//Case 1: same Manifest versions
 	if(strcmp(cManifestVer, sManifestVer) == 0) 
 	{
-		int toBeRemoved = open(".Conflict", O_RDONLY);
+		char* conflictPath = malloc(strlen(project)+12);
+		char* conflictFile = (char*)malloc(9);
+		conflictFile = ".Conflict";
+		strcpy(conflictPath, dot);
+		strcat(conflictPath, slash);
+		strcat(conflictPath, project);
+		strcat(conflictPath, slash);
+		strcat(conflictPath, conflictFile);
+		int toBeRemoved = open(conflictPath, O_RDONLY);
 		if(toBeRemoved >= 0)
 		{
-			remove(".Conflict");
+			remove(conflictPath);
 			close(toBeRemoved);
 		}
 		printf("Up To Date\n");
@@ -258,6 +391,7 @@ int update(char* project)
 		close(servManifestFd);
 		//free(cManifestVer);
 		//free(sManifestVer);
+		remove(".servManifest");
 		return 0;
 	}
 
@@ -265,7 +399,16 @@ int update(char* project)
 	//free(cManifestVer);
 	//free(sManifestVer);
 	
-	int updateFd = open(".Update", O_RDWR|O_CREAT|O_APPEND, 00600);
+	char* updatePath = malloc(strlen(project)+10);
+	char* updateFile = (char*)malloc(7);
+	updateFile = ".Update";
+	strcpy(updatePath, dot);
+	strcat(updatePath, slash);
+	strcat(updatePath, project);
+	strcat(updatePath, slash);
+	strcat(updatePath, updateFile);
+	
+	int updateFd = open(updatePath, O_RDWR|O_CREAT|O_APPEND, 0777);
 	char* currentClientLine = NULL, *clientFile = NULL, *cliVersion = NULL, *storedCliHash = NULL;
 
 	//Case 2: different Manifest versions
@@ -463,12 +606,22 @@ int update(char* project)
 						  printf("%s\n", action);
 							strcat(action, space);
 							strcat(action, liveHashCopy);
-							strcat(action, newLine);							
+							strcat(action, newLine);				
 							
-							int conflictFd = open(".Conflict", O_RDONLY);
+							char* conflictPath = malloc(strlen(project)+10);
+							char* conflictFile = (char*)malloc(10);
+							conflictFile = ".Conflict";
+							
+							strcpy(conflictPath, dot);
+							strcat(conflictPath, slash);
+							strcat(conflictPath, project);
+							strcat(conflictPath, slash);
+							strcat(conflictPath, conflictFile);			
+							
+							int conflictFd = open(conflictPath, O_RDONLY);
 							if(conflictFd < 0)
 							{
-								conflictFd = open(".Conflict", O_RDWR|O_CREAT|O_APPEND, 00600);
+								conflictFd = open(conflictPath, O_RDWR|O_CREAT|O_APPEND, 0777);
 						  }
 
 							write(conflictFd, action, 256);
@@ -593,10 +746,11 @@ int update(char* project)
 	close(servManifestFd);
 	close(updateFd);
 	
+	remove(".servManifest");
 	return 0;
 }
 
-int upgrade(char* project)
+int upgrade(char* project) //***
 {
 	//fail if proj dne on server
 	//fail if no cxn
@@ -604,38 +758,299 @@ int upgrade(char* project)
 	//fail if .conflict
 	
 	
+	//Composes message to send to server
+	char* command = malloc(7);
+	char* delim = malloc(1);
+	command = "upgrade";
+	delim = ":";
+	char* message = malloc(strlen(project)+7+1);
+	strcpy(message, command);
+	strcat(message, delim);
+	strcat(message, project);
+	
+	//Connects to server, sends message
+	int sockfd = connectToServer();
+	if(sockfd < 0)
+	{
+		printf("Error: could not connect to server.\n");
+		return -1;
+	}
+	int newsockfd = sendToServer(sockfd, message);
+	
+	//Reads response
+	int status = 1, readIn = 0;
+	char response[50];
+	do{
+	 status = read(newsockfd, response+readIn, 50 - readIn);
+	 readIn += status;
+ 	} while(status > 0 && readIn < 50);
+
+	//On success, read .Update line by line
+	if(strcmp(response, "success") == 0)
+	{
+		int fd = open(".Update", O_RDONLY);
+		file* fileLL = NULL; 
+		
+		//Read each line of .Update
+		while(1)
+		{
+			char* currentLine = readUntilDelim(fd, '\n');
+			
+			//End of .Update reached
+			if(currentLine == NULL || strlen(currentLine) == 0)
+			{
+				break;
+			}
+			
+			//Case: must modify code
+			if(currentLine[0] == 'M')
+			{
+				//Add to LL to send to server
+				char* name = getFileFromLine(currentLine);
+				fileLL = addFileToLL(fileLL, name);
+			}
+			
+			//Case: must add code
+			else if(currentLine[0] == 'A')
+			{
+				//Add to LL to send to server
+				char* name = getFileFromLine(currentLine);
+				fileLL = addFileToLL(fileLL, name);
+			}
+			
+			//Case: must delete code
+			else if(currentLine[0] == 'D')
+			{
+				//Extracts name/path from line
+				char* name = getFileFromLine(currentLine);
+				
+				//Removes file from local project
+				remove(name);
+				
+				//Must find location of project entry in .Manifest
+				
+				//Adds spaces to beginning and end of name
+					//Accounts for cases where path shows up in within another path
+				char* pathToFind = malloc(strlen(name)+2);
+				char* space = malloc(1);
+				space = " ";
+				strcpy(pathToFind, space);
+				strcat(pathToFind, name);
+				strcpy(pathToFind, space);
+				
+				//Finds location of path in .Manifest string
+				char* manifestString = readFromFile(".Manifest");
+				char* nameInManifest = strstr(manifestString, pathToFind);
+				int position = nameInManifest - manifestString;
+				
+				//Must split .Manifest string into beforeEntry and afterEntry
+				
+				//Finds first and last indices of beforeEntry chunk
+				int beforeEntryFirst = 0; //Starts at beginning
+				int beforeEntryLast = position - 3; //-3 skips version and new line
+				
+				//Finds first and last indices of afterEntry chunk
+				int i = position;
+				while(i < strlen(nameInManifest) && nameInManifest[i] != '\n')
+				{
+					//This loop finds the first new line after the name
+					i++;
+				}
+				
+				int afterEntryFirst = i; //Starts at first new line after the name
+				int afterEntryLast = strlen(manifestString)-1; //Ends at final character
+				int afterEntrySize = afterEntryLast - afterEntryFirst - 1;
+				
+				//Create strings for first chunk and second chunk
+				char* newManifestBefore = malloc(beforeEntryLast);
+				char* newManifestAfter = malloc(afterEntrySize);
+				
+				//Sets new strings char by char
+				int j = 0, k = 0;
+				for(j = 0; j < beforeEntryLast; j++)
+				{
+					newManifestBefore[j] = manifestString[j];
+				}
+				for(k = 0; k < afterEntrySize; k++)
+				{
+					newManifestAfter[k] = manifestString[k+afterEntryFirst];
+				}
+				
+				//Replace .Manifest and write data
+				remove(".Manifest");
+				int manifestFd = open(".Manifest", O_RDWR|O_CREAT|O_APPEND, 0777);
+				writeLoop(manifestFd, newManifestBefore, beforeEntryLast);
+				writeLoop(manifestFd, newManifestAfter, afterEntrySize);
+			}
+		}
+		
+		int sockFd = connectToServer();
+		if(sockfd < 0)
+		{
+			printf("Error: could not connect to server.\n");
+			return -1;
+		}
+		transferOver(sockfd, fileLL, command);
+
+		//Extracts information about upcoming data in from socket
+		char* command = readUntilDelim(newsockfd, ':');
+		char* numFilesString = readUntilDelim(newsockfd, ':');
+		int numFiles = atoi(numFilesString);
+		
+		//Loops through file data coming from socket
+		int i = 0, status = 1, readIn = 0;
+		for(i = 0; i < numFiles; i++)
+		{
+			//Reads in file name
+			char* nameLenString = readUntilDelim(newsockfd, ':');
+			int nameLen = atoi(nameLenString);
+			char* fileName = malloc(nameLen);
+		  do
+			{
+		    status = read(newsockfd, fileName+readIn, nameLen - readIn);
+		    readIn += status;
+		  } while(status > 0 && readIn < nameLen);
+			
+			//Resets status and readIn
+			status = 1;
+		  readIn = 0;
+			
+			//Reads in file data
+		  char* fileLenString = readUntilDelim(newsockfd, ':');
+			int fileLen = atoi(fileLenString);
+		  char* fileData = malloc(fileLen);
+			do
+			{
+		    status = read(newsockfd, fileData+readIn, fileLen - readIn);
+		    readIn += status;
+		  } while(status > 0 && readIn < fileLen);
+			
+			//Resets status and readIn
+			status = 1;
+		  readIn = 0;
+			
+			//Opens file and writes data
+			int fd = open(fileName, O_RDONLY);
+			
+			if(fd >= 0)
+			{
+				//File exists; must delete to allow for rewriting
+				remove(fileName);
+			}
+			
+			fd = open(fileName, O_RDWR|O_CREAT|O_APPEND, 0777);
+			writeLoop(fd, fileData, fileLen);
+		}		
+	}
+	else
+	{
+		printf("Error: Project not found on server.");
+		return -1;
+	}
 	
 	return 0;
 }
 
-int commit(char* project)
+int commit(char* project) //***
 {
-	//char* message = composeMessage(); //client send server commit <proj>
-	//receive .manifest
-	//client fails if project DNE on server
-	// client fails if server cannot be contacted
-	// client fails if it cannot fetch the server's .manifest file for the project,
+	char* updatePath = malloc(strlen(project)+10);
+	char* slash = (char*)malloc(1);
+	char* dot = (char*)malloc(1);
+	char* updateFile = (char*)malloc(7);
+	updateFile = ".Update";
+	slash = "/";
+	dot = ".";
 	
-	int status; 
-  status = open(".Update", O_RDONLY);
-	if(status >= 0)
+	strcpy(updatePath, dot);
+	strcat(updatePath, slash);
+	strcat(updatePath, project);
+	strcat(updatePath, slash);
+	strcat(updatePath, updateFile);
+	
+	char* updateContents = readFromFile(updatePath);
+	if(strcmp(updateContents, "EMPTY_FILE") != 0)
 	{
-		//CHECK IF EMPTY
-		printf("Error: .Update exists.");
-		return -1;
+		printf("Error: .Update exists and is not empty.");
+		return -1;	
 	}
-	status = open(".Conflict", O_RDONLY);
-	if(status >= 0)
+	
+	char* conflictPath = malloc(strlen(project)+10);
+	char* conflictFile = (char*)malloc(10);
+	conflictFile = ".Conflict";
+	
+	strcpy(conflictPath, dot);
+	strcat(conflictPath, slash);
+	strcat(conflictPath, project);
+	strcat(conflictPath, slash);
+	strcat(conflictPath, conflictFile);
+	
+	int conflictFd = open(conflictPath, O_RDONLY);
+	if(conflictFd >= 0)
 	{
+		close(conflictFd);
 		printf("Error: .Conflict exists.");
 		return -1;
 	}
+	close(conflictFd);
 	
-	// TESTING 
-	char* clientManifest = malloc(30);
-		char* serverManifest = malloc(30);
-		clientManifest = "proj1/.Manifest";
-		serverManifest = "Server/proj1/.Manifest";
+	//Composes message for server
+	char* clientcommand = malloc(6);
+	char* delim = malloc(1);
+	clientcommand = "update";
+	delim = ":";
+	char* message = malloc(strlen(project)+6+1);
+	strcpy(message, clientcommand);
+	strcat(message, delim);
+	strcat(message, project);
+	
+	//Connects to server, sends message
+	int sockfd = connectToServer();
+	if(sockfd < 0)
+	{
+		printf("Error: could not connect to server.\n");
+		return -1;
+	}
+	
+	//Reads server response 
+	//Extracts information about upcoming data in from socket
+	char* numBytesString = readUntilDelim(sockfd, ':');
+	if(strcmp(numBytesString, "error") == 0)
+	{
+		printf("Error: project does not exist.");
+		return -1;
+	}
+	
+	//On success, get number of bytes to read
+	int numBytes = atoi(numBytesString);
+	
+	//Reads in file data
+	char* manifestData = (char*)malloc(numBytes);
+
+	int status = 1;
+	int readIn = 0;
+		
+	do
+	{
+		  status = read(sockfd, manifestData+readIn, numBytes - readIn);
+		  readIn += status;
+	} while(status > 0 && readIn < numBytes);
+	
+	char* clientManifest = (char*)malloc(strlen(project)+12);
+	char* manifest = (char*)malloc(9);
+	manifest = ".Manifest";
+	
+	strcpy(clientManifest, dot);
+	strcat(clientManifest, slash);
+	strcat(clientManifest, project);
+	strcat(clientManifest, slash);
+	strcat(clientManifest, manifest);
+	
+	char* serverManifest = malloc(13);
+	serverManifest = ".servManifest";
+	
+	int fd = open(serverManifest, O_RDWR|O_CREAT|O_APPEND, 0777);
+	write(fd, manifestData, strlen(manifestData));
+	close(fd);
 	
 	//Opens both client and server .Manifest files
 	int cliManifestFd = open(clientManifest, O_RDONLY);
@@ -657,7 +1072,16 @@ int commit(char* project)
 	free(sManifestVer);
 	close(servManifestFd);
 	
-	int commitFd = open(".Commit", O_RDWR|O_CREAT|O_APPEND, 00600);
+	char* commitPath = (char*)malloc(strlen(project)+12);
+	char* commitFile = (char*)malloc(9);
+	commitFile = ".Commit";
+	
+	strcpy(commitPath, dot);
+	strcat(commitPath, slash);
+	strcat(commitPath, project);
+	strcat(commitPath, slash);
+	strcat(commitPath, commitFile);
+	int commitFd = open(commitPath, O_RDWR|O_CREAT|O_APPEND, 0777);
 	
 	//Case 2: client and server manifests match
 	while(1)
@@ -680,8 +1104,7 @@ int commit(char* project)
 		char* storedCliHash = getHashFromLine(currentClientLine);
 		//printf("clientFile: %s\n", clientFile);
 		char* filePath = malloc(strlen(project)+strlen(clientFile)+1);// proj1/example1.txt
-		char* slash = malloc(1);
-		slash = "/";
+
 		strcpy(filePath, project);
 		strcat(filePath, slash);
 		strcat(filePath, clientFile);
@@ -797,7 +1220,7 @@ int commit(char* project)
 					if(serverFileVer > clientFileVer)
 					{
 						printf("Error: Failed to commit. Please synch client with repository before committing changes.");
-						remove(".Commit");
+						remove(commitPath);
 						//free(currentClientLine);
 						//free(currentServerLine);
 						//free(servHash);
@@ -903,24 +1326,156 @@ int commit(char* project)
 
 /*if(strcmp(storedHash, liveHash) != 0)
 {
-	int cliManifestFd = open("project/.commit", O_RDONLY); 
-}*/
-
-int push(char* project)
-{
+	//Checks that .Commit exists
+	char* commitPath = malloc(strlen(project)+10);
+	char* slash = (char*)malloc(1);
+	char* dot = (char*)malloc(1);
+	char* commitFile = (char*)malloc(7);
+	commitFile = ".Commit";
+	slash = "/";
+	dot = ".";
+	
+	strcpy(commitPath, dot);
+	strcat(commitPath, slash);
+	strcat(commitPath, project);
+	strcat(commitPath, slash);
+	strcat(commitPath, commitFile);
+	int commitFd = open(commitPath, O_RDONLY);
+	if(commitFd < 0)
+	{
+		printf("Error: .Commit does not exist.");
+		close(commitFd);
+		return -1;
+	}
+	close(commitFd);
+	
+	char* commitString = readFromFile(commitPath);
+	char* commitHash = hash(commitString);
+	
+	//Composes message to send to server
+	char* message = malloc(strlen(project)+strlen(commitHash)+4+1);
+	char* command = malloc(4);
+	char* delim = malloc(1);
+	command = "push";
+	delim = ":";
+	
+	strcpy(message, command);
+	strcat(message, delim);
+	strcat(message, project);
+	strcat(message, delim);
+	strcat(message, commitHash);
+	
+	//Connects and sends to server
+	int sockfd = connectToServer();
+	if(sockfd < 0)
+	{
+		printf("Error: could not connect to server.\n");
+		return -1;
+	}
+	int newsockfd = sendToServer(sockfd, message);
+	
+	//Reads server response (which is a request for files)
+	char* numFilesString = readUntilDelim(newsockfd,':');
+	if(strcmp(numFilesString, "error") == 0)
+	{
+		printf("Error: failed to commit.\n");
+	}
+	
+	file* fileLL = NULL;
+	int numFiles = atoi(numFilesString);
+	int i = 0, status = 1, readIn = 0;
+	for(i = 0; i < numFiles; i++)
+	{
+		//Reads in file name
+		char* nameLenString = readUntilDelim(newsockfd, ':');
+		int nameLen = atoi(nameLenString);
+		char* fileName = malloc(nameLen);
+	  do
+		{
+	    status = read(newsockfd, fileName+readIn, nameLen - readIn);
+	    readIn += status;
+	  } while(status > 0 && readIn < nameLen);
+		
+		//Resets status and readIn
+		status = 1;
+	  readIn = 0;
+		
+		fileLL = addFileToLL(fileLL, fileName);
+	}
+	
+	//Connect to server and send over files
+	sockfd = connectToServer();
+	transferOver(sockfd, fileLL, command);
+	
+	status = 1;
+	readIn = 0;
+	char response[50];
+	do{
+	 status = read(sockfd, response+readIn, 50 - readIn);
+	 readIn += status;
+ } while(status > 0 && readIn < 50);
+	
+	if(strcmp(response, "success") != 0)
+	{
+		printf("Error: failed to commit.\n");
+	}
+	
+	remove(commitPath);
+	
 	return 0;
 }
 
-int create(char* project)
+int create(char* project) //Tested
 {
 	char* message;
 	int sockfd = connectToServer();
-	int status;
-	
-	sendToServer(sockfd, message);
-  status = mkdir(project, 00600); 
-	if(status < 0)
+	if(sockfd < 0)
 	{
+		printf("Error: could not connect to server.\n");
+		return -1;
+	}
+	int newsockfd = sendToServer(sockfd, message);
+	
+	//Reads response from server
+	int status = 1, readIn = 0;
+	char response[50];
+	do{
+     status = read(newsockfd, response+readIn, 50 - readIn);
+     readIn += status;
+	 } while(status > 0 && readIn < 50);
+	 
+	 close(sockfd);
+	 close(newsockfd);
+	
+	//On success, creates directory
+	if(strcmp(response, "success") == 0)
+	{
+		int mkdirStatus = mkdir(project, 0777); 
+		if(mkdirStatus < 0)
+		{
+			printf("Error: failed to create project.\n");
+			return -1;
+		}
+		
+		//Creates .Manifest in project, sets version to 0
+		char* manifestPath = (char*)malloc(strlen(project)+12);
+		char* slash = (char*)malloc(1);
+		char* dot = (char*)malloc(1);
+		char* manifest = (char*)malloc(9);
+		manifest = ".Manifest";
+		slash = "/";
+		dot = ".";
+		strcpy(manifestPath, dot);
+		strcat(manifestPath, slash);
+		strcat(manifestPath, project);
+		strcat(manifestPath, slash);
+		strcat(manifestPath, manifest);
+		
+		int fd = open(manifestPath, O_RDWR|O_CREAT|O_APPEND, 0777);
+		
+		char* version = malloc(2);
+		version = "0\n";
+		write(fd, version, 2);
 		
 	}
 	//struct file** arr = malloc(numFiles*sizeof(struct file*))
@@ -930,30 +1485,151 @@ int create(char* project)
 	return 0;
 }
 
-int destroy(char* project)
+int destroy(char* project) //Depends on server
 {
-	return 0;
-}
-
-int add(char* project, char* file)
-{
-	int status; 
-  status = open(file, O_RDONLY);
-	if(status < 0)
+	//Composes message for server
+	char* command = malloc(7);
+	char* delim = malloc(1);
+	command = "destroy";
+	delim = ":";
+	char* message = malloc(strlen(project)+7+1);
+	strcpy(message, command);
+	strcat(message, delim);
+	strcat(message, project);
+	
+	//Connects to server, sends message
+	int sockfd = connectToServer();
+	if(sockfd < 0)
 	{
-		printf("Error: file does not exist.");
+		printf("Error: could not connect to server.\n");
 		return -1;
 	}
-	// open manifest
-	// append write
+	int newsockfd = sendToServer(sockfd, message);
+	
+	//Reads response
+	int status = 1, readIn = 0;
+	
+	char response[50];
+	do{
+     status = read(newsockfd, response+readIn, 50 - readIn);
+     readIn += status;
+	 } while(status > 0 && readIn < 50);
+	
+	close(sockfd);
+	close(newsockfd);
+	
+	//On success, do nothing
+	if(strcmp(response, "success") == 0)
+	{
+		return 0;
+	}
+	//On failure, print error
+	else
+	{
+		printf("Error: Could not destroy.\n");
+	}	
 	
 	return 0;
 }
 
-int remove_(char* project, char* file)
+int add(char* project, char* file) //Tested
 {
+	//Builds file path from given info
+	char* path = malloc(strlen(project)+strlen(file)+2);
+	char* slash = malloc(1);
+	char* dot = malloc(1);
+	slash = "/";
+	dot = ".";
+	
+	strcpy(path, dot);
+	strcat(path, slash);
+	strcat(path, project);
+	strcat(path, slash);
+	strcat(path, file);
+	
+	//Opens file
+  int status = open(path, O_RDONLY);
+	if(status < 0)
+	{
+		printf("Error: file does not exist on the client.\n");
+		return -1;
+	}
+	close(status);
+	
+	//Opens project .Manifest
+	char* manifestPath = malloc(strlen(project)+12);
+	char* manifest = malloc(9);
+	manifest = ".Manifest";
+	strcpy(manifestPath, dot);
+	strcat(manifestPath, slash);
+	strcat(manifestPath, project);
+	strcat(manifestPath, slash);
+	strcat(manifestPath, manifest);
+	
+	int fd = open(manifestPath, O_RDWR|O_CREAT|O_APPEND, 0777);
+	readUntilDelim(fd, '\n'); //Skips over version number
+	
+	while(1)
+	{
+		char* currentLine = readUntilDelim(fd, '\n');
+		
+		//End of .Manifest reached without having found project
+		if(currentLine == NULL || strlen(currentLine) == 0)
+		{
+			char* toWrite = malloc(2+strlen(path)+1+40+1);
+			char* version = malloc(1);
+			char* newLine = malloc(1);
+			char* space = malloc(1);
+			version = "0";
+			newLine = "\n";
+			space = " ";
+			
+			char* projectString = readFromFile(path);
+			char* projHash = hash(projectString);
+			
+			strcpy(toWrite, version);
+			strcat(toWrite, space);
+			strcat(toWrite, path);
+			strcat(toWrite, space);
+			strcat(toWrite, projHash);
+			strcat(toWrite, newLine);
+			
+			write(fd, toWrite, strlen(toWrite));
+			
+			break;
+		}
+		
+		char* fileName = getFileFromLine(currentLine);
+			
+		//If file is already in .Manifest, update?
+		if(strcmp(fileName,path) == 0)
+		{
+			printf("File already exists in .Manifest.\n");
+			return -1;
+		}
+		
+	}
+	close(fd);
+	return 0;
+}
+
+int remove_(char* project, char* file) //Tested
+{
+	//Builds file path from given info
+	char* path = malloc(strlen(project)+strlen(file)+2);
+	char* slash = malloc(1);
+	char* dot = malloc(1);
+	slash = "/";
+	dot = ".";
+	
+	strcpy(path, dot);
+	strcat(path, slash);
+	strcat(path, project);
+	strcat(path, slash);
+	strcat(path, file);
+	
 	int status; 
-  status = open(file, O_RDONLY);
+  status = open(path, O_RDONLY);
 	if(status < 0)
 	{
 		printf("Error: file does not exist.");
@@ -961,36 +1637,228 @@ int remove_(char* project, char* file)
 	}
 	else
 	{
-		// open manifest
-		// find line
-		// load data into buffer
-		// delete manifest contents
-		// write
-		// write
+		//Opens project .Manifest
+		char* manifestPath = malloc(strlen(project)+12);
+		char* manifest = malloc(9);
+		manifest = ".Manifest";
+		strcpy(manifestPath, dot);
+		strcat(manifestPath, slash);
+		strcat(manifestPath, project);
+		strcat(manifestPath, slash);
+		strcat(manifestPath, manifest);
+		
+		//Must find location of project entry in .Manifest
+				
+		//Adds spaces to beginning and end of name
+			//Accounts for cases where path shows up in within another path
+		char* pathToFind = malloc(strlen(path)+2);
+		char* space = malloc(1);
+		space = " ";
+		strcpy(pathToFind, space);
+		strcat(pathToFind, path);
+		strcpy(pathToFind, space);
+		
+		//Finds location of path in .Manifest string
+		char* manifestString = readFromFile(manifestPath);
+		char* nameInManifest = strstr(manifestString, pathToFind);
+		int position = nameInManifest - manifestString;
+		
+		//Must split .Manifest string into beforeEntry and afterEntry
+				
+		//Finds first and last indices of beforeEntry chunk
+		int beforeEntryFirst = 0; //Starts at beginning
+		int beforeEntryLast = position-1; //-3 skips version and new line
+				
+		//Finds first and last indices of afterEntry chunk
+		int i = position;
+		while(i < strlen(nameInManifest) && nameInManifest[i] != '\n')
+		{
+			//This loop finds the first new line after the name
+			i++;
+		}
+				
+		int afterEntryFirst = i+4; //Starts at first new line after the name
+		int afterEntryLast = strlen(manifestString)-1; //Ends at final character
+		int afterEntrySize = afterEntryLast - afterEntryFirst - 1;
+				
+		//Create strings for first chunk and second chunk
+		char* newManifestBefore = malloc(beforeEntryLast);
+		char* newManifestAfter = malloc(afterEntrySize);
+		memset(newManifestBefore, '\0', beforeEntryLast);
+		memset(newManifestAfter, '\0', afterEntrySize);
+				
+		//Sets new strings char by char
+		int j = 0, k = 0;
+		for(j = 0; j < beforeEntryLast; j++)
+		{
+			newManifestBefore[j] = manifestString[j];
+			//printf("newManifestBefore[j] = %c\n",newManifestBefore[j]);
+		}
+		for(k = 0; k < afterEntrySize; k++)
+		{
+			newManifestAfter[k] = manifestString[k+afterEntryFirst];
+		}
+		
+		//printf("before: %s\nafter: %s\n", newManifestBefore, newManifestAfter);
+			
+		//Replace .Manifest and write data
+		remove(manifestPath);
+		int manifestFd = open(manifestPath, O_RDWR|O_CREAT|O_APPEND, 0777);
+		writeLoop(manifestFd, newManifestBefore, beforeEntryLast);
+		writeLoop(manifestFd, newManifestAfter, afterEntrySize);
+
 	}
 	
 	return 0;
 }
 
-int currentversion(char* project)
+int currentversion(char* project) //Depends on server
 {
+	//Composes message for server
+	char* clientcommand = malloc(14);
+	char* delim = malloc(1);
+	clientcommand = "currentversion";
+	delim = ":";
+	char* message = malloc(strlen(project)+6+1);
+	strcpy(message, clientcommand);
+	strcat(message, delim);
+	strcat(message, project);
+	
+	//Connects to server, sends message
+	int sockfd = connectToServer();
+	if(sockfd < 0)
+	{
+		printf("Error: could not connect to server.\n");
+		return -1;
+	}
+	
+	//Reads server response 
+	
+	//Extracts information about upcoming data in from socket
+	char* numBytesString = readUntilDelim(sockfd, ':');
+	
+	if(strcmp(numBytesString, "error") == 0)
+	{
+		char* cause = readUntilDelim(sockfd, ' ');
+		if(cause[0] == 'e')
+		{
+			printf("Error: project is empty.");
+		}
+		else
+		{
+			printf("Error: project does not exist.");
+		}
+		
+		return -1;
+	}
+	
+	//On success, get number of bytes to read
+	int numBytes = atoi(numBytesString);
+	
+	//Reads in file data
+	char* data = (char*)malloc(numBytes);
+
+	int status = 1;
+	int readIn = 0;
+		
+	do
+	{
+		  status = read(sockfd, data+readIn, numBytes - readIn);
+		  readIn += status;
+	} while(status > 0 && readIn < numBytes);
+	
+	printf("%s\n", data);
+	
 	return 0;
 }
 
-int history(char* project)
+int history(char* project) //Depends on server
 {
+	//Composes message to send to server
+	char* command = malloc(7);
+	char* delim = malloc(1);
+	command = "history";
+	delim = ":";
+	char* message = malloc(strlen(project)+7+1);
+	strcpy(message, command);
+	strcat(message, delim);
+	strcat(message, project);
+	
+	//Connects to server, sends message
+	int sockfd = connectToServer();
+	if(sockfd < 0)
+	{
+		printf("Error: could not connect to server.\n");
+		return -1;
+	}
+	int newsockfd = sendToServer(sockfd, message);
+	int status = 1, readIn = 0;
+
+	char* numBytesString = readUntilDelim(newsockfd, ':');
+	
+	if(strcmp(numBytesString, "error") == 0)
+	{
+		printf("Error: Project does not exist on server.");
+		return -1;
+	}
+	
+	//Reads response
+	int numBytes = atoi(numBytesString);
+	char* output = malloc(numBytes);
+  status = 1, readIn = 0;
+	do{
+	 status = read(newsockfd, output+readIn, numBytes - readIn);
+	 readIn += status;
+ 	} while(status > 0 && readIn < numBytes);
+	
+	printf("%s\n", output);
+	
 	return 0;
 }
 
-int rollback(char* project, char* version)
+int rollback(char* project, char* version) //Should work, depends on server
 {
+	//Composes message
+	char* command = malloc(7);
+	char* delim = malloc(1);
+	command = "rollback";
+	delim = ":";
+	char* message = malloc(strlen(project)+strlen(version)+7+1);
+	strcpy(message, command);
+	strcat(message, delim);
+	strcat(message, project);
+	strcat(message, version);
+	
+	//Connects to server, sends message
+	int sockfd = connectToServer();
+	if(sockfd < 0)
+	{
+		printf("Error: could not connect to server.\n");
+		return -1;
+	}
+	int newsockfd = sendToServer(sockfd, message);
+	
+	//Reads response
+	char* response = readUntilDelim(newsockfd, ':');
+	if(strcmp(response, "error"))
+	{
+		char* errorCause = readUntilDelim(newsockfd, '\n');
+		if(errorCause[0] == 'i')
+		{
+			printf("Error: Invalid version number.");
+			return -1;
+		}
+		else
+		{
+			printf("Error: Project does not exist.");
+			return -1;
+		}
+	}
 	return 0;
 }
 
 int setServerDetails()
 {
-	//CHECK THIS
-	//doesn't work for me unless i myself go into .configure and edit it...
 	char* configure_string = readFromFile("./.configure");
 	int len = strlen(configure_string), spaceFound = 0, i = 0, j = 0;
 	
@@ -1041,7 +1909,6 @@ int connectToServer()
 	
 	if(sockfd < 0)
 	{
-		printf("ERROR\n");
 		return -1;
 	}
 	struct hostent* host = gethostbyname("127.0.0.1");
@@ -1051,14 +1918,13 @@ int connectToServer()
 	
 	serverAddressInfo.sin_family = AF_INET;
 	serverAddressInfo.sin_addr.s_addr = htons(INADDR_ANY);
-	serverAddressInfo.sin_port = htons(42069); //CHANGE BACK TO PORTNO
+	serverAddressInfo.sin_port = htons(atoi(PORT));
 	
 	bcopy((char*)host->h_addr, (char*)&serverAddressInfo.sin_addr.s_addr, host->h_length);
 	
 	cxn_status = connect(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo));
 	if(cxn_status < 0)
 	{
-		printf("ERROR\n");
 		return -1;
 	}
 	
@@ -1134,7 +2000,7 @@ char* readFromFile(char* file)
     int fd = open(file, O_RDONLY);    // Returns -1 on failure, >0 on success
     // Fatal Error if file does not exist
     if(fd < 0){
-        printf("Fatal Error: File does not exist.\n");
+        //printf("Fatal Error: File does not exist.\n");
         return "FILE_DNE";
     }
     struct stat *buffer = malloc(sizeof(struct stat));
@@ -1146,7 +2012,7 @@ char* readFromFile(char* file)
     int bufferSize = buffer->st_size;
     // Warning: Empty file
     if(bufferSize == 0){
-        printf("Warning: Empty file.\n");
+        //printf("Warning: Empty file.\n");
 				return "EMPTY_FILE";
     }
 		
@@ -1361,3 +2227,111 @@ char* readUntilDelim(int fd, char delim){
 	return buffer;
 }
 
+// Loops write
+void writeLoop(int fd, char* str, int numBytes){
+	int strLen = strlen(str);
+    // IO Read Loop
+    int status = 1;
+    int readIn = 0;
+    do{
+        status = write(fd, str + readIn, numBytes - readIn);
+        readIn += status;
+    } while(status > 0 && readIn < numBytes);
+}
+
+// Converts given int to string of appropriate length stored on heap
+char* intToString(int num){
+	char* itoabuf = (char*)malloc( (int)((ceil(log10(num))+1)) * sizeof(char));
+    sprintf(itoabuf,"%d", num);
+    return itoabuf;
+}
+
+// Given fileLL and file name, prepends new, populated file node to LL
+file* addFileToLL(file* fileLL, char* name){
+	char* fileString = readFromFile(name);
+	// FILE DNE - not exactly sure what to do or if this should be possible
+	if(strcmp(fileString, "FILE_DNE") == 0){
+		return fileLL;
+	}
+	file* temp = (file*)malloc(sizeof(file));
+	temp->next = fileLL;
+	temp->fileName = name;
+	temp->nameLen = strlen(name);	
+	
+	// EMPTY FILE - set fileLen to 0, fileData = NULL
+	if(strcmp(fileString, "EMPTY_FILE") == 0){
+		temp->fileData = NULL;
+		temp->fileLen = 0;
+	}
+	// NON-EMPTY FILE - set data and len as normal
+	else{
+		temp->fileLen = strlen(temp->fileData);
+		temp->fileData = fileString;
+	}
+	return temp;
+}
+
+// Given project and fileLL, recursively adds each file to the fileLL
+file *addDirToLL(file* fileLL, char *proj){
+	DIR *currentDir = opendir(proj);
+	if (currentDir == NULL)	{
+		printf("ERROR: Project does not exist\n");
+		return NULL;
+	}
+	struct dirent *currentThing = NULL;
+	readdir(currentDir);
+	readdir(currentDir);
+	while ((currentThing = readdir(currentDir)) != NULL){
+		char buff[1024];
+		snprintf(buff, sizeof(buff), "%s/%s", proj, currentThing->d_name);
+		if (currentThing->d_type == DT_REG){
+			// Might cause memory issues since can recurse into subdirs before adding that dir's files
+			fileLL = addFileToLL(fileLL, buff);
+		}
+		else if (currentThing->d_type == DT_DIR){
+			addDirToLL(fileLL, buff);
+		}
+	}
+	closedir(currentDir);
+	return fileLL;
+}
+
+// Given server/client socket and fileLL to send over, composes string message and writes message to fd
+void transferOver(int sockfd, file* fileLL, char* command){
+	if(fileLL == NULL){
+		printf("Trying to transfer empty LL\n");
+		return;
+	}
+	file* ptr = fileLL;
+	int bufLen = 20;
+	int numFiles = 0;
+	// Calculates # files to be transferred
+	while(ptr != NULL){
+		numFiles++;
+		ptr = ptr->next;
+	}
+	// <command>:<numFiles>:
+	writeLoop(sockfd, command, strlen(command));
+	write(sockfd, ":", 1);
+	char* numFilesString = intToString(numFiles);
+	writeLoop(sockfd, numFilesString, strlen(numFilesString));
+	write(sockfd, ":", 1);
+
+	// Reset loop to write each files' info to socket
+	// <nameLen>:<fileName><fileLen>:<fileData>
+	ptr = fileLL;
+	while(ptr != NULL){
+		
+		char* nameLenString = intToString(ptr->nameLen);
+		writeLoop(sockfd, nameLenString, strlen(nameLenString));
+		write(sockfd, ":", 1);
+
+		writeLoop(sockfd, ptr->fileName, ptr->nameLen);
+
+		char* fileLenString = intToString(ptr->fileLen);
+		writeLoop(sockfd, fileLenString, strlen(fileLenString));
+		write(sockfd, ":", 1);
+
+		writeLoop(sockfd, ptr->fileData, ptr->fileLen);
+	}
+}
