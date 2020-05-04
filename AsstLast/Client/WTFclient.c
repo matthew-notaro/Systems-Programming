@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <openssl/sha.h>
+#include <dirent.h>
 
 char* HOST = NULL;
 char* PORT = NULL;
