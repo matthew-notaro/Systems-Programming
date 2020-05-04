@@ -1,5 +1,5 @@
 all: WTFclient.c
-	gcc -g -lcrypto WTFclient.c WTFserver.c -o WTFclient WTFserver
+	gcc -g -lcrypto WTFclient.c WTFserver.c -o WTF WTFserver
 	
 clean:
-	rm WTFclient WTFserver
+	rm WTF WTFserver
