@@ -9,17 +9,15 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <openssl/sha.h>
-#include <dirent.h>
 
 char* HOST = NULL;
 char* PORT = NULL;
 
 typedef struct file{
-	char* fileName;
-	int nameLen;
-	int fileLen;
-	char* fileData;
-	struct file* next;
+		char* fileName;
+		char* nameLen;
+		char* numBytes;
+		char* fileData;
 } file;
 
 int configure(char* IPAddress, char* portNum);
@@ -38,9 +36,12 @@ int history(char* project);
 int rollback(char* project, char* version);
 
 int setServerDetails();
+
 int connectToServer();
-//char* composeMessage(char* command, file* arr, char* numFiles);
+char* composeMessage(char* command, file* arr, char* numFiles);
 int sendToServer();
+
+char* readFromFile(char* file);
 
 char* hash(char* data);
 
@@ -48,14 +49,7 @@ char* getHashFromLine(char* line);
 char* getFileFromLine(char* line);
 char* getVersionFromLine(char* line);
 
-char* readFromFile(char* file);
 char* readUntilDelim(int fd, char delim);
-void writeLoop(int fd, char* str, int numBytes);
-char* intToString(int num);
-
-void transferOver(int sockfd, file* fileLL, char* command);
-file *addDirToLL(file* fileLL, char *proj);
-file* addFileToLL(file* fileLL, char* name);
 
 int main(int argc, char **argv) 
 {
@@ -162,6 +156,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	
+	
 	//int sockfd = connectToServer();
 	// char* command = malloc(5);
 	// command = "proj1";
@@ -180,8 +175,6 @@ int main(int argc, char **argv)
 	//sendToServer(sockfd, command);
 	//composeMessage(command, arr, numFiles);
 	//getHash(command);
-	//commit(command);
-	//checkout(command);
 	
 	return 0;
 }
@@ -215,7 +208,7 @@ int configure(char* IPAddress, char* portNum)
 	
 	printf("buffer: %s\n", buffer);
 	
-	writeLoop(fd, buffer, strlen(buffer));
+	write(fd, buffer, strlen(buffer));
 
 	return 0;
 }
@@ -538,7 +531,7 @@ int update(char* project)
 				strcat(action, storedCliHash);
 				strcat(action, newLine);
 				
-				writeLoop(updateFd, action, strlen(action));
+				write(updateFd, action, strlen(action));
 				printf("written action: %s\n", action);
 				
 				memset(action, '\0', strlen(action));
@@ -615,7 +608,7 @@ int update(char* project)
 							strcat(action, space);
 							strcat(action, servHash);
 							strcat(action, newLine);
-							writeLoop(updateFd, action, strlen(action));
+							write(updateFd, action, strlen(action));
 							printf("written action: %s\n", action);
 
 							/*
@@ -766,7 +759,7 @@ int update(char* project)
 				strcat(action, space);
 				strcat(action, servHash);
 				strcat(action, newLine);
-				writeLoop(updateFd, action, strlen(action));
+				write(updateFd, action, strlen(action));
 				printf("written action: %s\n", action);
 				
 			//	memset(action, '\0', strlen(action));
@@ -1283,7 +1276,7 @@ int commit(char* project) //Tested
 				strcat(action, space);
 				strcat(action, storedCliHash);
 				strcat(action, newLine);
-				writeLoop(commitFd, action, strlen(action));
+				write(commitFd, action, strlen(action));
 				printf("written action: %s\n", action);
 				
 			//	memset(action, '\0', strlen(action));
@@ -1331,7 +1324,7 @@ int commit(char* project) //Tested
 	  				strcat(action, space);
 						strcat(action, servHash);
 						strcat(action, newLine);
-						writeLoop(commitFd, action, strlen(action));
+						write(commitFd, action, strlen(action));
 						printf("written action: %s\n", action);
 						////free(actioncode);
 						//free(currentServerLine);
@@ -1432,7 +1425,7 @@ int commit(char* project) //Tested
 				strcat(action, servHash);
 				strcat(action, newLine);
 				
-				writeLoop(commitFd, action, strlen(action));
+				write(commitFd, action, strlen(action));
 				printf("written action: %s\n", action);
 				
 				close(cliManifestFd);
@@ -1602,17 +1595,7 @@ int push(char* project) //Depends on server
 
 int create(char* project) //Tested
 {
-	//Composes message to send to server
-	char* command = malloc(6);
-	char* delim = malloc(1);
-	command = "create";
-	delim = ":";
-	char* message = malloc(strlen(project)+6+1);
-	strcpy(message, command);
-	strcat(message, delim);
-	strcat(message, project);
-	
-	//Connect and send to server
+	char* message;
 	int sockfd = connectToServer();
 	if(sockfd < 0)
 	{
@@ -1678,6 +1661,10 @@ int create(char* project) //Tested
 		printf("Error: Failed to create project.\n");
 		return -1;
 	}
+	//struct file** arr = malloc(numFiles*sizeof(struct file*))
+
+	
+	//get manifest from server
 	return 0;
 }
 
@@ -2128,7 +2115,7 @@ int connectToServer()
 }
 
 //Composes a message based on delimiter-based protocol
-/*char* composeMessage(char* command, file* arr, char* numFiles)
+char* composeMessage(char* command, file* arr, char* numFiles)
 {
 	int commandLen = strlen(command);
 	int numFilesLen = 1;
@@ -2143,8 +2130,8 @@ int connectToServer()
 	  file* curr = &arr[i];
 	 	sizeOfBuffer += strlen(curr->nameLen); //len of nameLen
 	 	sizeOfBuffer += strlen(curr->fileName); //len of fileName 
-	 	sizeOfBuffer += strlen(curr->fileLen); //len of numBytes
-	 	sizeOfBuffer += atoi(curr->fileLen); //numBytes
+	 	sizeOfBuffer += strlen(curr->numBytes); //len of numBytes
+	 	sizeOfBuffer += atoi(curr->numBytes); //numBytes
 	 	sizeOfBuffer += 2; //to account for delimiters
 	}
 	
@@ -2160,7 +2147,7 @@ int connectToServer()
 	  strcat(buffer, curr->nameLen);
   	strcat(buffer, delim);
 	 	strcat(buffer, curr->fileName);
-	 	strcat(buffer, curr->fileLen);
+	 	strcat(buffer, curr->numBytes);
 	 	strcat(buffer, delim);
 		strcat(buffer, curr->fileData);
   }
@@ -2168,7 +2155,7 @@ int connectToServer()
 	printf("buffer: %s\n", buffer);
   return buffer;
 	
-}*/
+}
 
 int sendToServer(int sockfd, char* message)
 {
@@ -2179,9 +2166,13 @@ int sendToServer(int sockfd, char* message)
 	n = write(sockfd,message,strlen(message));
 	if (n < 0) 
 		 printf("ERROR writing to socket\n");
+		 
+	n = read(sockfd,buffer,255);
+	 if (n < 0) 
+			printf("ERROR reading from socket\n");
 	
 	//printf("Message: %s\n", buffer);
-	// RETURN SOCK FD
+	
 	return 0;
 }
 
@@ -2234,7 +2225,7 @@ char* hash(char* data)
 	char* buffer = malloc(40);
 	memset(buffer, '\0', 40);
 	unsigned char hash[SHA_DIGEST_LENGTH];
-	//SHA1(data, length, hash);
+	SHA1(data, length, hash);
 	
 	for(x = 0; x < 30; x++)
 	{
@@ -2256,6 +2247,61 @@ char* hash(char* data)
 	
 	return buffer;
 }
+
+/*char* getHashFromLine(char* line)
+{
+	int i = 0, start = 0, end = 0, len = strlen(line);
+	
+	end = strlen(line)-1;
+	for(i = end-1; i > 0; i--)
+	{
+		if(isspace(line[i]) != 0)
+		{
+			start = i+1;
+			break;
+		}
+	}
+	
+	int bufSize = end-start+1;
+	char* serverbuffer = malloc(end-start+1);
+	//char serverbuffer[end-start+1];
+	memset(serverbuffer, '\0', strlen(serverbuffer));
+	
+	for(i = 0; i < bufSize; i++)
+	{
+		serverbuffer[i] = line[i+start];
+	}
+
+	printf("getHashFromLine buffer: %s\n", serverbuffer);
+	return serverbuffer;
+}
+char* getHashFromLine(char* line)
+{
+	int i = 0, start = 0, end = 0, len = strlen(line);
+	
+	end = strlen(line)-1;
+	for(i = end-1; i > 0; i--)
+	{
+		if(isspace(line[i]) != 0)
+		{
+			start = i+1;
+			break;
+		}
+	}
+	
+	int bufSize = end-start+1;
+	char* clientbuffer = malloc(end-start+1);
+	//char clientbuffer[end-start+1];
+	memset(clientbuffer, '\0', strlen(clientbuffer));
+	
+	for(i = 0; i < bufSize; i++)
+	{
+		clientbuffer[i] = line[i+start];
+	}
+
+	printf("getHashFromLine buffer: %s\n", clientbuffer);
+	return clientbuffer;
+}*/
 
 // Extracts stored hash code from .Manifest line
 // Returns hash string

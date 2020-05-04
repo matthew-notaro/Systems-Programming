@@ -16,19 +16,20 @@
 
 int port = 0;
 
-int checkout(char* project);
-int update(char* project);
-int upgrade(char* project);
-int commit(char* project);
-int push(char* project);
-int create(char* project);
-int destroy(char* project);
-int update_(char* project);
-int currentversion(char* project);
-int history(char* project);
-int rollback(char* project, char* version);
+void checkout(int socketfd);
+void updateCommit(int socketfd);
+void upgrade(int socketfd);
+void commit2(int socketfd);
+void push(int socketfd);
+void create(int socketfd);
+void destroy(int socketfd);
+void update_(int socketfd);
+void currentversion(int socketfd);
+void history(int socketfd);
+void rollback(int socketfd, char* version);
 
 void* socketThread(void* sockfd);
+void* socketThread2(void* sockfd);
 
 typedef struct file{
 	char* fileName;
@@ -38,6 +39,18 @@ typedef struct file{
 	struct file* next;
 } file;
 
+typedef struct file2{
+	char* fileName;
+	int nameLen;
+	int fileLen;
+	char* fileData;
+	struct file2* next;
+	char* code;
+	char* hash;
+} file2;
+
+
+file2* commitToLL(int commitfd);
 char* readNBytes(int fd, int numBytes);
 char* readUntilDelim(int fd, char delim);
 char* readFromFile(char* file);
@@ -154,269 +167,404 @@ void* socketThread2(void* sockvoidstar){
 	int n;
 	// Reads desired command from socket
 	char* command = readUntilDelim(sock, ':');
-	char* message;
-	file* fileLL = NULL;
 
 	// CHECKOUT - Sends back entire project
 	if(strcmp("checkout", command) == 0){
-		char* project = readUntilDelim(sock, ':');
-		fileLL = addDirToLL(fileLL, project);
-		// Transfer over or error if DNE
-		if(fileLL != NULL){
-			transferOver(sock, fileLL, command);
-		}
-		else{
-			message = "error:project does not exist"
-			writeLoop(sock, message, strlen(message));
-		}
+		checkout(sock);
 	}
 
 	// Sends back .Manifest of given project
 	// Assumes request formatted as: <command>:<project>
 	else if(strcmp("update", command) == 0 || strcmp("commit", command) == 0){
-		// Format desired file name to <project>/.Manifest
-		char* project = readUntilDelim(sock, ':');
-		char* manWithProj = (char*)malloc( (strlen(project)+10) * sizeof(char));
-    	strcpy(manWithProj, project);
-    	strcat(manWithProj, "./Manifest");
-
-		// Transfers file if exists
-		fileLL = addFileToLL(fileLL, manWithProj);
-		if(fileLL != NULL){
-			transferOver(sock, fileLL, command);
-		}
-		// Writes error to socket
-		else{
-			message = "error:project does not exist";
-			writeLoop(sock, message, strlen(message));
-		}
-		// Frees heap strings used
-		free(project);
-		free(manWithProj);
+		updateCommit(sock);
 	}
 	// Commit has extra stuff to do - log .Commit file sent over
 	// Format: commit2:project:length:data
 	else if(strcmp("commit2", command) == 0){
-
+		commit2(sock);
 	}
 	
 	// Reads in names of n files to be sent back to client
 	// Protocol: <cmd>:<project>:<num>:<nameLen>:<fileName>...
 	else if(strcmp("upgrade", command) == 0){
-		// Checks if project exists
-		char* project = readUntilDelim(sock, ':');
-		char projBuffer[300];
-		char* message;
-		strcpy(projBuffer, "dir \0");
-		strcat(projBuffer, project);
-
-		// Project DNE
-		if(system(projBuffer) != 0){
-			message = "error:project does not exist";
-			writeLoop(sock, message, strlen(message));
-		}
-		// Project exists
-		else{
-			char* numFilesString = readUntilDelim(sock, ':');
-			int numFiles = atoi(numFilesString);
-			int i, nameLen;
-			char* fileName, *nameLenString;
-			// Reads nameLen to get fileName
-			for(i = 0; i < numFiles; i++){
-				nameLenString = readUntilDelim(sock, ':');
-				nameLen = atoi(nameLenString);
-				fileName = readNBytes(sock, nameLen);
-				free(nameLenString);
-				free(fileName);
-				fileLL = addFileToLL(fileLL, fileName);
-
-			}
-			transferOver(sock, fileLL, command);
-			free(numFilesString);
-		}
-		free(project);
+		upgrade(sock);
 	}
 
 	// PUSH - does some stuff
 	else if(strcmp("push", command) == 0){
-		
+		push(sock);
 	}
 	
 	// CREATE - creates new project's dir and .Manifest
 	// Sends "success" or "error"
 	else if(strcmp("create", command) == 0){
-		char* project = readUntilDelim(sock, ':');
-		// Attempts to make new project's dir
-		if(mkdir(project, 00600) == -1){
-			message = "error:project already exists";
-			writeLoop(sock, message, strlen(message));
-		}
-		else{
-			// Creates empty .Manifest
-			char* manWithProj = (char*)malloc( (strlen(project)+10) * sizeof(char));
-			strcpy(manWithProj, project);
-			strcat(manWithProj, "./Manifest");
-			int manfd = open(manWithProj, O_RDWR|O_CREAT|O_APPEND, 00600);
-			// Send success to client if creates project's .Manifest
-			if(manfd > 0){
-				message = "success";
-				write(manfd, "0", 1);
-				writeLoop(sock, message, strlen(message));
-			}
-			free(manWithProj);
-		}
-		free(project);
+		create(sock);
 	}
 
 	// Reads project name then recursively deletes files then the dir
 	else if(strcmp("destroy", command) == 0){
-		char* project = readUntilDelim(sock, ':');
-		// Formats command to recursively delete project
-		char* rmCommand = (char*)malloc( (strlen(project)+7) * sizeof(char));
-    	strcpy(rmCommand, "rm -rf ");
-    	strcat(rmCommand, project);
-
-		char* message;
-		// system return 0 on success
-		// Just assign message
-		// rmCommand = rm -rf <project>
-		if(system(rmCommand) != 0){
-			message = "error:project does not exist"
-		}
-		else{
-			message = "success";
-		}
-		writeLoop(sock, message, strlen(message));
-		free(rmCommand);
-		free(project);
+		destroy(sock);
 	}
 
 	// CURRENTVERSION - sends over all files w/ version numbers for a given project
 	// Ignores the manifest version and all hash codes
 	else if(strcmp("currentversion", command) == 0){
-		char* project = readUntilDelim(sock, ':');
-		char* manWithProj = (char*)malloc( (strlen(project)+10) * sizeof(char));
-		char* message;
-    	strcpy(manWithProj, project);
-    	strcat(manWithProj, "./Manifest");
-
-		int manfd = open(manWithProj, O_RDWR|O_CREAT|O_APPEND, 00600);
-		if(manfd > 0){
-			// Does nothing with projVer
-			char* projVer = readUntilDelim(sock, '\n');
-			free(projVer);
-
-			// For each line of .Manifest, reads version # and name
-			// Keeps looping until length of line read is 0
-			char* line;
-			int version, bytesWritten;
-			char fileBuffer[200];
-			char sockBuffer[200];
-			int wroteToSock = 0;
-
-			line = readUntilDelim(sock, '\n');
-			while(strlen(line) != 0){
-				// Writes success to client before writing first line
-				if(!wroteToSock){
-					message = "success:";
-					writeLoop(sock, message, strlen(message));
-
-					// Writes length of manifest to socket
-					struct stat *buffer = (struct stat*)malloc(sizeof(struct stat));
-					stat(manWithProj, buffer);
-					int manSize = buffer->st_size;
-					char* manSizeString = intToString(manSize);
-					writeLoop(sock, manSizeString, strlen(manSizeString));
-					write(sock, ":", 1);
-					free(manSizeString);
-					free(buffer);
-				}
-				// Reset buffers
-				memset(fileBuffer, '\0', 200);
-				memset(sockBuffer, '\0', 200);
-				
-				wroteToSock = 1;
-				sscanf(line, "%d %s\n", &version, fileBuffer);
-//printf("%d. %s.\n", version, fileBuffer);
-				sprintf(sockBuffer, "%d %s\n\0", version, fileBuffer);
-				writeLoop(sock, sockBuffer, strlen(sockBuffer));
-				free(line);
-				line = readUntilDelim(sock, '\n');
-			}
-			free(line);
-
-			// No files in project
-			if(!wroteToSock){
-				message = "error:empty project";
-				writeLoop(sock, message, strlen(message));
-			}
-		}
-		// Fails to open file
-		else{
-			message = "error:empty project";
-			writeLoop(sock, message, strlen(message));
-		}
-		free(project);
-		free(manWithProj);
+		currentversion(sock, project);
 	}
 
 	else if(strcmp("history", command)){
-		
+		history(sock);
 	}
 	else if(strcmp("rollback", command)){
-		
+		rollback(sock);
 	}
 	else{
-		// Bad stuff
+		printf("failed\n");
+		char* message = "error:invalid command";
+		writeLoop(sock, message, strlen(message));
 	}
 	
 	free(command);
 	close(sock);
 	printf("Disconnecting to a client\n");
 	pthread_exit(NULL);
+}
 
-	// LOCK
-	pthread_mutex_lock(&lock);
-	char* message = (char*)malloc(sizeof(client_message));
-	strcpy(message, "Message received: \n");
-	strcat(message, client_message);
-	strcat(message, "\n");
-	strcpy(buffer, message);
-	free(message);
-	printf("Message: %s\n", buffer);
-	pthread_mutex_unlock(&lock);
-	// UNLOCK
 
-	n = write(sock, buffer, 255);
-	if (n < 0)
-	{
-		printf("ERROR: Could not write to socket\n");
+void checkout(int sock){
+	char* message;
+	char* project = readUntilDelim(sock, ':');
+	
+pthread_mutex_lock(lock);
+	file* fileLL = addDirToLL(fileLL, project);
+pthread_mutex_unlock(lock);
+	
+	// Transfer over or error if DNE
+	if(fileLL != NULL){
+		transferOver(sock, fileLL, "success");
 	}
-	printf("Exiting thread\n");
-	close(sock);
-	pthread_exit(NULL);
+	else{
+		message = "error:project does not exist";
+		writeLoop(sock, message, strlen(message));
+	}
+	free(project);
+	freeLL(fileLL);
 }
 
 
+// Sends back .Manifest of given project
+// Assumes request formatted as: <command>:<project>
+void updateCommit(int sock){	
+	// Format desired file name to <project>/.Manifest
+	file* fileLL;
+	char* message;
+	char* project = readUntilDelim(sock, ':');
+	char* manWithProj = (char*)malloc( (strlen(project)+10) * sizeof(char));
+	strcpy(manWithProj, project);
+	strcat(manWithProj, "./Manifest");
 
-int update(char* project)
-{
-	return 0;
+	// Transfers file if exists
+pthread_mutex_lock(lock);
+	fileLL = addFileToLL(fileLL, manWithProj);
+pthread_mutex_unlock(lock);
+	if(fileLL != NULL){
+		transferOver(sock, fileLL, "success");
+	}
+	// Writes error to socket
+	else{
+		message = "error:project does not exist";
+		writeLoop(sock, message, strlen(message));
+	}
+	free(project);
+	free(manWithProj);
+	freeLL(fileLL);
 }
 
-int upgrade(char* project)
-{
-	return 0;
+
+// Reads in names of n files to be sent back to client
+// Protocol: <cmd>:<project>:<num>:<nameLen>:<fileName>...
+void upgrade(int sock){
+	// Checks if project exists
+	char* project = readUntilDelim(sock, ':');
+	char projBuffer[300];
+	char* message;
+	file* fileLL;
+	strcpy(projBuffer, "dir \0");
+	strcat(projBuffer, project);
+pthread_mutex_lock(lock);
+	// Project DNE
+	if(system(projBuffer) != 0){
+		message = "error:project does not exist";
+		writeLoop(sock, message, strlen(message));
+	}
+	// Project exists
+	// Sends protocol: success:<numFiles>:<nameLen>:<fileName><fileLen>:<fileData>...
+	else{
+		char* numFilesString = readUntilDelim(sock, ':');
+		int numFiles = atoi(numFilesString);
+		int i, nameLen;
+		char* fileName, *nameLenString;
+		// Reads nameLen to get fileName
+		for(i = 0; i < numFiles; i++){
+			nameLenString = readUntilDelim(sock, ':');
+			nameLen = atoi(nameLenString);
+			fileName = readNBytes(sock, nameLen);
+			free(nameLenString);
+			free(fileName);
+			fileLL = addFileToLL(fileLL, fileName);
+
+		}
+		transferOver(sock, fileLL, "success");
+		free(numFilesString);
+	}
+pthread_mutex_unlock(lock);
+	free(project);
 }
 
-int commit(char* project)
+
+// Receive's client .Commit file as: commit2:<project>:<fileLen>:<fileData>
+// Save file as .Commit<hash>
+void commit2(int sock)
 {
-	return 0;
+	// Processes input from socket
+	char* project = readUntilDelim(sock, ":");
+	char* fileLenString = readUntilDelim(sock, ":");
+	int fileLen = atoi(fileLenString);
+	char* fileBuffer = readNBytes(sock, fileLen);
+
+	// Calculates 40 char hash for given commit file
+	char* hashCode = hash(fileBuffer);
+
+	// Formats name to include its hash - should be 47 chars long
+	char* fileName = (char*)malloc(50 * sizeof(char));
+    strcpy(fileName, ".Commit");
+    strcat(fileName, hashCode);
+
+	// Tests to see if file already exists - should be 54 chars long
+	// If exists, do nothing since files are identical
+	// If doesn't exist, write new one
+pthread_mutex_lock(lock);
+	char* existBuffer = (char*)malloc(60 *sizeof(char));
+	sprintf(existBuffer, "[ -f %s ]", fileName);
+    // If file DNE, make new commit
+	if(system(existBuffer) != 0){
+        int commitfd = open(fileName, O_RDWR|O_CREAT|O_APPEND, 00600);
+		writeLoop(commitfd, fileBuffer, strlen(fileBuffer));
+		close(commitfd);
+    }
+pthread_mutex_unlock(lock);
+	free(project);
+	free(fileLenString);
+	free(fileBuffer);
+	free(hashCode);
+	free(fileName);
+	free(existBuffer);
 }
 
-int push(char* project)
-{
-	return 0;
+
+// Receives client's current .Commit, checks if it had been stored
+// If it had, request files from client
+void push(int sock){
+
+///////////////////////
+// STEP 1
+///////////////////////
+
+	char* project = readUntilDelim(sock, ":");
+	char* receivedHash = readUntilDelim(sock, ":"); //readNBytes(sock, 40);
+	char* message;
+
+	// Checks if project exists
+	char projBuffer[300];
+	strcpy(projBuffer, "dir \0");
+	strcat(projBuffer, project);
+	// Project DNE
+	if(system(projBuffer) != 0){
+		message = "error:project does not exist";
+		writeLoop(sock, message, strlen(message));
+		free(project);
+		free(receivedHash);
+		return;
+	}
+
+	// Checks if desired .Commit exists
+	char* fileName = (char*)malloc(50 *sizeof(char));
+	strcpy(fileName, ".Commit");
+	strcat(fileName, receivedHash);
+	
+pthread_mutex_lock(lock);
+	int commitfd = open(fileName, O_RDONLY);
+	if(commitfd < 0){
+		message = "error:commit does not exist";
+		writeLoop(sock, message, strlen(message));
+		close(commitfd);
+		free(fileName);
+		free(project);
+		free(receivedHash);
+		return;
+	}
+	//
+	// .COMMIT EXISTS
+	//
+	message = "success:";
+	writeLoop(sock, message, strlen(message));
+
+	// For each line of .Commit, reads code, name, hash
+	// Keeps looping until length of line read is 0
+	// Reads 1st line of .Commit
+	file2* fileLL = NULL;
+	int numFiles = 0;
+	char* line = readUntilDelim(commitfd, '\n');
+	while(strlen(line) > 0){
+		// mallocs space for new node
+		file2* temp = (file*)malloc(sizeof(file2));
+		temp->code = (char*)malloc(5*sizeof(char));
+		temp->hash = (char*)malloc(50*sizeof(char));
+		temp->fileName = (char*)malloc(200*sizeof(char));
+		temp->next = fileLL;
+
+		// Scans everything into the new file2 node
+		sscanf(line, "%s %s %s\n", temp->code, temp->fileName, temp->hash);
+		free(line);
+		// Incr numFiles if code is not D
+		if(strcmp(temp->code, "D") != 0){
+			numFiles++;
+		}
+		// Next line, move ptr up
+		line = readUntilDelim(commitfd, '\n');
+		fileLL = temp;
+	}
+	free(line);
+
+	// Write 1/2 message to socket
+	char* numFilesString = intToString(numFiles);
+	writeLoop(sock, numFilesString, strlen(numFilesString));
+	free(numFilesString);
+	file2* ptr = fileLL;
+	char writeBuffer[250];
+	// Requests files from client
+	while(ptr != NULL){
+		// Only request file on A/M
+		if(strcmp(ptr->code, "D") != 0){
+			memset(writeBuffer, '\0', 250);
+			char* nameLenString = intToString(strlen(ptr->fileName));
+			strcpy(writeBuffer, nameLenString);
+			strcat(writeBuffer, ":");
+			strcat(writeBuffer, ptr->fileName);
+			writeLoop(sock, writeBuffer, strlen(writeBuffer));
+			free(nameLenString);
+		}
+		ptr = ptr->next;
+	}
+
+///////////////////////
+// STEP 2 (assuming reading returns right stuff)
+///////////////////////
+
+
+	// Gets message from client containing file contents
+	char* command = readUntilDelim(sock, ':');
+	// command should always be "push"
+	if(strcmp(command, "push") != 0){
+		message = "error:something bad happened";
+		writeLoop(sock, message, strlen(message));
+	}
+	// Read in files from socket
+	else{
+		char* numFilesString = readUntilDelim(sock, ':');
+		int numFiles = atoi(numFilesString);
+		free(numFilesString);
+		int i, nameLen;
+		char* fileName, *nameLenString;
+		file2* ptr = fileLL;
+		// Reads nameLen to get fileName
+		for(i = 0; i < numFiles; i++){
+			// Read nameLen, fileName
+			nameLenString = readUntilDelim(sock, ':');
+			nameLen = atoi(nameLenString);
+			free(nameLenString);
+			fileName = readNBytes(sock, nameLen);
+			// Matches fileName to correct node in LL
+			while(ptr != NULL){
+				// If names match, read fileLen and fileData into node
+				if(strcmp(ptr->fileName, fileName) == 0){
+					ptr->fileLen = readUntilDelim(sock, ':');
+					ptr->fileData = readNBytes(sock, ptr->fileLen);
+					break;
+				}
+			}
+		}
+
+		// Deletes all .Commit files in project
+		char cmdBuffer[300];
+		strcpy(cmdBuffer, "rm ");
+		strcat(cmdBuffer, project);
+		strcat(cmdBuffer, "/.Commit*");
+		system(cmdBuffer);
+
+		// Copy project into ./project/.Archive
+		char cmdBuffer1[600];
+		memset(cmdBuffer1, '\0', 300);	// cmdBuffer1 = cp -r project
+		strcpy(cmdBuffer1, "cp -r ");
+		strcat(cmdBuffer1, project);
+		char cmdBuffer2[300];			// cmdBuffer2 = project/.Archive
+		memset(cmdBuffer2, '\0', 300);
+		strcpy(cmdBuffer2, project);
+		strcat(cmdBuffer2, "/.Archive");
+
+		strcat(cmdBuffer1, cmdBuffer2);
+		system(cmdBuffer1);
+
+		int max = maxBackup(project/.Archive);
+		system("tar -zcvf max+1.tar.gz /project/.Archive/");
+
+///////////////////////
+// STEP 3
+///////////////////////
+
+		
+
+	}
+pthread_mutex_unlock(lock);
+
+	free(project);
+	free(receivedHash);
+}
+
+int maxBackup(char* project){
+  DIR* currentDir = opendir(project);
+  struct dirent* currentThing = NULL;
+  readdir(currentDir);
+  readdir(currentDir);
+  int max = 0;
+  while((currentThing = readdir(currentDir)) != NULL){
+    char buff[1024];
+    if(currentThing->d_type == DT_REG){
+      int curr = extractNum(currentThing->d_name);
+	  if(curr > max){
+		  max = curr;
+	  }
+    }
+  }
+  closedir(currentDir);
+  return max;
+}
+
+// Extract all first consecutive numbers from name
+int extractNum(char* name){
+	int i;
+	char* num = (char*)malloc(strlen(name) * sizeof(char));
+	for(i = 0; i < strlen(name); i++){
+		if(name[i] >= 0 || num[i]] < 10){
+			num[i] = name[i]
+		}
+		else{
+			break;
+		}
+	}
+	i = atoi(num);
+	free(num);
+	return i;
 }
 
 /*
@@ -425,81 +573,178 @@ with the server. Otherwise, the server will create a project folder with the giv
 and send it to the client. The client will set up a local version of the project folder in its current directory and
 should place the .Manifest the server sent in it.
 */
-int create(char* project)
-{
-	int status;
-  	status = mkdir(project, 00600); //CHECK WITHIN PROJECTS FOLDER
-	if(status < 0) //File does not exist
-	{
-		char* manifestName = ".Manifest";
-		int fd = open(manifestName, O_RDWR|O_CREAT|O_APPEND, 00600);
-		//SEND MANIFEST TO CLIENT
+void create(int sock){
+	char* project = readUntilDelim(sock, ':');
+	char* message;
+	// Attempts to make new project's dir
+pthread_mutex_lock(lock);
+	if(mkdir(project, 00600) == -1){
+		message = "error:project already exists";
+		writeLoop(sock, message, strlen(message));
 	}
-	else
-	{
-		printf("Error: Project already exists.");
-	}
-	return 0;
-}
-
-int destroy(char* project)
-{
-	return 0;
-}
-
-int update_(char* project)
-{
-	return 0;
-}
-
-int currentversion(char* project)
-{
-	return 0;
-}
-
-int history(char* project)
-{
-	return 0;
-}
-
-int rollback(char* project, char* version)
-{
-	return 0;
-}
-
-
-// USELESS CODE
-// Recursively deletes all files, and subdirs in proj
-// Must remove the dir that destroyProj is called on
-void destroyProj(char* name){
-  	DIR* currentDir = opendir(name);
-    if(currentDir == NULL){
-		printf("Error: invalid path\n");
-		return;
-  	}
-	struct dirent* currentThing = NULL;
-	readdir(currentDir);
-	readdir(currentDir);
-	while((currentThing = readdir(currentDir)) != NULL){
-		char buff[1024];
-		snprintf(buff, sizeof(buff), "%s/%s", name, currentThing->d_name);
-		if(currentThing->d_type == DT_REG){
-			if(remove(buff) == 0){
-				printf("removed file: %s.\n", buffer);
-			}
+	else{
+		// Creates empty .Manifest
+		char* manWithProj = (char*)malloc( (strlen(project)+10) * sizeof(char));
+		strcpy(manWithProj, project);
+		strcat(manWithProj, "./Manifest");
+		int manfd = open(manWithProj, O_RDWR|O_CREAT|O_APPEND, 00600);
+		// Send success to client if creates project's .Manifest
+		if(manfd > 0){
+			// Writes version "0" to new Manifest
+			write(manfd, "0", 1);
+			message = "success";
+			writeLoop(sock, message, strlen(message));
 		}
-		else if(currentThing->d_type == DT_DIR){
-			destroyProj(buff);
-			// Removes empty dir
-			if(remove(buff) == 0){
-				printf("removed dir: %s.\n", buffer);
-			}
-		}
+		free(manWithProj);
 	}
-	closedir(currentDir);
+pthread_mutex_unlock(lock);
+	free(project);
 }
 
 
+// Reads project name then recursively deletes files then the dir
+void destroy(int sock){
+	char* project = readUntilDelim(sock, ':');
+	// Formats command to recursively delete project
+	char* rmCommand = (char*)malloc( (strlen(project)+7) * sizeof(char));
+	strcpy(rmCommand, "rm -rf ");
+	strcat(rmCommand, project);
+
+	char* message;
+	// system return 0 on success
+	// Just assign message
+	// rmCommand = rm -rf <project>
+pthread_mutex_lock(lock);
+	if(system(rmCommand) != 0){
+		message = "error:project does not exist"
+	}
+	else{
+		message = "success";
+	}
+pthread_mutex_unlock(lock);
+	writeLoop(sock, message, strlen(message));
+	free(rmCommand);
+	free(project);
+}
+
+void update_(int sock)
+{
+	return 0;
+}
+
+void currentversion(int sock){
+	// Formats .Manifest path to include project
+	char* project = readUntilDelim(sock, ':');
+	char* manWithProj = (char*)malloc( (strlen(project)+10) * sizeof(char));
+	char* message;
+	strcpy(manWithProj, project);
+	strcat(manWithProj, "./Manifest");
+	
+	// Attempts to open project's .Manifest if it exists
+	int manfd = open(manWithProj, O_RDONLY);
+	if(manfd > 0){
+		// Does nothing with projVer
+		char* projVer = readUntilDelim(sock, '\n');
+		free(projVer);
+
+		// For each line of .Manifest, reads version # and name
+		// Keeps looping until length of line read is 0
+		char* line;
+		int version, bytesWritten;
+		char fileBuffer[200];
+		char sockBuffer[200];
+		int wroteToSock = 0;
+pthread_mutex_lock(lock);
+		// Reads 1st line of .Manifest
+		line = readUntilDelim(manfd, '\n');
+		while(strlen(line) != 0){
+			// Writes success and size of .Manifest to client before writing first line
+			if(!wroteToSock){
+				message = "success:";
+				writeLoop(sock, message, strlen(message));
+
+				// Writes length of manifest to socket
+				struct stat *buffer = (struct stat*)malloc(sizeof(struct stat));
+				stat(manWithProj, buffer);
+				int manSize = buffer->st_size;
+				char* manSizeString = intToString(manSize);
+				writeLoop(sock, manSizeString, strlen(manSizeString));
+				write(sock, ":", 1);
+				free(manSizeString);
+				free(buffer);
+			}
+			// Reset buffers
+			memset(fileBuffer, '\0', 200);
+			memset(sockBuffer, '\0', 200);
+			
+			wroteToSock = 1;
+			sscanf(line, "%d %s\n", &version, fileBuffer);
+//printf("%d. %s.\n", version, fileBuffer);
+			sprintf(sockBuffer, "%d %s\n\0", version, fileBuffer);
+			writeLoop(sock, sockBuffer, strlen(sockBuffer));
+			free(line);
+			line = readUntilDelim(manfd, '\n');
+		}
+pthread_mutex_unlock(lock);
+		free(line);
+
+		// No files in project
+		if(!wroteToSock){
+			message = "error:empty project";
+			writeLoop(sock, message, strlen(message));
+		}
+	}
+	// Fails to open file
+	else{
+		message = "error:project does not exist";
+		writeLoop(sock, message, strlen(message));
+	}
+	free(project);
+	free(manWithProj);
+}
+
+void history(int sock)
+{
+	return 0;
+}
+
+void rollback(int sock)
+{
+	return 0;
+}
+
+
+
+// Hashes a given string and returns the code 
+char* hash(char* data)
+{
+	int x = 0;
+	size_t length = strlen(data);
+	char* buffer = malloc(40);
+	memset(buffer, '\0', 40);
+	unsigned char hash[SHA_DIGEST_LENGTH];
+	SHA1(data, length, hash);
+	
+	for(x = 0; x < 30; x++)
+	{
+		sprintf(buffer+(x * 2), "%02x", hash[x]);
+	}
+	
+	//not sure why this is needed but it is:
+	char* finalbuffer = malloc(40);
+	memset(finalbuffer, '\0', 40);
+	
+	for(x = 0; x < 40; x++)
+	{
+		finalbuffer[x] = buffer[x];
+	}
+	buffer[40] = '\0';
+	
+	printf("hash code: %s\n", buffer);
+	//free(buffer);
+	
+	return buffer;
+}
 
 
 // Reads given n bytes from given fd
@@ -661,6 +906,7 @@ file *addDirToLL(file* fileLL, char *proj){
 }
 
 // Given server/client socket and fileLL to send over, composes string message and writes message to fd
+// <command>:<numFiles>:<nameLen>:<fileName><fileLen>:<fileData>
 void transferOver(int sockfd, file* fileLL, char* command){
 	// Trying to transfer empty LL
 	if(fileLL == NULL){
@@ -737,3 +983,28 @@ void freeLL(file* head){
 		free(ptr);
 	}
 }
+
+// Frees fileLL
+void freeLL(file2* head){
+	file2* ptr;
+	while(head != NULL){
+		ptr = head;
+		head = head->next;
+		free(ptr->fileData);
+		free(ptr->fileName);
+		free(ptr->code);
+		free(ptr->hash);
+		free(ptr);
+	}
+}
+
+
+typedef struct file2{
+	char* fileName;
+	int nameLen;
+	int fileLen;
+	char* fileData;
+	struct file2* next;
+	char* code;
+	char* hash;
+} file2;
