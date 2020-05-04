@@ -1439,7 +1439,7 @@ int push(char* project)
 		printf("Error: failed to commit.\n");
 	}
 	
-	remove(".Commit");
+	remove(commitPath);
 	
 	return 0;
 }
