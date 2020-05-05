@@ -2,17 +2,39 @@
 #include <stdlib.h>
 #include <string.h>
 
+int clientDriver();
+int serverDriver();
+
 int main(int argc, char **argv) 
 {
-
-//pid_t id = fork() and if id = 0 then execv(<command>,<char* arr[] of parameters>)
-
-	int client = mkdir("./Client", 0777); 
-	int server = mkdir("./Server", 0777);
+	system("mkdir -p -m777 ./Client");
+	system("mkdir -p -m777 ./Server");
 	
 	system("mv ./WTF ./Client/WTF");
 	system("mv ./WTFserver ./Server/WTFserver");
-	
+
+  pid_t pid = fork(); 
+	if(pid == -1)
+	{
+		prinft("ERROR: Could not fork.\n");
+		return -1;
+	} 
+	else if(pid == 0) //Child process
+	{
+		serverDriver(); 
+	}
+	else
+	{
+		childDriver();
+	}
+
+	system("killall -SIGINT WTFserver");
+
+	return 0;
+}   
+
+int clientDriver()
+{
 	chdir("./Client");
 	
 	system("make sam");
@@ -62,11 +84,13 @@ int main(int argc, char **argv)
 	
 	system("./Client/WTF destroy nonexistentProject");
 	printf("-- Unsuccessful attempt to destroy project that does not exist -- \n");
-	
-	// system("./WTF currentversion project1"); //Succ
-	// system("./WTF currentversion projectDNE"); //Proj DNE
-	// 
-	// system("./WTF destroy project1"); //Successful 	
-	// system("./WTF checkout project1"); //Successful 
+
 	return 0;
-}    
+} 
+
+int serverDriver()
+{
+	chdir("./Server");
+	
+	//execvp(./WTFserver <portnum> &)
+}
