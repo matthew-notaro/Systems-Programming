@@ -1538,8 +1538,7 @@ int push(char* project) //Depends on server
 	slash = "/";
 	dot = ".";
 	
-	strcpy(commitPath, dot);
-	strcat(commitPath, slash);
+	strcpy(commitPath, parentDir);
 	strcat(commitPath, project);
 	strcat(commitPath, slash);
 	strcat(commitPath, commitFile);
@@ -1621,9 +1620,64 @@ int push(char* project) //Depends on server
 	do{
 	 status = read(sockfd, response+readIn, 50 - readIn);
 	 readIn += status;
- } while(status > 0 && readIn < 50);
+ 	} while(status > 0 && readIn < 50);
 	
-	if(strcmp(response, "success") != 0)
+	//On success, increment version numbers
+	if(strcmp(response, "success") == 0)
+	{
+		//Reads .Manifest line by line, updating version numbers and writing results into temp
+		char* manifest = malloc(8);
+		manifest = ".Manifest";
+		char* manifestPath = malloc(strlen(manifest)+strlen(parentDir)+strlen(project)+2);
+		strcpy(manifestPath, parentDir);
+		strcat(manifestPath, project);
+		strcat(manifestPath, slash);
+		strcat(manifestPath, manifest);
+		
+		//Creates .temp, which will eventually be renamed to .Manifest
+		char* temp = malloc(5);
+		temp = ".temp";
+		char* tempPath = malloc(strlen(manifest)+strlen(parentDir)+strlen(project)+2);
+		strcpy(tempPath, parentDir);
+		strcat(tempPath, project);
+		strcat(tempPath, slash);
+		strcat(tempPath, temp);
+		
+		int manifestFd = open(manifestPath, O_RDONLY);
+		int tempFd = open(tempPath, O_RDWR|O_CREAT|O_APPEND, 0777);
+		
+		//Gets .Manifest version (first line)
+		char* manifestVer = readUntilDelim(manifestFd, '\n');
+		int newManifestVer = atoi(manifestVer)+1;
+		char* newManifestVerString = intToString(newManifestVer);
+		
+		writeLoop(tempFd, newManifestVerString, strlen(newManifestVerString));
+		
+		while(1)
+		{
+			//Gets first token of fd since last new line
+			char* fileVer = readUntilDelim(manifestFd, ' ');
+			
+			//End of .Manifest has been reached
+			if(fileVer == NULL || strlen(fileVer) == 0)
+			{
+				close(manifestFd);
+				close(tempFd);
+				break;
+			}
+			
+			//Convert version to integer, increment, then convert back to string
+			int newFileVer = atoi(fileVer)+1;
+			char* newFileVerString = intToString(newFileVer);
+			
+			//Write version to .temp
+			writeLoop(tempFd, newFileVerString, strlen(newFileVerString));
+			
+			char* restOfLine
+		}
+		
+	}
+	else 
 	{
 		printf("ERROR: Failed to commit.\n");
 	}
@@ -2030,7 +2084,7 @@ int history(char* project)
 	int newsockfd = sendToServer(sockfd, message);
 	if(newsockfd < 0)
 	{
-		printf("ERROR: Could not write to socket\n");
+		printf("ERROR: Could not write to socket.\n");
 		return -1;
 	}
 	
