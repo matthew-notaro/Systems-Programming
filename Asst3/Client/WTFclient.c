@@ -40,6 +40,7 @@ int rollback(char* project, char* version);
 
 int setServerDetails();
 int connectToServer();
+//char* composeMessage(char* command, file* arr, char* numFiles);
 int sendToServer();
 
 char* hash(char* data);
@@ -58,7 +59,7 @@ file *addDirToLL(file* fileLL, char *proj);
 file* addFileToLL(file* fileLL, char* name);
 
 int main(int argc, char **argv) 
-{/*
+{
 	if(argc < 3){
 		printf("ERROR: Not enough parameters\n");
 		return -1;
@@ -74,7 +75,7 @@ int main(int argc, char **argv)
 	setServerDetails();
 	// printf("Host: %s\n", HOST);
 	// printf("Port: %s\n", PORT);
-
+	//connectToServer();
 	if(strcmp(op, "checkout") == 0 && argc == 3){
 		if(checkout(argv[2]) == 0){
 			printf("Checkout successful\n");
@@ -162,13 +163,28 @@ int main(int argc, char **argv)
 	else{
 		printf("ERROR: Invalid command\n");
 		return -1;
-	}*/
-	
-	int fd = open("./myproj/newFile.txt", O_RDONLY);
-	if(fd < 0)
-	{
-		printf("nope\n");
 	}
+	
+	//int sockfd = connectToServer();
+	// char* command = malloc(5);
+	// command = "proj1";
+	// char* numFiles = malloc(1);
+	// numFiles = "2";
+	// struct file arr[2];
+	// arr[0].fileName = "file1"; 
+	// arr[0].nameLen = "5"; 
+	// arr[0].numBytes = "9"; 
+	// arr[0].fileData = "file1data"; 
+	// arr[1].fileName = "file2"; 
+	// arr[1].nameLen = "5"; 
+	// arr[1].numBytes = "9"; 
+	// arr[1].fileData = "file2data"; 
+	
+	//sendToServer(sockfd, command);
+	//composeMessage(command, arr, numFiles);
+	//getHash(command);
+	//commit(command);
+	//checkout(command);
 	
 	return 0;
 }
