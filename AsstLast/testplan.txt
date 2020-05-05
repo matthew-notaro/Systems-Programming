@@ -1,0 +1,24 @@
+WTFtest first creates separate directories for the client and server (./Client and ./Server) if they do not already exist.
+
+It then moves the WTF executable into ./Client and the WTFServer executable into ./Server.
+
+Fork() is called; if the process is a child, serverDriver() changes the working directory to ./Server and sets up the server.
+
+If the process is the parent, clientDriver() changes the working directory to ./Client, compiles WTFclient.c, and runs various system calls.
+
+The system calls test basic functionality of the client. Specifically, the following cases run:
+	- Attempt to create project before configuring ... Output: error message prompting user to configure
+	- Configure project ... Output: success message
+	- Create two different projects ... Output: success messages
+	- Attempt to create project that already exists ... Output: error message indicating project already exists
+	- Add two files to a project ... Output: success messages
+	- Attempt to add file that already exists in project ... Output: error message indicating file already exists
+	- Attempt to add file to nonexistent project ... Output: error message indicating project does not exist
+	- Remove file from project ... Output: success message
+	- Attempt to remove file from nonexistent project ... Output: error message indicating project does not exist
+	- Attempt to remove file that does not exist within project ... Output: error message indicating file does not exist
+	- Commit projects ... Output: success messages
+	- Destroy project ... Output: success message
+	- Attempt to destroy nonexistent project ... Output: error message indicating project does not exist
+	
+At the end of the program, a killall command terminates all processes.

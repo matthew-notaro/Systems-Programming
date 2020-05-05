@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 	}
 	else
 	{
-		childDriver();
+		clientDriver();
 	}
 
 	system("killall -SIGINT WTFserver");
