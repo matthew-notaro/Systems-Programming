@@ -1464,7 +1464,7 @@ int commit(char* project)
 	
 	//Composes another message for server
 	char* clientcommand2 = malloc(8);
-	clientcommand2 = "commit:";
+	clientcommand2 = "commit2:";
 	char* commitContent = readFromFile(commitPath);
 	int commitSize = strlen(commitContent);
 	char* commitSizeString = intToString(commitSize);

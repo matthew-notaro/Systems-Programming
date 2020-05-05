@@ -7,16 +7,17 @@ int serverDriver();
 
 int main(int argc, char **argv) 
 {
-	system("mkdir -p -m777 ./Client");
-	system("mkdir -p -m777 ./Server");
+	system("mkdir -p -m777 Client1");
+	system("mkdir -p -m777 Client2");
+	system("mkdir -p -m777 Server");
 	
-	system("mv ./WTF ./Client/WTF");
+	system("mv ./WTF ./WTF");
 	system("mv ./WTFserver ./Server/WTFserver");
 
   pid_t pid = fork(); 
 	if(pid == -1)
 	{
-		prinft("ERROR: Could not fork.\n");
+		printf("ERROR: Could not fork.\n");
 		return -1;
 	} 
 	else if(pid == 0) //Child process
@@ -40,49 +41,52 @@ int clientDriver()
 	system("make sam");
 	printf("-- Compilation successful -- \n");
 	
-	system("./Client/WTF create project1");
+	system("./WTF create project1");
 	printf("-- Unsuccessful attempt to create project -- \n");
 	
-	system("./Client/WTF configure 127.0.0.1 42069");
+	system("./WTF configure 127.0.0.1 42069");
 	printf("-- Configuration successful -- \n");
 	
-	system("./Client/WTF create project1");
-	system("./Client/WTF create toBeDestroyed");
+	system("./WTF create project1");
+	system("./WTF create toBeDestroyed");
 	printf("-- Successful attempts to create projects -- \n");
 	
-	system("./Client/WTF create project1");
+	system("./WTF create project1");
 	printf("-- Unsuccessful attempt to create project that already exists -- \n");
 	
-	system("./Client/WTF add project1 file1");
-	system("./Client/WTF add project1 file2");
+	system("echo 'File1 contents' > ./proj1/file1.txt");
+	system("echo 'File2 contents' > ./proj1/file2.txt");
+	
+	system("./WTF add project1 file1.txt");
+	system("./WTF add project1 file2.txt");
 	printf("-- Successful attempts to add files -- \n");
 	
-	system("./Client/WTF add project1 file1");
+	system("./WTF add project1 file1.txt");
 	printf("-- Unsuccessful attempt to add file that already exists -- \n");
 	
-	system("./Client/WTF add nonexistentProject file1");
+	system("./WTF add nonexistentProject file1.txt");
 	printf("-- Unsuccessful attempt to add to project that does not exist -- \n");
 	
-	system("./Client/WTF remove project1 file2");
+	system("./WTF remove project1 file2.txt");
 	printf("-- Successful attempt to remove file -- \n");
 	
-	system("./Client/WTF remove nonexistentProject file1");
+	system("./WTF remove nonexistentProject file1.txt");
 	printf("-- Unsuccessful attempt to remove file from project that does not exist -- \n");
 	
-	system("./Client/WTF remove project1 file2");
+	system("./WTF remove project1 file2.txt");
 	printf("-- Unsuccessful attempt to remove file that does not exist -- \n");
 	
-	system("./Client/WTF commit project1");
+	system("./WTF commit project1");
 	printf("-- Successful attempt to commit project -- \n");
 	
-	system("./Client/WTF push project1");
-	system("./Client/WTF push toBeDestroyed");
+	system("./WTF push project1");
+	system("./WTF push toBeDestroyed");
 	printf("-- Successful attempts to push projects -- \n");
 	
-	system("./Client/WTF destroy toBeDestroyed");
+	system("./WTF destroy toBeDestroyed");
 	printf("-- Successful attempt to destroy project -- \n");
 	
-	system("./Client/WTF destroy nonexistentProject");
+	system("./WTF destroy nonexistentProject");
 	printf("-- Unsuccessful attempt to destroy project that does not exist -- \n");
 
 	return 0;

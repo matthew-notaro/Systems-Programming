@@ -11,6 +11,7 @@ The system calls test basic functionality of the client. Specifically, the follo
 	- Configure project ... Output: success message
 	- Create two different projects ... Output: success messages
 	- Attempt to create project that already exists ... Output: error message indicating project already exists
+** Use echo to add files to project directory **
 	- Add two files to a project ... Output: success messages
 	- Attempt to add file that already exists in project ... Output: error message indicating file already exists
 	- Attempt to add file to nonexistent project ... Output: error message indicating project does not exist
