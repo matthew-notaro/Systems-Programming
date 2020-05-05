@@ -280,6 +280,48 @@ pthread_mutex_unlock(lock);
 	free(project);
 	free(manWithProj);
 	freeLL(fileLL);
+
+
+
+
+
+	// Receive's client .Commit file as: commit2:<project>:<fileLen>:<fileData>
+	// Save file as .Commit<hash>
+
+	// Processes input from socket
+	char* project = readUntilDelim(sock, ":");
+	char* fileLenString = readUntilDelim(sock, ":");
+	int fileLen = atoi(fileLenString);
+	char* fileBuffer = readNBytes(sock, fileLen);
+
+	// Calculates 40 char hash for given commit file
+	char* hashCode = hash(fileBuffer);
+
+	// Formats name to include its hash - should be 47 chars long
+	char* fileName = (char*)malloc(50 * sizeof(char));
+    strcpy(fileName, ".Commit");
+    strcat(fileName, hashCode);
+
+	// Tests to see if file already exists - should be 54 chars long
+	// If exists, do nothing since files are identical
+	// If doesn't exist, write new one
+pthread_mutex_lock(lock);
+	char* existBuffer = (char*)malloc(60 *sizeof(char));
+	sprintf(existBuffer, "[ -f %s ]", fileName);
+    // If file DNE, make new commit
+	if(system(existBuffer) != 0){
+        int commitfd = open(fileName, O_RDWR|O_CREAT|O_APPEND, 00600);
+		writeLoop(commitfd, fileBuffer, strlen(fileBuffer));
+		close(commitfd);
+    }
+pthread_mutex_unlock(lock);
+	free(project);
+	free(fileLenString);
+	free(fileBuffer);
+	free(hashCode);
+	free(fileName);
+	free(existBuffer);
+
 }
 
 
@@ -321,46 +363,6 @@ pthread_mutex_lock(lock);
 	}
 pthread_mutex_unlock(lock);
 	free(project);
-}
-
-
-// Receive's client .Commit file as: commit2:<project>:<fileLen>:<fileData>
-// Save file as .Commit<hash>
-void commit2(int sock)
-{
-	// Processes input from socket
-	char* project = readUntilDelim(sock, ":");
-	char* fileLenString = readUntilDelim(sock, ":");
-	int fileLen = atoi(fileLenString);
-	char* fileBuffer = readNBytes(sock, fileLen);
-
-	// Calculates 40 char hash for given commit file
-	char* hashCode = hash(fileBuffer);
-
-	// Formats name to include its hash - should be 47 chars long
-	char* fileName = (char*)malloc(50 * sizeof(char));
-    strcpy(fileName, ".Commit");
-    strcat(fileName, hashCode);
-
-	// Tests to see if file already exists - should be 54 chars long
-	// If exists, do nothing since files are identical
-	// If doesn't exist, write new one
-pthread_mutex_lock(lock);
-	char* existBuffer = (char*)malloc(60 *sizeof(char));
-	sprintf(existBuffer, "[ -f %s ]", fileName);
-    // If file DNE, make new commit
-	if(system(existBuffer) != 0){
-        int commitfd = open(fileName, O_RDWR|O_CREAT|O_APPEND, 00600);
-		writeLoop(commitfd, fileBuffer, strlen(fileBuffer));
-		close(commitfd);
-    }
-pthread_mutex_unlock(lock);
-	free(project);
-	free(fileLenString);
-	free(fileBuffer);
-	free(hashCode);
-	free(fileName);
-	free(existBuffer);
 }
 
 
@@ -546,7 +548,7 @@ pthread_mutex_lock(lock);
 
 		// move tar into ./project/.Archive
 		memset(cmdBuffer, '\0', 300);
-		strcpy(cmdBuffer, "cp ");
+		strcpy(cmdBuffer, "mv ");
 		strcat(cmdBuffer, tarFile);
 		strcat(cmdBuffer, project);
 		strcat(cmdBuffer, "/.Archive");
@@ -607,6 +609,8 @@ pthread_mutex_lock(lock);
 		rename(manBuffer2, manBuffer);
 		message = "success";
 		writeLoop(sock, message, strlen(message));
+		
+		// 
 	}
 pthread_mutex_unlock(lock);
 
@@ -867,14 +871,100 @@ pthread_mutex_unlock(lock);
 	free(manWithProj);
 }
 
-void history(int sock)
-{
-	return 0;
+
+// TESTED w/ hard coded project name and .History contents
+// Writes contents of .History if it exists
+void history(int sock){
+	char* project = readUntilDelim(sock, ':');
+	char* message;
+	char historyBuff[300];
+	strcpy(historyBuff, project);
+	strcat(historyBuff, "./History");
+	char* historyData = readFromFile(historyBuff);
+	// Checks if project exists
+	if(strcmp("FILE_DNE", historyData) == 0){
+		message = "error:project does not exist";
+		writeLoop(sock, message, strlen(message));
+	}
+	else{
+		int hisLen = strlen(historyData);
+		char* hisLenString = intToString(hisLen);
+		char* writeBuffer = (char*)malloc((20 + hisLen) * sizeof(char));
+		strcpy(writeBuffer, "success:");
+		strcat(writeBuffer, hisLenString);
+		strcat(writeBuffer, ":");
+		strcat(writeBuffer, historyData);
+		writeLoop(sock, writeBuffer, strlen(writeBuffer));
+
+		free(hisLenString);
+		free(writeBuffer);
+	}
+	free(historyData);
+	free(project);
 }
 
-void rollback(int sock)
-{
-	return 0;
+
+// TESTED - w/o fds
+// Copies desired version tar file out of ./project/.Archive into ./
+// Deletes project directory
+// Extracts contents of NUM.tar.gz and deletes it
+void rollback(int sock){
+	char* project = readUntilDelim(sock, ':');
+	char* version = readUntilDelim(sock, ':');
+	char* message;
+	char tarName[300];
+	char cmdBuffer[300];
+	memset(tarName, '\0', 300);
+	memset(cmdBuffer, '\0', 300);
+
+	// checks if directory exists:
+	memset(cmdBuffer, '\0', 300);
+	strcpy(cmdBuffer, "dir ");
+	strcat(cmdBuffer, project);
+	if(system(cmdBuffer) != 0){
+		message = "error:p";
+	}
+	else{
+        // Formats tar name
+		strcpy(tarName, version);
+		strcat(tarName, ".tar.gz");
+
+		// mv ./project/.Archive/NUM.tar.gz ./
+		strcpy(cmdBuffer, "mv ");
+		strcat(cmdBuffer, project);
+		strcat(cmdBuffer, "/.Archive/");
+		strcat(cmdBuffer, tarName);
+		strcat(cmdBuffer, " ./");
+		// checks if NUM.tar.gz exists when trying to move
+		if(system(cmdBuffer) == 0){
+			// rm -rf project
+			memset(cmdBuffer, '\0', 300);
+			strcpy(cmdBuffer, "rm -rf ");
+			strcat(cmdBuffer, project);
+			system(cmdBuffer);
+
+			// tar -zxvf NUM.tar.gz
+			memset(cmdBuffer, '\0', 300);
+			strcpy(cmdBuffer, "tar -zxvf ");
+			strcat(cmdBuffer, tarName);
+			system(cmdBuffer);
+
+			// rm NUM.tar.gz
+			memset(cmdBuffer, '\0', 300);
+			strcpy(cmdBuffer, "rm ");
+			strcat(cmdBuffer, tarName);
+			system(cmdBuffer);
+
+			message = "success";
+		}
+		// NUM.tar.gz DNE
+		else{
+			message = "error:i";
+		}
+	}
+	writeLoop(sock, message, strlen(message));
+	free(project);
+	free(version);
 }
 
 
@@ -910,7 +1000,7 @@ char* hash(char* data)
 	return buffer;
 }
 
-
+// TESTED
 // Reads given n bytes from given fd
 // Returns string of n bytes stored on the heap
 // Returns NULL if 0 bytes requested
@@ -936,7 +1026,7 @@ char* readNBytes(int fd, int numBytes){
     return nBytes;
 }
 
-
+// TESTED
 // Reads byte by byte from fd until the delim is found
 // Delim is read then overwritten so next read will start after delim
 // Returns string of at most bufLen bytes stored on the heap
@@ -966,8 +1056,9 @@ char* readUntilDelim(int fd, char delim){
 }
 
 
+// TESTED
 // Reads entire file into string buffer
-// Returns NULL if file does not exist, string otherwise
+// Returns "FILE_DNE" if file does not exist, "EMPTY_FILE" if file empty, file contents otherwise
 char* readFromFile(char* file){
     int fd = open(file, O_RDONLY);    // Returns -1 on failure, >0 on success
 
@@ -1017,7 +1108,9 @@ char* readFromFile(char* file){
 }
 
 
+// NOT TESTED - pretty straightforward
 // Given fileLL and file name, prepends new, populated file node to LL
+// Returns given fileLL if file-to-be-added doesn't exist
 file* addFileToLL(file* fileLL, char* name){
 	char* fileString = readFromFile(name);
 	// FILE DNE - not exactly sure what to do or if this should be possible
@@ -1037,8 +1130,8 @@ file* addFileToLL(file* fileLL, char* name){
 	}
 	// NON-EMPTY FILE - set data and len as normal
 	else{
-		temp->fileLen = strlen(temp->fileData);
 		temp->fileData = fileString;
+		temp->fileLen = strlen(fileString);
 	}
 	return temp;
 }
