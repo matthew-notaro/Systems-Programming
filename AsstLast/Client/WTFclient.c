@@ -1480,7 +1480,7 @@ int commit(char* project)
 	
 	//Composes another message for server
 	char* clientcommand2 = malloc(8);
-	clientcommand2 = "commit2:";
+	clientcommand2 = "commit:";
 	char* commitContent = readFromFile(commitPath);
 	int commitSize = strlen(commitContent);
 	char* commitSizeString = intToString(commitSize);
@@ -1614,18 +1614,23 @@ int push(char* project) //Depends on server
 	sockfd = connectToServer();
 	transferOver(sockfd, fileLL, command);
 	
-	status = 1;
-	readIn = 0;
-	char response[50];
-	do{
-	 status = read(sockfd, response+readIn, 50 - readIn);
-	 readIn += status;
- 	} while(status > 0 && readIn < 50);
+	char* response = readUntilDelim(sockfd, ':');
 	
 	//On success, increment version numbers
 	if(strcmp(response, "success") == 0)
 	{
-		//Reads .Manifest line by line, updating version numbers and writing results into temp
+		char* numBytesString = readUntilDelim(sockfd, ':');
+		int numBytes = atoi(numBytesString);
+		char* manifestContent = (char*)malloc(numBytes);
+		status = 1;
+	  readIn = 0;
+		do
+		{
+	    status = read(sockfd, manifestContent+readIn, numBytes - readIn);
+	    readIn += status;
+	  } while(status > 0 && readIn < numBytes);
+		
+		//Builds .Manifest path
 		char* manifest = malloc(8);
 		manifest = ".Manifest";
 		char* manifestPath = malloc(strlen(manifest)+strlen(parentDir)+strlen(project)+2);
@@ -1634,47 +1639,10 @@ int push(char* project) //Depends on server
 		strcat(manifestPath, slash);
 		strcat(manifestPath, manifest);
 		
-		//Creates .temp, which will eventually be renamed to .Manifest
-		char* temp = malloc(5);
-		temp = ".temp";
-		char* tempPath = malloc(strlen(manifest)+strlen(parentDir)+strlen(project)+2);
-		strcpy(tempPath, parentDir);
-		strcat(tempPath, project);
-		strcat(tempPath, slash);
-		strcat(tempPath, temp);
-		
-		int manifestFd = open(manifestPath, O_RDONLY);
-		int tempFd = open(tempPath, O_RDWR|O_CREAT|O_APPEND, 0777);
-		
-		//Gets .Manifest version (first line)
-		char* manifestVer = readUntilDelim(manifestFd, '\n');
-		int newManifestVer = atoi(manifestVer)+1;
-		char* newManifestVerString = intToString(newManifestVer);
-		
-		writeLoop(tempFd, newManifestVerString, strlen(newManifestVerString));
-		
-		while(1)
-		{
-			//Gets first token of fd since last new line
-			char* fileVer = readUntilDelim(manifestFd, ' ');
-			
-			//End of .Manifest has been reached
-			if(fileVer == NULL || strlen(fileVer) == 0)
-			{
-				close(manifestFd);
-				close(tempFd);
-				break;
-			}
-			
-			//Convert version to integer, increment, then convert back to string
-			int newFileVer = atoi(fileVer)+1;
-			char* newFileVerString = intToString(newFileVer);
-			
-			//Write version to .temp
-			writeLoop(tempFd, newFileVerString, strlen(newFileVerString));
-			
-			char* restOfLine
-		}
+		remove(manifestPath);
+		int manifestFd = open(manifestPath, O_RDWR|O_CREAT|O_APPEND, 0777);
+
+		writeLoop(manifestFd, manifestContent, strlen(manifestContent));
 		
 	}
 	else 
@@ -2252,12 +2220,8 @@ int sendToServer(int sockfd, char* message)
 	int n = 0;
 	bzero(buffer,256);
 	
-	n = writeLoop(sockfd,message,strlen(message));
-	if (n < 0) 
-	{
-		return -1;
-	}
-	
+	writeLoop(sockfd,message,strlen(message));
+
 	return sockfd;
 }
 

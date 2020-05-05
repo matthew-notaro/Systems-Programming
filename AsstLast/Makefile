@@ -15,4 +15,4 @@ test:
 	gcc -pthread WTFtest.c -o WTFTest
 	
 clean:
-	rm WTF WTFserver
+	rm -rf WTF WTFserver
