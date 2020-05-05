@@ -10,9 +10,10 @@ server: WTFserver.c
 	
 sam: WTFclient.c
 	gcc -g -lm WTFclient.c -o WTF
+	gcc -g -lm WTFserver.c -o WTFserver
 		
 test:
 	gcc -pthread WTFtest.c -o WTFtest
 	
 clean:
-	rm -rf WTF WTFserver
+	rm -rf WTF WTFserver WTFtest WTF.dSYM

@@ -1274,7 +1274,7 @@ int commit(char* project)
 			{
 				printf("checkpoint: client project does not exist on server side -- must add code\n");
 
-				char action[256]; //malloc(strlen(clientFile)+liveHashSize+sizeof(char)*4); //+3 to account spaces and actionCode
+				char action[400]; //malloc(strlen(clientFile)+liveHashSize+sizeof(char)*4); //+3 to account spaces and actionCode
 				char* actionCode = malloc(sizeof(char)*2);
 				char* space = malloc(sizeof(char)*1);
 				char* newLine = malloc(sizeof(char)*1);
@@ -1286,7 +1286,7 @@ int commit(char* project)
 				strcat(action, clientFile);
 				printf("%s\n", action);
 				strcat(action, space);
-				strcat(action, storedCliHash);
+				strcat(action, liveHash);
 				strcat(action, newLine);
 				writeLoop(commitFd, action, strlen(action));
 				printf("written action: %s\n", action);
@@ -1320,7 +1320,7 @@ int commit(char* project)
 					//Case 2.2.1 extended: live hash does not match stored hash -- must modify code
 					if(strcmp(liveHash, storedCliHash) != 0)
 					{
-						char action[256]; //malloc(strlen(clientFile)+liveHashSize+sizeof(char)*4); //+3 to account spaces and actionCode
+						char action[400]; //malloc(strlen(clientFile)+liveHashSize+sizeof(char)*4); //+3 to account spaces and actionCode
 						char* actionCode = malloc(sizeof(char)*2);
 						char* space = malloc(sizeof(char)*1);
 						char* newLine = malloc(sizeof(char)*1);
@@ -1334,7 +1334,7 @@ int commit(char* project)
 						strcat(action, clientFile);
 						printf("%s\n", action);
 	  				strcat(action, space);
-						strcat(action, servHash);
+						strcat(action, liveHash);
 						strcat(action, newLine);
 						writeLoop(commitFd, action, strlen(action));
 						printf("written action: %s\n", action);
