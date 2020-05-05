@@ -61,6 +61,8 @@ file *addDirToLL(file* fileLL, char *proj);
 file* addFileToLL(file* fileLL, char* name);
 void destroyProj(char* name);
 void freeLL(file* head);
+void freeLL2(file2* head);
+
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -388,17 +390,17 @@ void push(int sock){
 	}
 
 	// Checks if desired .Commit exists
-	char* fileName = (char*)malloc(50 *sizeof(char));
-	strcpy(fileName, ".Commit");
-	strcat(fileName, receivedHash);
+	char* commitFile = (char*)malloc(50 *sizeof(char));
+	strcpy(commitFile, ".Commit");
+	strcat(commitFile, receivedHash);
 	
 pthread_mutex_lock(lock);
-	int commitfd = open(fileName, O_RDONLY);
+	int commitfd = open(commitFile, O_RDONLY);
 	if(commitfd < 0){
 		message = "error:commit does not exist";
 		writeLoop(sock, message, strlen(message));
 		close(commitfd);
-		free(fileName);
+		free(commitFile);
 		free(project);
 		free(receivedHash);
 		return;
@@ -435,6 +437,7 @@ pthread_mutex_lock(lock);
 		fileLL = temp;
 	}
 	free(line);
+	close(commitfd);
 
 	// Write 1/2 message to socket
 	char* numFilesString = intToString(numFiles);
@@ -495,6 +498,29 @@ pthread_mutex_lock(lock);
 			}
 		}
 
+		// Updates .History - writes project version then copy and pastes .Commit<hash>
+
+		char hisBuffer[300];
+		strcpy(hisBuffer, project);
+		strcat(hisBuffer, "/.History");
+		int historyfd = open(hisBuffer, O_RDWR|O_APPEND);
+		char manBuffer[300];
+		strcpy(manBuffer, project);
+		strcat(manBuffer, "/.Manifest");
+	    int man1 = open(manBuffer, O_RDONLY);
+
+		// Reads version # from old man, then write to .History
+		char* line = readUntilDelim(man1, '\n');
+		writeLoop(historyfd, line, strlen(line));
+		writeLoop(historyfd, "\n", 1);
+		free(line);
+
+		// Writes all of commitfd to historyfd
+		char* commitFileData = readFromFile(commitFile);
+		writeLoop(historyfd, commitFileData, strlen(commitFileData));
+		free(commitFileData);
+		close(historyfd);
+
 		// Deletes all .Commit files in project
 		char cmdBuffer[300];
 		strcpy(cmdBuffer, "rm ");
@@ -502,28 +528,85 @@ pthread_mutex_lock(lock);
 		strcat(cmdBuffer, "/.Commit*");
 		system(cmdBuffer);
 
-		// Copy project into ./project/.Archive
-		char cmdBuffer1[600];
-		memset(cmdBuffer1, '\0', 300);	// cmdBuffer1 = cp -r project
-		strcpy(cmdBuffer1, "cp -r ");
-		strcat(cmdBuffer1, project);
-		char cmdBuffer2[300];			// cmdBuffer2 = project/.Archive
-		memset(cmdBuffer2, '\0', 300);
-		strcpy(cmdBuffer2, project);
-		strcat(cmdBuffer2, "/.Archive");
+		//Gets max current version
+		int max = maxBackup(project);
+		char* maxString = intToString(max);
 
-		strcat(cmdBuffer1, cmdBuffer2);
-		system(cmdBuffer1);
+		// Creates tar file
+		char tarFile[300];
+		memset(cmdBuffer, '\0', 300);
+		strcpy(cmdBuffer, "tar -zcvf ");
+		memset(tarFile, '\0', 300);
+		strcat(tarFile, maxString);
+		strcat(tarFile, ".tar.gz ");
+		strcat(cmdBuffer, tarFile);
+		strcat(cmdBuffer, project);
+		system(cmdBuffer);
 
-		int max = maxBackup(project/.Archive);
-		system("tar -zcvf max+1.tar.gz /project/.Archive/");
+
+		// move tar into ./project/.Archive
+		memset(cmdBuffer, '\0', 300);
+		strcpy(cmdBuffer, "cp ");
+		strcat(cmdBuffer, tarFile);
+		strcat(cmdBuffer, project);
+		strcat(cmdBuffer, "/.Archive");
+		// should be mv tar proj/.Archive
+		system(cmdBuffer);
+
 
 ///////////////////////
 // STEP 3
 ///////////////////////
 
-		
+		// 1st line of old man already opened and read
+		char manBuffer2[300];
+		strcpy(manBuffer2, manBuffer);
+		strcat(manBuffer2, "2");
+		int man2 = open(manBuffer2, O_RDWR|O_CREAT|O_APPEND, 00600);
 
+		char* newVersionString = intToString(manVersion + 1);
+		writeLoop(man2, newVersionString, strlen(newVersionString));
+		free(line);
+		free(newVersionString);
+
+		int fileVer;
+		char manFileName[300], hash[50];
+		char lineBuffer[300];
+		file2* matchNode;
+		// For each line in old man, check if file name was in .Commit
+		while(strlen(line) > 0){
+			// Scans line of .Manifest for "version file hash"
+			sscanf(line, "%d %s %s\n", &fileVer, manFileName, hash);
+
+			// Iterates through fileLL to find a match
+			matchNode = pushFileMatch(fileLL, manFileName);
+			// NULL when fileName not in .Commit - just write to man unchanged
+			if(matchNode == NULL){
+				writeLoop(man2, line, strlen(line));
+			}
+			// !NULL - must check code
+			else{
+				// D - do not write anything to man2
+				// download file from fileLL if M/A and write to man2
+				if(strcmp(matchNode->code, "D") != 0){
+					downloadFile(matchNode->fileName, matchNode->fileData);
+
+					// Writes incr'ed file version to man2
+					memset(lineBuffer, '\0', 300);
+					sprintf(lineBuffer, "%d %s %s\n", ++fileVer, manFileName, matchNode->hash);
+					writeLoop(man2, lineBuffer, strlen(lineBuffer));
+				}
+			}
+			// Next line, move ptr up
+			free(line);
+			line = readUntilDelim(man1, '\n');
+		}
+
+		// Deletes original man, renames man2 to man, write success to client
+		remove(manBuffer);
+		rename(manBuffer2, manBuffer);
+		message = "success";
+		writeLoop(sock, message, strlen(message));
 	}
 pthread_mutex_unlock(lock);
 
@@ -531,6 +614,62 @@ pthread_mutex_unlock(lock);
 	free(receivedHash);
 }
 
+// Iterates through fileLL to find a match
+// Returns node containing a match
+file2* pushFileMatch(file2* head, char* fileName){
+	file2* ptr = head;
+	while(ptr != NULL){
+		if(strcmp(ptr->fileName, fileName) == 0){
+			return ptr;
+		}
+	}
+	return NULL;
+}
+
+
+// TESTED - except for writing the file
+// Given file path and intended file contents, opens new FD to path, making subdirectories if needed
+// If one exists, deletes file found at path
+void downloadFile(char* fileName, char* fileData){
+	// First attempts to delete existing file to overwrite later
+	char cmdBuffer[300];
+    char first[300], second[300];
+    char* next;
+	memset(cmdBuffer, '\0', 300);
+	strcpy(cmdBuffer, "rm ");
+	strcat(cmdBuffer, fileName);
+	system(cmdBuffer);
+    
+    // Reads off "." or project - both of which do not need to be checked if they exist
+    memset(first, '\0', 300);
+    strcpy(first, "mkdir ");
+    memset(second, '\0', 300);
+    next = strtok(fileName, "/");
+    strcpy(second, next);
+
+    // Makes missing directories in that path
+    while(next != NULL){
+        next = strtok(NULL, "/");
+        if(next != NULL){
+            strcpy(first, "mkdir ");
+            strcat(first, second);
+            strcat(second, "/");
+            strcat(second, next);
+
+            system(first); // first holds mkdir ./path
+            printf("first: %s\n", first);
+            printf("second: %s\n", second);
+        }
+    }
+
+    // Now all dirs made, must write file
+    int filefd = open(fileName, O_RDWR|O_CREAT|O_APPEND, 00600);
+    writeLoop(filefd, fileData, strlen(fileData));
+    close(filefd);
+}
+
+
+// NOT TESTED
 int maxBackup(char* project){
   DIR* currentDir = opendir(project);
   struct dirent* currentThing = NULL;
@@ -550,13 +689,14 @@ int maxBackup(char* project){
   return max;
 }
 
+// TESTED
 // Extract all first consecutive numbers from name
 int extractNum(char* name){
 	int i;
 	char* num = (char*)malloc(strlen(name) * sizeof(char));
 	for(i = 0; i < strlen(name); i++){
 		if(name[i] >= 0 || num[i]] < 10){
-			num[i] = name[i]
+			num[i] = name[i];
 		}
 		else{
 			break;
@@ -566,6 +706,7 @@ int extractNum(char* name){
 	free(num);
 	return i;
 }
+
 
 /*
 The create command will fail if the project name already exists on the server or the client can not communicate
@@ -578,7 +719,13 @@ void create(int sock){
 	char* message;
 	// Attempts to make new project's dir
 pthread_mutex_lock(lock);
-	if(mkdir(project, 00600) == -1){
+
+	// Attempts to make new project's dir
+	char cmdBuffer[300];
+    memset(cmdBuffer, '\0', 300);
+    strcpy(cmdBuffer, "mkdir ");
+    strcat(cmdBuffer, project);
+	if(system(cmdBuffer) != 0){
 		message = "error:project already exists";
 		writeLoop(sock, message, strlen(message));
 	}
@@ -588,14 +735,31 @@ pthread_mutex_lock(lock);
 		strcpy(manWithProj, project);
 		strcat(manWithProj, "./Manifest");
 		int manfd = open(manWithProj, O_RDWR|O_CREAT|O_APPEND, 00600);
-		// Send success to client if creates project's .Manifest
+		// Send success to client if creates project's .Manifest - which it always should
 		if(manfd > 0){
 			// Writes version "0" to new Manifest
 			write(manfd, "0", 1);
-			message = "success";
-			writeLoop(sock, message, strlen(message));
+			close(manfd);
 		}
 		free(manWithProj);
+
+		// Creates empty .Archive directory
+        memset(cmdBuffer, '\0', 300);
+        strcpy(cmdBuffer, "mkdir ");
+		strcat(cmdBuffer, project);
+		strcat(cmdBuffer, "/.Archive");
+		system(cmdBuffer); //project = project/.Archive
+		
+        // Creates empty .History file
+        memset(cmdBuffer, '\0', 300);
+        strcpy(cmdBuffer, "touch ");
+        strcat(cmdBuffer, project);
+        strcat(cmdBuffer, "/.History");
+		system(cmdBuffer);
+
+		// Sends success to client
+		message = "success";
+		writeLoop(sock, message, strlen(message));
 	}
 pthread_mutex_unlock(lock);
 	free(project);
@@ -985,7 +1149,7 @@ void freeLL(file* head){
 }
 
 // Frees fileLL
-void freeLL(file2* head){
+void freeLL2(file2* head){
 	file2* ptr;
 	while(head != NULL){
 		ptr = head;
@@ -997,14 +1161,3 @@ void freeLL(file2* head){
 		free(ptr);
 	}
 }
-
-
-typedef struct file2{
-	char* fileName;
-	int nameLen;
-	int fileLen;
-	char* fileData;
-	struct file2* next;
-	char* code;
-	char* hash;
-} file2;
