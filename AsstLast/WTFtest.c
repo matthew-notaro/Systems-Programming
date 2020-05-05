@@ -4,6 +4,17 @@
 
 int main(int argc, char **argv) 
 {
+
+//pid_t id = fork() and if id = 0 then execv(<command>,<char* arr[] of parameters>)
+
+	int client = mkdir("./Client", 0777); 
+	int server = mkdir("./Server", 0777);
+	
+	system("mv ./WTF ./Client/WTF");
+	system("mv ./WTFserver ./Server/WTFserver");
+	
+	chdir("./Client");
+	
 	system("make sam");
 	printf("-- Compilation successful -- \n");
 	
