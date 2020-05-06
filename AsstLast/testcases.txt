@@ -77,7 +77,7 @@ Checkout:
     WTF
     WTFserver
     Client
-        .configure
+				.Manifest
         <project> - ignores .* files
             file1
             file2
@@ -108,8 +108,37 @@ Commit:
 Destroy:
 
 Add:
+		./WTF add <project> <file>
+		Success:
+.
+		WTF
+		WTFserver
+		Client
+				.configure
+				<project>
+						.Manifest - new entry
+		Server
+				<project>
+						.Archive
+						.History
+						.Manifest - contains "0"
+
 
 Remove:
+		./WTF remove <project> <file>
+		Success:
+.
+		WTF
+		WTFserver
+		Client
+				.configure
+				<project>
+						.Manifest - entry deleted
+		Server
+				<project>
+						.Archive
+						.History
+						.Manifest - contains "0"
 
 Current Version:
 
