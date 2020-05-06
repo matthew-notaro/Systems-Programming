@@ -1034,7 +1034,7 @@ int upgrade(char* project)
 	char* newManifestVersion = intToString(newManifestVersionNum);
 	
 	//Reads rest of manifest into a buffer
-	char* currentManifestString = readfromfile(manifestPath);
+	char* currentManifestString = readFromFile(manifestPath);
 	char* restOfManifest = malloc(strlen(currentManifestString)+4);
 
   int s = 1, ri = 0;
@@ -1458,8 +1458,8 @@ int commit(char* project)
 	}
 	
 	//Reads server response
-	char* serverResponse = readUntilDelim(finalsockfd,':');
-	if(strcmp(serverResponse, "error") == 0)
+	char* serverResponse2 = readUntilDelim(finalsockfd,':');
+	if(strcmp(serverResponse2, "error") == 0)
 	{
 		printf("ERROR: Failed to commit.\n");
 		remove(commitPath);
@@ -1639,7 +1639,7 @@ int create(char* project)
 	}
 	
 	//Reads response from server
-	char* response = readUntilDelim(newsockfd);
+	char* response = readUntilDelim(newsockfd, ':');
 	 
 	 close(sockfd);
 	 close(newsockfd);
@@ -1721,7 +1721,7 @@ int destroy(char* project)
 		return -1;
 	}
 	
-	char* serverResponse = readUntilDelim(newsockfd);
+	char* serverResponse = readUntilDelim(newsockfd, ':');
 	
 	close(sockfd);
 	close(newsockfd);
