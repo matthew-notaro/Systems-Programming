@@ -2,7 +2,7 @@ WTFtest first creates separate directories for the client and server (./Client a
 
 It then moves the WTF executable into ./Client and the WTFServer executable into ./Server.
 
-Fork() is called; if the process is a child, serverDriver() changes the working directory to ./Server and sets up the server.
+Fork() is called; if the process is a child, the working directory changes to ./Server and the server starts running.
 
 If the process is the parent, clientDriver() changes the working directory to ./Client, compiles WTFclient.c, and runs various system calls.
 
