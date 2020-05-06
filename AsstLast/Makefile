@@ -1,6 +1,6 @@
 all: WTFclient.c WTFserver.c
-	gcc -g -lm -lcrypto WTFclient.c -o WTF
-	gcc -g -lm -lcrypto WTFserver.c -o WTFserver
+	gcc -g WTFclient.c -o WTF -lm -lcrypto
+	gcc -g WTFserver.c -o WTFserver -lm -lcrypto -pthread
 	
 client: WTFclient.c
 	gcc -g -lm -lcrypto WTFclient.c -o WTF

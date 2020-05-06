@@ -20,17 +20,14 @@ int port = 0;
 void checkout(int socketfd);
 void updateCommit(int socketfd, char* command);
 void upgrade(int socketfd);
-void commit2(int socketfd);
 void push(int socketfd);
 void create(int socketfd);
 void destroy(int socketfd);
-void update_(int socketfd);
 void currentversion(int socketfd);
 void history(int socketfd);
-void rollback(int socketfd, char* version);
+void rollback(int socketfd);
 
 void* socketThread(void* sockfd);
-void* socketThread2(void* sockfd);
 
 typedef struct file{
 	char* fileName;
@@ -60,10 +57,13 @@ int writeLoop(int fd, char* str, int numBytes);
 void transferOver(int sockfd, struct file* fileLL, char* command);
 struct file *addDirToLL(struct file* fileLL, char *proj);
 struct file* addFileToLL(struct file* fileLL, char* name);
-void destroyProj(char* name);
 void freeLL(struct file* head);
 void freeLL2(struct file2* head);
-
+char* hash(char* buffer);
+struct file2* pushFileMatch(struct file2* head, char* fileName);
+void downloadFile(char* fileName, char* fileData);
+int extractNum(char* name);
+int maxBackup(char* project);
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -127,7 +127,7 @@ int main(int argc, char **argv){
 
 // Function to be made into a thread for each connection to server
 // Function to be used
-void* socketThread2(void* sockvoidstar){
+void* socketThread(void* sockvoidstar){
 	printf("Connecting to a client\n");
 	int sock = *((int*)sockvoidstar);
 	int n;
@@ -143,11 +143,6 @@ void* socketThread2(void* sockvoidstar){
 	// Assumes request formatted as: <command>:<project>
 	else if(strcmp("update", command) == 0 || strcmp("commit", command) == 0){
 		updateCommit(sock, command);
-	}
-	// Commit has extra stuff to do - log .Commit file sent over
-	// Format: commit2:project:length:data
-	else if(strcmp("commit2", command) == 0){
-		commit2(sock);
 	}
 	
 	// Reads in names of n files to be sent back to client
@@ -175,7 +170,7 @@ void* socketThread2(void* sockvoidstar){
 	// CURRENTVERSION - sends over all files w/ version numbers for a given project
 	// Ignores the manifest version and all hash codes
 	else if(strcmp("currentversion", command) == 0){
-		currentversion(sock, project);
+		currentversion(sock);
 	}
 
 	else if(strcmp("history", command)){
@@ -201,9 +196,9 @@ void checkout(int sock){
 	char* message;
 	char* project = readUntilDelim(sock, ':');
 	
-pthread_mutex_lock(lock);
+pthread_mutex_lock(&lock);
 	file* fileLL = addDirToLL(fileLL, project);
-pthread_mutex_unlock(lock);
+pthread_mutex_unlock(&lock);
 	
 	// Transfer over or error if DNE
 	if(fileLL != NULL){
@@ -229,9 +224,9 @@ void updateCommit(int sock, char* command){
 	strcat(manWithProj, "/.Manifest");
 
 	// Gets contents of project's .Manifest
-pthread_mutex_lock(lock);
+pthread_mutex_lock(&lock);
 	char* manContents = readFromFile(manWithProj);
-pthread_mutex_unlock(lock);
+pthread_mutex_unlock(&lock);
 
 	// Writes error to socket
 	if(strcmp(manContents, "FILE_DNE") == 0){
@@ -259,7 +254,7 @@ pthread_mutex_unlock(lock);
 	// <fileLen>:<fileData>
 	// Save file as .Commit<hash>
 	if(strcmp(command, "commit")){
-		char* fileLenString = readUntilDelim(sock, ":");
+		char* fileLenString = readUntilDelim(sock, ':');
 		int fileLen = atoi(fileLenString);
 		char* fileData = readNBytes(sock, fileLen);
 
@@ -268,14 +263,14 @@ pthread_mutex_unlock(lock);
 
 		// Formats name to include its hash and project - should be 47 chars long w/o project
 		char* fileName = (char*)malloc(300 * sizeof(char));
-		strcpy(fileName, project2);
+		strcpy(fileName, project);
 		strcat(fileName, "/.Commit");
 		strcat(fileName, hashCode);
 
 		// Tests to see if file already exists - should be 54 chars long
 		// If exists, do nothing since files are identical
 		// If doesn't exist, write new one
-//pthread_mutex_lock(lock);
+//pthread_mutex_lock(&lock);
 		char* existBuffer = (char*)malloc(60 *sizeof(char));
 		sprintf(existBuffer, "[ -f %s ]", fileName);
 		// If file DNE, make new commit
@@ -284,7 +279,7 @@ pthread_mutex_unlock(lock);
 			writeLoop(commitfd, fileData, strlen(fileData));
 			close(commitfd);
 		}
-//pthread_mutex_unlock(lock);
+//pthread_mutex_unlock(&lock);
 		free(fileLenString);
 		free(fileData);
 		free(hashCode);
@@ -305,7 +300,7 @@ void upgrade(int sock){
 	file* fileLL;
 	strcpy(projBuffer, "dir \0");
 	strcat(projBuffer, project);
-pthread_mutex_lock(lock);
+pthread_mutex_lock(&lock);
 	// Project DNE
 	if(system(projBuffer) != 0){
 		message = "error:project does not exist";
@@ -331,7 +326,7 @@ pthread_mutex_lock(lock);
 		transferOver(sock, fileLL, "success");
 		free(numFilesString);
 	}
-pthread_mutex_unlock(lock);
+pthread_mutex_unlock(&lock);
 	free(project);
 }
 
@@ -344,8 +339,8 @@ void push(int sock){
 // STEP 1
 ///////////////////////
 
-	char* project = readUntilDelim(sock, ":");
-	char* receivedHash = readUntilDelim(sock, ":"); //readNBytes(sock, 40);
+	char* project = readUntilDelim(sock, ':');
+	char* receivedHash = readUntilDelim(sock, ':'); //readNBytes(sock, 40);
 	char* message;
 
 	// Checks if project exists
@@ -366,7 +361,7 @@ void push(int sock){
 	strcpy(commitFile, ".Commit");
 	strcat(commitFile, receivedHash);
 	
-pthread_mutex_lock(lock);
+pthread_mutex_lock(&lock);
 	int commitfd = open(commitFile, O_RDONLY);
 	if(commitfd < 0){
 		message = "error:commit does not exist";
@@ -391,7 +386,7 @@ pthread_mutex_lock(lock);
 	char* line = readUntilDelim(commitfd, '\n');
 	while(strlen(line) > 0){
 		// mallocs space for new node
-		file2* temp = (file*)malloc(sizeof(file2));
+		file2* temp = (file2*)malloc(sizeof(file2));
 		temp->code = (char*)malloc(5*sizeof(char));
 		temp->hash = (char*)malloc(50*sizeof(char));
 		temp->fileName = (char*)malloc(200*sizeof(char));
@@ -450,7 +445,7 @@ pthread_mutex_lock(lock);
 		int numFiles = atoi(numFilesString);
 		free(numFilesString);
 		int i, nameLen;
-		char* fileName, *nameLenString;
+		char* fileName, *nameLenString, *fileLenString;
 		file2* ptr = fileLL;
 		// Reads nameLen to get fileName
 		for(i = 0; i < numFiles; i++){
@@ -463,10 +458,13 @@ pthread_mutex_lock(lock);
 			while(ptr != NULL){
 				// If names match, read fileLen and fileData into node
 				if(strcmp(ptr->fileName, fileName) == 0){
-					ptr->fileLen = readUntilDelim(sock, ':');
+					fileLenString = readUntilDelim(sock, ':');
+					ptr->fileLen = atoi(fileLenString);
+					free(fileLenString);
 					ptr->fileData = readNBytes(sock, ptr->fileLen);
 					break;
 				}
+				ptr = ptr->next;
 			}
 		}
 
@@ -483,6 +481,7 @@ pthread_mutex_lock(lock);
 
 		// Reads version # from old man, then write to .History
 		char* line = readUntilDelim(man1, '\n');
+		int manVersion = atoi(line);
 		writeLoop(historyfd, line, strlen(line));
 		writeLoop(historyfd, "\n", 1);
 		free(line);
@@ -582,7 +581,7 @@ pthread_mutex_lock(lock);
 		
 		// 
 	}
-pthread_mutex_unlock(lock);
+pthread_mutex_unlock(&lock);
 
 	free(project);
 	free(receivedHash);
@@ -669,7 +668,7 @@ int extractNum(char* name){
 	int i;
 	char* num = (char*)malloc(strlen(name) * sizeof(char));
 	for(i = 0; i < strlen(name); i++){
-		if(name[i] >= 0 || num[i]] < 10){
+		if(name[i] >= 0 || num[i] < 10){
 			num[i] = name[i];
 		}
 		else{
@@ -692,7 +691,7 @@ void create(int sock){
 	char* project = readUntilDelim(sock, ':');
 	char* message;
 	// Attempts to make new project's dir
-pthread_mutex_lock(lock);
+pthread_mutex_lock(&lock);
 
 	// Attempts to make new project's dir
 	char cmdBuffer[300];
@@ -735,7 +734,7 @@ pthread_mutex_lock(lock);
 		message = "success";
 		writeLoop(sock, message, strlen(message));
 	}
-pthread_mutex_unlock(lock);
+pthread_mutex_unlock(&lock);
 	free(project);
 }
 
@@ -752,14 +751,14 @@ void destroy(int sock){
 	// system return 0 on success
 	// Just assign message
 	// rmCommand = rm -rf <project>
-pthread_mutex_lock(lock);
+pthread_mutex_lock(&lock);
 	if(system(rmCommand) != 0){
 		message = "error:project does not exist";
 	}
 	else{
 		message = "success";
 	}
-pthread_mutex_unlock(lock);
+pthread_mutex_unlock(&lock);
 	writeLoop(sock, message, strlen(message));
 	free(rmCommand);
 	free(project);
@@ -790,7 +789,7 @@ void currentversion(int sock){
 		char fileBuffer[200];
 		char sockBuffer[200];
 		int wroteToSock = 0;
-pthread_mutex_lock(lock);
+pthread_mutex_lock(&lock);
 		// Reads 1st line of .Manifest
 		line = readUntilDelim(manfd, '\n');
 		while(strlen(line) != 0){
@@ -816,12 +815,12 @@ pthread_mutex_lock(lock);
 			wroteToSock = 1;
 			sscanf(line, "%d %s\n", &version, fileBuffer);
 //printf("%d. %s.\n", version, fileBuffer);
-			sprintf(sockBuffer, "%d %s\n\0", version, fileBuffer);
+			sprintf(sockBuffer, "%d %s\n", version, fileBuffer);
 			writeLoop(sock, sockBuffer, strlen(sockBuffer));
 			free(line);
 			line = readUntilDelim(manfd, '\n');
 		}
-pthread_mutex_unlock(lock);
+pthread_mutex_unlock(&lock);
 		free(line);
 
 		// No files in project
