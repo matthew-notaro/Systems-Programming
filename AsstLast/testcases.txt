@@ -3,21 +3,107 @@ Writing every single one would be redundant.
 
 ./WTFserver
 
+Example directory structure before executing any commands:
+.
+    WTFtest.c  
+    WTFserver.c
+    WTFclient.c
+
+Upon running the makefile:
+.
+    WTFtest.c  
+    WTFserver.c
+    WTFclient.c
+    WTF
+    WTFserver
+
+Upon running ./WTFtest but before any client/server commands are called (not including .c files from now on):
+.
+    WTFtest.c  
+    WTFserver.c
+    WTFclient.c
+    WTF
+    WTFserver
+    WTFtest
+    Client - working directory for WTFclient
+    Server - working directory for WTFserver
+
 Configure:
     ./WTF configure <IP> <host>
+.
+    WTF
+    WTFserver
+    Client
+        .configure - contains <IP> and <host>
+    Server
+
+
+Create:
+    ./WTF create <project>
+    Success:
+.
+    WTF
+    WTFserver
+    Client
+        .configure
+    Server
+        <project>
+            .Archive
+            .History
+            .Manifest - contains "0"
+
+
 
 Checkout:
-    ./WTF checkout <project>
+    Before:
+.
+    WTF
+    WTFserver
+    Client
+        .configure
+    Server
+        <project>
+            .Archive
+            .History
+            .Manifest
+            file1
+            file2
+            subdir1
+                file3
+
+    ./WTF create <project>
+    After:
+.
+    WTF
+    WTFserver
+    Client
+        .configure
+        <project> - ignores .* files
+            file1
+            file2
+            subdir1
+                file3
+    Server
+        <project>
+            .Archive
+            .History
+            .Manifest
+            file1
+            file2
+            subdir1
+                file3
+
+
     
 Update: 
+
+
+
 
 Upgrade:
 
 Commit: 
 
-Path:
-
-Create:
 
 Destroy:
 
@@ -29,4 +115,10 @@ Current Version:
 
 History: similar to update and 1st part of commit since it just transfer a single file with a known name over to the client
 
+
+
+
 Rollback:
+    
+./Server/
+    .Archive   
