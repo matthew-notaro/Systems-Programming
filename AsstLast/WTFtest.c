@@ -6,11 +6,10 @@ int clientDriver();
 
 int main(int argc, char **argv)
 {
-	system("mkdir -p -m777 Client1");
-	system("mkdir -p -m777 Client2");
+	system("mkdir -p -m777 Client");
 	system("mkdir -p -m777 Server");
 
-	system("mv ./WTF ./WTF");
+	system("mv ./WTF ./Client/WTF");
 	system("mv ./WTFserver ./Server/WTFserver");
 
 	pid_t pid = fork();
@@ -19,14 +18,16 @@ int main(int argc, char **argv)
 		printf("ERROR: Could not fork.\n");
 		return -1;
 	}
-	else if (pid == 0) //Child process
+	else if (pid == 0)
 	{
-		system("./WTFserver 42069");
-		chdir("./Server");
+		clientDriver();
 	}
 	else
 	{
-		clientDriver();
+		system("make server");
+		chdir("./Server");
+		system("./WTFserver 42069");
+		
 	}
 
 	system("killall -SIGINT WTFserver");
@@ -36,11 +37,9 @@ int main(int argc, char **argv)
 
 int clientDriver()
 {
+	system("make client");
 	chdir("./Client");
-
-	system("make sam");
-	printf("-- Compilation successful -- \n");
-
+	
 	system("./WTF create project1");
 	printf("-- Unsuccessful attempt to create project -- \n");
 
@@ -90,10 +89,4 @@ int clientDriver()
 	printf("-- Unsuccessful attempt to destroy project that does not exist -- \n");
 
 	return 0;
-}
-
-int serverDriver()
-{
-
-	//execvp(./WTFserver <portnum> &)
 }

@@ -2341,7 +2341,7 @@ char* readUntilDelim(int fd, char delim){
     int readIn = 0;
 		//sleep(3);
     do{
-			printf("in loop\n");
+			//printf("in loop\n");
         status = read(fd, buffer+readIn, 1);
 		// breaks and resets most recently read byte if  byte = delim
 		if(buffer[readIn] == delim){
@@ -2351,7 +2351,7 @@ char* readUntilDelim(int fd, char delim){
         readIn += status;
     } while(status > 0 && readIn < bufLen);
 		
-		printf("result: %s\n", buffer);
+		//printf("result: %s\n", buffer);
 	return buffer;
 }
 
