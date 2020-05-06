@@ -1,18 +1,19 @@
-all: Client/WTFclient.c Server/WTFserver.c
-	gcc -g -lm -lcrypto ./Client/WTFclient.c -o ./Client/WTF
-	gcc -g -lm -lcrypto ./Server/WTFserver.c -o ./Server/WTFserver
+all: WTFclient.c WTFserver.c
+	gcc -g -lm -lcrypto WTFclient.c -o WTF
+	gcc -g -lm -lcrypto WTFserver.c -o WTFserver
 	
-client: Client/WTFclient.c
-	gcc -g -lm -lcrypto ./Client/WTFclient.c -o ./Client/WTF
+client: WTFclient.c
+	gcc -g -lm -lcrypto WTFclient.c -o WTF
 	
-server: Server/WTFserver.c
-	gcc -g -lm -lcrypto ./Server/WTFserver.c -o ./Server/WTFserver
+server: WTFserver.c
+	gcc -g -lm -lcrypto WTFserver.c -o WTFserver
 	
-sam: Client/WTFclient.c
-	gcc -g -lm ./Client/WTFclient.c -o ./Client/WTF
+sam: WTFclient.c
+	gcc -g -lm WTFclient.c -o WTF
+	gcc -g -lm WTFserver.c -o WTFserver
 		
 test:
 	gcc -pthread WTFtest.c -o WTFtest
 	
 clean:
-	rm -rf ./Client/WTF ./Server/WTFserver ./Client/WTF.dSYM
+	rm -rf WTF WTFserver WTFtest WTF.dSYM
