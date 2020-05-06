@@ -1623,6 +1623,8 @@ int create(char* project)
 	strcat(message, delim);
 	strcat(message, project);
 	
+	//printf("checkpoint 1\n");
+	
 	//Connect and send to server
 	int sockfd = connectToServer();
 	if(sockfd < 0)
@@ -1630,19 +1632,19 @@ int create(char* project)
 		printf("ERROR: Could not connect to server.\n");
 		return -1;
 	}
+	
 	printf("Connection to server established.\n");
 	int newsockfd = sendToServer(sockfd, message);
-	if(newsockfd < 0)
-	{
-		printf("ERROR: Could not write to socket\n");
-		return -1;
-	}
+	close(sockfd);
+	
+	//sleep(3);
 	
 	//Reads response from server
 	char* response = readUntilDelim(newsockfd, ':');
-	 
-	 close(sockfd);
-	 close(newsockfd);
+	
+	close(newsockfd);
+	
+	//printf("response %s\n", response);
 	
 	//On success, creates directory
 	if(strcmp(response, "error") != 0)
@@ -1655,7 +1657,7 @@ int create(char* project)
 		int mkdirStatus = mkdir(projectPath, 0777); 
 		if(mkdirStatus < 0)
 		{
-			printf("ERROR: failed to create project.\n");
+			printf("ERROR: Failed to create project.\n");
 			return -1;
 		}
 		
@@ -1715,6 +1717,7 @@ int destroy(char* project)
 	}
 	printf("Connection to server established.\n");
 	int newsockfd = sendToServer(sockfd, message);
+	close(sockfd);
 	if(newsockfd < 0)
 	{
 		printf("ERROR: Could not write to socket\n");
@@ -1723,7 +1726,6 @@ int destroy(char* project)
 	
 	char* serverResponse = readUntilDelim(newsockfd, ':');
 	
-	close(sockfd);
 	close(newsockfd);
 	
 	//On failure, print error
@@ -2163,12 +2165,7 @@ int connectToServer()
 //Returns a socket fd on success, -1 on failure
 int sendToServer(int sockfd, char* message)
 {
-	char* buffer[256]; //check type
-	int n = 0;
-	bzero(buffer,256);
-	
 	writeLoop(sockfd,message,strlen(message));
-
 	return sockfd;
 }
 
@@ -2222,7 +2219,7 @@ char* hash(char* data)
 	char* buffer = malloc(40);
 	memset(buffer, '\0', 40);
 	unsigned char hash[SHA_DIGEST_LENGTH];
-	//SHA1(data, length, hash);
+	SHA1(data, length, hash);
 	
 	for(x = 0; x < 30; x++)
 	{
@@ -2342,7 +2339,9 @@ char* readUntilDelim(int fd, char delim){
     // IO Read Loop
     int status = 1;
     int readIn = 0;
+		//sleep(3);
     do{
+			printf("in loop\n");
         status = read(fd, buffer+readIn, 1);
 		// breaks and resets most recently read byte if  byte = delim
 		if(buffer[readIn] == delim){
@@ -2350,7 +2349,9 @@ char* readUntilDelim(int fd, char delim){
 			break;
 		}
         readIn += status;
-    } while(status > 0);
+    } while(status > 0 && readIn < bufLen);
+		
+		printf("result: %s\n", buffer);
 	return buffer;
 }
 
