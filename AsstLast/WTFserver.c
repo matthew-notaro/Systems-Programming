@@ -69,6 +69,7 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 
 int main(int argc, char **argv){
+	chdir("./Server");
 	if(argc != 2){
 		printf("ERROR: Please enter a valid port number\n");
 		return -1;
@@ -93,6 +94,7 @@ int main(int argc, char **argv){
 	serverAddressInfo.sin_addr.s_addr = INADDR_ANY;
 	serverAddressInfo.sin_port = htons(portno);
 
+	memset(serverAddressInfo.sin_zero, '\0', sizeof(serverAddressInfo.sin_zero));
 	if (bind(sockfd, (struct sockaddr *)&serverAddressInfo, sizeof(serverAddressInfo)) < 0)
 		printf("ERROR binding\n");
 	listen(sockfd, 50);
