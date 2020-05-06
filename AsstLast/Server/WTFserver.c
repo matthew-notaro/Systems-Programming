@@ -12,12 +12,13 @@
 #include <fcntl.h>
 #include <openssl/sha.h>
 #include <dirent.h>
+#include <math.h>
 
 
 int port = 0;
 
 void checkout(int socketfd);
-void updateCommit(int socketfd);
+void updateCommit(int socketfd, char* command);
 void upgrade(int socketfd);
 void commit2(int socketfd);
 void push(int socketfd);
@@ -50,18 +51,18 @@ typedef struct file2{
 } file2;
 
 
-file2* commitToLL(int commitfd);
+struct file2* commitToLL(int commitfd);
 char* readNBytes(int fd, int numBytes);
 char* readUntilDelim(int fd, char delim);
 char* readFromFile(char* file);
 char* intToString(int num);
 int writeLoop(int fd, char* str, int numBytes);
-void transferOver(int sockfd, file* fileLL, char* command);
-file *addDirToLL(file* fileLL, char *proj);
-file* addFileToLL(file* fileLL, char* name);
+void transferOver(int sockfd, struct file* fileLL, char* command);
+struct file *addDirToLL(struct file* fileLL, char *proj);
+struct file* addFileToLL(struct file* fileLL, char* name);
 void destroyProj(char* name);
-void freeLL(file* head);
-void freeLL2(file2* head);
+void freeLL(struct file* head);
+void freeLL2(struct file2* head);
 
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -124,43 +125,6 @@ int main(int argc, char **argv){
 }
 
 
-
-// Function to be made into a thread for each connection to server
-// Plain function used to test connecting
-void* socketThread(void* sockvoidstar){
-	printf("Entering thread\n");
-	int sock = *((int*)sockvoidstar);
-	int n;
-	char buffer[1024];
-	bzero(client_message, 256);
-	n = read(sock, client_message, 255);
-	if (n < 0)
-	{
-		printf("ERROR: Could not read from socket\n");
-	}
-
-	// LOCK
-	pthread_mutex_lock(&lock);
-	char* message = (char*)malloc(sizeof(client_message));
-	strcpy(message, "Message received: \n");
-	strcat(message, client_message);
-	strcat(message, "\n");
-	strcpy(buffer, message);
-	free(message);
-	printf("Message: %s\n", buffer);
-	pthread_mutex_unlock(&lock);
-	// UNLOCK
-
-	n = write(sock, buffer, 255);
-	if (n < 0)
-	{
-		printf("ERROR: Could not write to socket\n");
-	}
-	printf("Exiting thread\n");
-	close(sock);
-	pthread_exit(NULL);
-}
-
 // Function to be made into a thread for each connection to server
 // Function to be used
 void* socketThread2(void* sockvoidstar){
@@ -178,7 +142,7 @@ void* socketThread2(void* sockvoidstar){
 	// Sends back .Manifest of given project
 	// Assumes request formatted as: <command>:<project>
 	else if(strcmp("update", command) == 0 || strcmp("commit", command) == 0){
-		updateCommit(sock);
+		updateCommit(sock, command);
 	}
 	// Commit has extra stuff to do - log .Commit file sent over
 	// Format: commit2:project:length:data
@@ -256,72 +220,78 @@ pthread_mutex_unlock(lock);
 
 // Sends back .Manifest of given project
 // Assumes request formatted as: <command>:<project>
-void updateCommit(int sock){	
+void updateCommit(int sock, char* command){
 	// Format desired file name to <project>/.Manifest
-	file* fileLL;
 	char* message;
-	char* project = readUntilDelim(sock, ':');
+	char* project = readUntilDelim(sock, '\n');
 	char* manWithProj = (char*)malloc( (strlen(project)+10) * sizeof(char));
 	strcpy(manWithProj, project);
-	strcat(manWithProj, "./Manifest");
+	strcat(manWithProj, "/.Manifest");
 
-	// Transfers file if exists
+	// Gets contents of project's .Manifest
 pthread_mutex_lock(lock);
-	fileLL = addFileToLL(fileLL, manWithProj);
+	char* manContents = readFromFile(manWithProj);
 pthread_mutex_unlock(lock);
-	if(fileLL != NULL){
-		transferOver(sock, fileLL, "success");
-	}
+
 	// Writes error to socket
-	else{
+	if(strcmp(manContents, "FILE_DNE") == 0){
 		message = "error:project does not exist";
 		writeLoop(sock, message, strlen(message));
 	}
-	free(project);
+	// Writes success:manLen:manContents to socket
+	else{
+		int manLen = strlen(manContents);
+		char* manLenString = intToString(manLen);
+		int manLenStringLen = strlen(manLenString);
+		char* writeBuffer = (char*)malloc((manLen + manLenStringLen + 10) * sizeof(char));
+		strcpy(writeBuffer, "success:");
+		strcat(writeBuffer, manLenString);
+		strcat(writeBuffer, ":");
+		strcat(writeBuffer, manContents);
+		writeLoop(sock, writeBuffer, strlen(writeBuffer));
+		free(manLenString);
+		free(writeBuffer);
+	}
 	free(manWithProj);
-	freeLL(fileLL);
 
 
-
-
-
-	// Receive's client .Commit file as: commit2:<project>:<fileLen>:<fileData>
+	// Must receive and save client's .Commit file
+	// <fileLen>:<fileData>
 	// Save file as .Commit<hash>
+	if(strcmp(command, "commit")){
+		char* fileLenString = readUntilDelim(sock, ":");
+		int fileLen = atoi(fileLenString);
+		char* fileData = readNBytes(sock, fileLen);
 
-	// Processes input from socket
-	char* project = readUntilDelim(sock, ":");
-	char* fileLenString = readUntilDelim(sock, ":");
-	int fileLen = atoi(fileLenString);
-	char* fileBuffer = readNBytes(sock, fileLen);
+		// Calculates 40 char hash for given commit file
+		char* hashCode = hash(fileData);
 
-	// Calculates 40 char hash for given commit file
-	char* hashCode = hash(fileBuffer);
+		// Formats name to include its hash and project - should be 47 chars long w/o project
+		char* fileName = (char*)malloc(300 * sizeof(char));
+		strcpy(fileName, project2);
+		strcat(fileName, "/.Commit");
+		strcat(fileName, hashCode);
 
-	// Formats name to include its hash - should be 47 chars long
-	char* fileName = (char*)malloc(50 * sizeof(char));
-    strcpy(fileName, ".Commit");
-    strcat(fileName, hashCode);
-
-	// Tests to see if file already exists - should be 54 chars long
-	// If exists, do nothing since files are identical
-	// If doesn't exist, write new one
-pthread_mutex_lock(lock);
-	char* existBuffer = (char*)malloc(60 *sizeof(char));
-	sprintf(existBuffer, "[ -f %s ]", fileName);
-    // If file DNE, make new commit
-	if(system(existBuffer) != 0){
-        int commitfd = open(fileName, O_RDWR|O_CREAT|O_APPEND, 00600);
-		writeLoop(commitfd, fileBuffer, strlen(fileBuffer));
-		close(commitfd);
-    }
-pthread_mutex_unlock(lock);
+		// Tests to see if file already exists - should be 54 chars long
+		// If exists, do nothing since files are identical
+		// If doesn't exist, write new one
+//pthread_mutex_lock(lock);
+		char* existBuffer = (char*)malloc(60 *sizeof(char));
+		sprintf(existBuffer, "[ -f %s ]", fileName);
+		// If file DNE, make new commit
+		if(system(existBuffer) != 0){
+			int commitfd = open(fileName, O_RDWR|O_CREAT|O_APPEND, 00600);
+			writeLoop(commitfd, fileData, strlen(fileData));
+			close(commitfd);
+		}
+//pthread_mutex_unlock(lock);
+		free(fileLenString);
+		free(fileData);
+		free(hashCode);
+		free(fileName);
+		free(existBuffer);
+	}
 	free(project);
-	free(fileLenString);
-	free(fileBuffer);
-	free(hashCode);
-	free(fileName);
-	free(existBuffer);
-
 }
 
 
@@ -769,13 +739,13 @@ pthread_mutex_unlock(lock);
 	free(project);
 }
 
-
+// TESTED
 // Reads project name then recursively deletes files then the dir
 void destroy(int sock){
-	char* project = readUntilDelim(sock, ':');
+	char* project = readUntilDelim(sock, '\n');
 	// Formats command to recursively delete project
 	char* rmCommand = (char*)malloc( (strlen(project)+7) * sizeof(char));
-	strcpy(rmCommand, "rm -rf ");
+	strcpy(rmCommand, "rm -r ");
 	strcat(rmCommand, project);
 
 	char* message;
@@ -784,7 +754,7 @@ void destroy(int sock){
 	// rmCommand = rm -rf <project>
 pthread_mutex_lock(lock);
 	if(system(rmCommand) != 0){
-		message = "error:project does not exist"
+		message = "error:project does not exist";
 	}
 	else{
 		message = "success";
@@ -795,14 +765,12 @@ pthread_mutex_unlock(lock);
 	free(project);
 }
 
-void update_(int sock)
-{
-	return 0;
-}
 
+// TESTED
+// Writes project's man w/o project version and file hash codes
 void currentversion(int sock){
 	// Formats .Manifest path to include project
-	char* project = readUntilDelim(sock, ':');
+	char* project = readUntilDelim(sock, '\n');
 	char* manWithProj = (char*)malloc( (strlen(project)+10) * sizeof(char));
 	char* message;
 	strcpy(manWithProj, project);
@@ -812,7 +780,7 @@ void currentversion(int sock){
 	int manfd = open(manWithProj, O_RDONLY);
 	if(manfd > 0){
 		// Does nothing with projVer
-		char* projVer = readUntilDelim(sock, '\n');
+		char* projVer = readUntilDelim(manfd, '\n');
 		free(projVer);
 
 		// For each line of .Manifest, reads version # and name
@@ -1113,14 +1081,14 @@ char* readFromFile(char* file){
 // Returns given fileLL if file-to-be-added doesn't exist
 file* addFileToLL(file* fileLL, char* name){
 	char* fileString = readFromFile(name);
-	// FILE DNE - not exactly sure what to do or if this should be possible
+	// FILE DNE - checks if file exists
 	if(strcmp(fileString, "FILE_DNE") == 0){
 		return fileLL;
 	}
 	file* temp = (file*)malloc(sizeof(file));
 	temp->next = fileLL;
 	temp->fileName = name;
-	temp->nameLen = strlen(name);	
+	temp->nameLen = strlen(name);
 	
 	// EMPTY FILE - set fileLen to 0, fileData = NULL
 	// Should not be any empty files since all .Manifests have at least a version number
@@ -1208,20 +1176,20 @@ void transferOver(int sockfd, file* fileLL, char* command){
 }
 
 
-
+// TESTED
 // Loops write
 int writeLoop(int fd, char* str, int numBytes){
-	int strLen = strlen(str);
-    // IO Read Loop
+    // IO Loop
     int status = 1;
     int writtenOut = 0;
     do{
         status = write(fd, str + writtenOut, numBytes - writtenOut);
-        readIn += status;
+        writtenOut += status;
     } while(status > 0 && writtenOut < numBytes);
 	return writtenOut;
 }
 
+// TESTED
 // Converts given int to string of appropriate length stored on heap
 char* intToString(int num){
 	char* itoabuf = (char*)malloc( (int)((ceil(log10(num))+1)) * sizeof(char));
