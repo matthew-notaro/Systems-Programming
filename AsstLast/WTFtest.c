@@ -95,6 +95,6 @@ int clientDriver()
 int serverDriver()
 {
 	chdir("./Server");
+	system("make server");
 	
-	//execvp(./WTFserver <portnum> &)
 }
