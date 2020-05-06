@@ -1,0 +1,32 @@
+All testcases assume the client can connect to the server and the client requests project/files/version numbers that exists/doesn't exist depending on the command.
+Writing every single one would be redundant.
+
+./WTFserver
+
+Configure:
+    ./WTF configure <IP> <host>
+
+Checkout:
+    ./WTF checkout <project>
+    
+Update: 
+
+Upgrade:
+
+Commit: 
+
+Path:
+
+Create:
+
+Destroy:
+
+Add:
+
+Remove:
+
+Current Version:
+
+History: similar to update and 1st part of commit since it just transfer a single file with a known name over to the client
+
+Rollback:
