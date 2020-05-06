@@ -3,17 +3,16 @@ all: WTFclient.c WTFserver.c
 	gcc -g WTFserver.c -o WTFserver -lm -lcrypto -pthread
 	
 client: WTFclient.c
-	gcc -g -lm -lcrypto WTFclient.c -o WTF
+	gcc -g WTFclient.c -o WTF -lm -lcrypto
 	
 server: WTFserver.c
-	gcc -g -lm -lcrypto WTFserver.c -o WTFserver
+	gcc -g WTFserver.c -o WTFserver -lm -lcrypto -pthread
 	
 sam: WTFclient.c
-	gcc -g -lm WTFclient.c -o WTF
-	gcc -g -lm WTFserver.c -o WTFserver
+	gcc -g WTFclient.c -o WTF -lm
 		
 test:
-	gcc -pthread WTFtest.c -o WTFtest
+	gcc WTFtest.c -o WTFtest -pthread
 	
 clean:
 	rm -rf WTF WTFserver WTFtest WTF.dSYM

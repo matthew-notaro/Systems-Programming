@@ -1184,6 +1184,7 @@ int writeLoop(int fd, char* str, int numBytes){
     int status = 1;
     int writtenOut = 0;
     do{
+			printf(str + writtenOut);
         status = write(fd, str + writtenOut, numBytes - writtenOut);
         writtenOut += status;
     } while(status > 0 && writtenOut < numBytes);
