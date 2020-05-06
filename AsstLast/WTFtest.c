@@ -27,7 +27,6 @@ int main(int argc, char **argv)
 		system("make server");
 		chdir("./Server");
 		system("./WTFserver 42069");
-		
 	}
 
 	system("killall -SIGINT WTFserver");

@@ -1119,6 +1119,9 @@ file *addDirToLL(file* fileLL, char *proj){
 	while ((currentThing = readdir(currentDir)) != NULL){
 		char buff[1024];
 		snprintf(buff, sizeof(buff), "%s/%s", proj, currentThing->d_name);
+		if(currentThing->d_name[0] == '.'){
+			continue;
+		}
 		if (currentThing->d_type == DT_REG){
 			// Might cause memory issues since can recurse into subdirs before adding that dir's files
 			fileLL = addFileToLL(fileLL, buff);
