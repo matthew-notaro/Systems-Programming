@@ -96,16 +96,46 @@ Checkout:
 
     
 Update: 
-
-
-
+    Transfer ./<project>/.Manifest to client
+    Client creates appropriate .Update / .Conflict
+    
 
 Upgrade:
+.Update:
+A file1 hash
+D file2 hash
+
+Server:
+    project
+        file2
+        file1
+Client
+    project
+        file1 - pulled and overwritten from server
+        file2 - deleted from .Manifest
+        file3 - existed already and overwritten from server
+
 
 Commit: 
+    Transfer ./<project>/.Manifest to client
 
+    Server receives clients .Commit and saves it
+./Server:
+    <project>
+        .Commit<hash>
 
 Destroy:
+    Before:
+./Server:
+    <project1>
+        ...
+    <project2>
+    <project3>
+
+    ./WTF destroy <project1>
+./Server:
+    <project2>
+    <project3>
 
 Add:
 		./WTF add <project> <file>
@@ -124,6 +154,7 @@ Add:
 						.Manifest - contains "0"
 
 
+
 Remove:
 		./WTF remove <project> <file>
 		Success:
@@ -140,14 +171,41 @@ Remove:
 						.History
 						.Manifest - contains "0"
 
+
 Current Version:
+    Example ./<project>/.Manifest
+    7
+    2 ./<project>/file1 <hash1>
+    7 ./<project>/file2 <hash2>
+    3 ./<project>/file3 <hash3>
+    1 ./<project>/file4 <hash4>
+
+    ./WTF currentversion <project>
+    Output to client:
+    2 ./<project>/file1
+    7 ./<project>/file2
+    3 ./<project>/file3
+    1 ./<project>/file4
+
+
 
 History: similar to update and 1st part of commit since it just transfer a single file with a known name over to the client
 
 
-
-
 Rollback:
-    
+    Before:
 ./Server/
-    .Archive   
+    <project>
+        .Archive
+            0.tar.gz - just contains .Man, .Ar, .His
+        .Manifest
+        .History
+        more files...
+    more projects...
+    ./WTF rollback <project> 0
+./Server/
+    <project>
+        .Archive - empty
+        .Manifest - "0"
+        .History - empty
+    more projects...
