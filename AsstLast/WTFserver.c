@@ -189,7 +189,7 @@ void* socketThread(void* sockvoidstar){
 	
 	free(command);
 	close(sock);
-	printf("\nDisconnecting from a client\n");
+	printf("Disconnecting to a client\n");
 	pthread_exit(NULL);
 }
 
